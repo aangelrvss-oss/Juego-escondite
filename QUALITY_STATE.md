@@ -1,18 +1,29 @@
 # Estado de calidad
 
-**Última actualización:** 24/10/2026
+**Última actualización:** 24/10/2026 (sesión 2)
 
-No hay código, así que no hay pruebas.
+No hay código, así que no hay pruebas ejecutadas.
 
 | Tipo de prueba | Estado |
 |---|---|
 | Pruebas automatizadas | No aplica (sin código) |
-| Pruebas en dispositivos reales | No realizadas |
-| Pruebas de la competencia | No realizadas: ninguna app instalada ni probada |
-| Ubicación en segundo plano, GPS y notificaciones | **No validados** |
+| Pruebas en dispositivos reales | **No realizadas** |
+| Pruebas simuladas | **No realizadas** |
+| Pruebas de la competencia (instalar SCRAM o HideZone) | No realizadas |
+| Ubicación en segundo plano, GPS, notificaciones y batería | **No validados** en ninguna plataforma |
 
-## Calidad de la investigación (fase 0)
+## Pruebas definidas (sin ejecutar)
 
-- Fuentes primarias consultadas: web, privacidad, términos y soporte de SCRAM, fichas y reseñas de Google Play, webs de HideZone y Hunting Game.
-- Limitaciones: muestra de reseñas pequeña (20–30 por app), sin acceso a Reddit ni a la App Store de SCRAM y sin transcripción del audio del vídeo.
-- La valoración de 5,0★ de Hunting Game (451 valoraciones, todas de 5★) es anómala y no se usa como evidencia de calidad.
+- Criterios de aceptación del MVP: `docs/product/ACCEPTANCE_CRITERIA.md` (AC-A1 a AC-H4). **Ninguno cumplido.**
+- Pruebas de la prueba técnica: `docs/technical/TECHNICAL_SPIKE_PLAN.md` §4 (T01–T13), con umbrales fijados **antes** de ejecutar.
+
+## Plantilla para resultados (se rellenará a partir de la prueba técnica)
+
+| ID | Fecha | Dispositivo / SO | Variante | Red | REAL / SIMULADO | Medido | Resultado | Observaciones |
+|---|---|---|---|---|---|---|---|---|
+| — | — | — | — | — | — | — | — | — |
+
+## Calidad de la investigación
+
+- **Fase 0:** ver las limitaciones en `COMPETITIVE_ANALYSIS.md` (muestra pequeña de reseñas, sin Reddit ni audio del vídeo).
+- **Sesión 2:** las verificaciones técnicas y de precios vienen de fragmentos de resultados de búsqueda, porque WebFetch no resuelve DNS en el contenedor. Algunas son de fuentes secundarias y están marcadas [V: terceros] o [P]. **Contradicción abierta:** si Durable Objects está o no en el plan gratuito de Cloudflare.

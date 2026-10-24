@@ -4,6 +4,12 @@
 **Estado:** borrador para aprobación. **La implementación no ha comenzado.**
 **Base de evidencia:** [`COMPETITIVE_ANALYSIS.md`](./COMPETITIVE_ANALYSIS.md). Las etiquetas [V]/[I]/[H]/[P] significan lo mismo que allí.
 
+> **Nota de la sesión 2 (24/10/2026):** este informe se conserva como registro histórico. Varios puntos están **superados** por decisiones posteriores. La versión vigente está en `DECISION_LOG.md` (D-008 a D-019), `docs/product/` y `docs/technical/`. En particular:
+> - La edad mínima ya no está pendiente: **solo mayores de 18** (D-008).
+> - El "servicio en primer plano en Android y modo en segundo plano 'mientras se usa la app' en iOS" del §2 **no está garantizado con el `expo-location` estándar**, que exige el permiso "Siempre". Ver D-013 y `TECHNICAL_SPIKE_PLAN.md` §1.
+> - El "límite de jugadores gratis por definir" se sustituye por salas privadas gratuitas (D-004) y un límite técnico propuesto de 20 jugadores (D-019).
+> - El servidor recomendado ya no es "servidor propio frente a Supabase+worker", sino D-014.
+
 Este documento recoge los puntos 7, 8 y 9 de la primera tarea: tres enfoques de producto, un MVP recomendado y las decisiones técnicas y de costes que hay que investigar. **No sustituye** a los entregables de las fases 1 a 3 (`PRODUCT_STRATEGY.md`, `MVP_SCOPE.md`, `ARCHITECTURE.md`…), que se redactarán cuando se aprueben las decisiones de abajo.
 
 ---
