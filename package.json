@@ -1,0 +1,18 @@
+{
+  "name": "juego-escondite-s0",
+  "private": true,
+  "version": "0.0.0",
+  "description": "S0: motor de reglas y simulaciones deterministas (sin red, sin app móvil)",
+  "type": "module",
+  "engines": {
+    "node": ">=22.18"
+  },
+  "scripts": {
+    "test": "node --test \"engine/test/*.test.ts\" \"sim/test/*.test.ts\"",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.1",
+    "typescript": "5.9.3"
+  }
+}

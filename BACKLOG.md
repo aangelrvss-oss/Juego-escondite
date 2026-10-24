@@ -14,8 +14,12 @@ Estados: `[ ]` pendiente · `[~]` documentado o planificado, **no ejecutado** ·
 - [~] Plan de la prueba técnica (`TECHNICAL_SPIKE_PLAN.md`): diseñado, sin ejecutar.
 
 ## P1: prueba técnica (sesiones siguientes, una etapa por sesión)
+- [x] S0: motor TypeScript, servidor simulado y bots. 103 pruebas superadas, **todas SIMULADAS** (sesión 3). Sin transporte de red real.
+- [ ] Revisión de S0 y autorización del commit.
+- [ ] Decidir D-020 a D-023, incluida la incoherencia sobre quién se expone fuera de la zona.
+- [ ] Medir el coste de CPU del motor dentro del adaptador elegido (S1).
+- [ ] Filtro básico de palabras ofensivas en los nombres (pendiente en el motor).
 - [ ] Verificaciones previas sin coste (`TECHNICAL_SPIKE_PLAN.md` §7).
-- [ ] S0: motor TypeScript, servidor local y bots en el contenedor, con pruebas T03, T09, T10 y unitarias. **Requiere autorizar `npm install`.**
 - [ ] S1: Android real + bot contra el servidor publicado en el plan gratuito (T01, T02, T04, T05, T07, T08, T11, T12 y T13).
 - [ ] S2: dos Android reales por la calle.
 - [ ] S3: iPhone (T06). Requiere decidir entre Mac y Apple Developer Program.

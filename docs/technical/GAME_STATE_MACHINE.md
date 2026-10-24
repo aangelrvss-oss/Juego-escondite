@@ -97,6 +97,8 @@ El resultado lo calcula y publica **solo el servidor**, en el evento `game_finis
 - Comandos idempotentes por `command_id`: si llega uno repetido, se devuelve la misma respuesta.
 - Eventos con un `seq` que crece de forma estricta. El cliente descarta los `seq` que ya ha aplicado.
 
+> **Corrección tras S0 (D-020):** un único `seq` por sala no sirve, porque con el filtrado por audiencia cada cliente vería saltos legítimos y no podría distinguirlos de pérdidas reales. El `seq` es **por destinatario**: cada jugador tiene su propio flujo contiguo, y la reanudación (`resume { last_seq }`) usa ese flujo. La sala mantiene aparte un registro de auditoría con numeración global.
+
 ### 5.8 Pausas
 - No hay pausa en el MVP. [P]
 
@@ -115,6 +117,10 @@ El resultado lo calcula y publica **solo el servidor**, en el evento `game_finis
 | `is_mock` | Dispositivo (bandera de ubicación simulada de Android o `isSimulatedBySoftware` de iOS, si está disponible) | Indicio de trampa; **no es una prueba** |
 | `speed_mps`, `heading` | Dispositivo (opcional) | Detectar velocidades implausibles |
 | `availability` | Servidor | `CURRENT`, `STALE` o `UNAVAILABLE` |
+
+> **Corrección tras S0 (D-021):** la regla de `age_ms` de la tabla anterior es peligrosa en su segunda parte. Si se usara `received_at` cuando la diferencia supera 60 s, una muestra guardada sin cobertura durante minutos parecería actual. La regla implementada es:
+> - Si `measured_at` (ya convertido a la hora del servidor) es **posterior** a `received_at` + 2 s: se usa `received_at`, se marca `clock_suspect` y la muestra **nunca** es `CURRENT` ni sirve para capturas.
+> - En cualquier otro caso se respeta `measured_at`, aunque sea muy antiguo: la muestra se clasifica como `STALE` o `UNAVAILABLE` según su antigüedad real.
 
 ### 6.2 Reglas
 1. Una muestra con `age_ms > 15 s` **nunca se muestra como actual**.
@@ -165,6 +171,22 @@ Si pasa la comprobación, el fugitivo recibe un aviso prioritario: **"¿Te ha pi
 **Norma física** (en las reglas del juego): una captura es **un toque suave en el hombro o el brazo y decir "¡Pillado!"**. Prohibido agarrar, empujar o perseguir por la calzada. Además, **no vale capturar en la calzada ni en pasos de peatones**.
 
 **Lo que no prometemos:** el GPS no puede confirmar un contacto físico ni detectar todas las manipulaciones. La verificación reduce las capturas imposibles, no las elimina.
+
+## 7 bis. Aclaraciones tomadas al implementar S0 [P: pendientes de aprobación]
+
+La documentación no fijaba estos puntos. El motor de S0 los implementa así, y cualquiera de ellos se puede cambiar:
+
+| Punto | Comportamiento en S0 |
+|---|---|
+| `duración` de la partida | Duración de la fase `ACTIVE` (no incluye la ventaja inicial) |
+| Inicio forzado con jugadores no listos | **No implementado**: `start` exige que todos los jugadores de la sala de espera estén conectados y listos |
+| Reparto de "Aleatorio" | Objetivo `ceil(n/4)` cazadores (mínimo 1, como mucho `floor(n/2)`), con las preferencias fijas respetadas y un sorteo determinista con semilla |
+| Final mixto (unos capturados y el último fugitivo se va) | Si el último fugitivo activo **se va**: "sin ganador". Si es **capturado**: ganan los cazadores |
+| Ubicación de los capturados | Dejan de compartirla y sus muestras se borran (minimización). Ven a los demás con 60 s de retraso |
+| Salida de la zona | Solo se expone a **fugitivos**, según §6.4. `PRODUCT_STRATEGY.md` §5 dice "quien pasa más de 30 s fuera", sin distinguir equipo: **es una incoherencia que hay que resolver** |
+| Plazo de exposición si salió durante la ventaja | La gracia de 30 s cuenta desde el inicio de `ACTIVE` |
+| Límite de intentos de entrada | Cuentan todos los intentos (válidos o no): 10 por minuto y dispositivo |
+| Revancha | Invitados: quienes jugaron la partida, incluidos los que se fueron *durante* ella. No se invita a los expulsados ni a quienes salieron de la sala |
 
 ## 8. Medidas contra trampas (realistas)
 

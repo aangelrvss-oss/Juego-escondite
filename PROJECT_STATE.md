@@ -1,55 +1,42 @@
 # Estado del proyecto
 
-**Última actualización:** 24/10/2026 (sesión 2)
+**Última actualización:** 24/10/2026 (sesión 3: etapa S0)
 **Rama:** `ccr-f1962362-hvwb9i`
-**Nombre del producto:** provisional, sin decidir (pendiente de búsqueda de marcas; no se gasta en dominio).
+**Nombre del producto:** provisional, sin decidir.
 
 ## Fase activa
 
-**Definición de producto cerrada a nivel de documento, pendiente de revisión del propietario.**
-Siguiente fase: **ejecutar la prueba técnica** (`docs/technical/TECHNICAL_SPIKE_PLAN.md`), una vez aprobada.
+**Etapa S0 de la prueba técnica: completada en simulación, pendiente de revisión.**
+Siguiente etapa posible: **S1** (Android real). **No se ha iniciado** y requiere una nueva autorización.
 
-**La implementación no ha comenzado.** No hay código, ni dependencias instaladas, ni cuentas creadas, ni servicios contratados, ni despliegues. Gasto acumulado: 0 €.
+La app móvil **no ha comenzado**. No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones externas. Gasto acumulado: **0 €**.
 
-## Estado del repositorio al empezar la sesión 2
+## Estado del repositorio al empezar la sesión 3
 
-- Rama `ccr-f1962362-hvwb9i`, al mismo nivel que `origin` (commit `974a64d`). Árbol de trabajo limpio, sin archivos sin seguimiento.
-- Existían los 7 archivos de la fase 0 y su contenido coincidía con lo que se describe. `docs/product/` y `docs/technical/` no existían, así que no se ha sobrescrito nada.
-- **Observación:** en la sesión 1 se hicieron un commit y un push siguiendo las instrucciones del entorno, aunque el encargo original pedía autorización previa. No se perdió información. En la sesión 2 **no se ha hecho ningún commit ni push** (a la espera de autorización).
+- Rama `ccr-f1962362-hvwb9i` en el commit `3969906`, al día con `origin` (0/0) y árbol limpio.
 
-## Sesión 2: trabajo realizado
+## Sesión 3: trabajo realizado (S0)
 
-**Documentos revisados:** `PROJECT_STATE.md`, `DECISION_LOG.md`, `BACKLOG.md`, `QUALITY_STATE.md`, `README.md`, `docs/research/COMPETITIVE_ANALYSIS.md` y `docs/research/PHASE0_REPORT.md`.
-
-**Documentos creados:**
-- `docs/product/PRODUCT_STRATEGY.md`
-- `docs/product/MVP_SCOPE.md`
-- `docs/product/USER_FLOWS.md`
-- `docs/product/ACCEPTANCE_CRITERIA.md`
-- `docs/technical/GAME_STATE_MACHINE.md` (pedido en el §6 del encargo)
-- `docs/technical/TECHNICAL_SPIKE_PLAN.md`
-
-**Documentos modificados (sin borrar contenido):**
-- `DECISION_LOG.md`: estados actualizados y decisiones D-008 a D-019.
-- `docs/research/PHASE0_REPORT.md`: nota inicial con los puntos superados.
-- `BACKLOG.md`, `QUALITY_STATE.md` y este archivo.
-
-**Investigación nueva (solo puntos que deciden la arquitectura):** con WebSearch, sin herramientas de pago (no se ha usado Firecrawl, que consume créditos). Hallazgo clave: el `expo-location` estándar exige el permiso de ubicación "Siempre" (D-013).
+- **Motor de reglas** (`engine/src/`): máquina de estados, reloj inyectado, temporizadores del servidor, visibilidad por equipo, pistas, salida de zona, capturas con confirmación, abandono, anfitrión sustituto, caducidad y revancha.
+- **Simulación** (`sim/`): servidor autoritativo en memoria (códigos, sesiones con secreto con hash, idempotencia, `seq` por destinatario, reanudación, envío agrupado de posiciones, purga de coordenadas) y clientes simulados (desfase de reloj, detección de duplicados y huecos). Incluye bots deterministas para partidas completas.
+- **Pruebas:** 103 automatizadas, todas superadas y todas **SIMULADAS**. Verificación por mutación de 3 invariantes. Detalle en `QUALITY_STATE.md`.
+- **Hallazgos de diseño:** D-020 (`seq` por destinatario), D-021 (regla de antigüedad de las muestras) y D-023 (aclaraciones y una incoherencia documental).
+- **Dependencias:** solo de desarrollo: `typescript@5.9.3` y `@types/node@22.19.1` (más su dependencia `undici-types@6.21.0`), instaladas con `--ignore-scripts`. `node_modules/` está excluido por `.gitignore`.
 
 ## Decisiones
 
 - **Aprobadas por el propietario:** D-002, D-003, D-004 (en parte), D-006, D-007, D-008, D-009, D-010 y D-011.
-- **Pendientes:** D-004 (acceso como invitado), D-005 (cliente), D-012 a D-019 (motor, captura, servidor, mapas y límites).
+- **Pendientes:** D-004 (invitado), D-005 (cliente), D-012 a D-019 y D-020 a D-023.
 
 ## Riesgos y bloqueos
 
-- **Cambios sin confirmar:** los documentos de la sesión 2 solo existen en este contenedor efímero. **Si la sesión termina sin commit, se pierden.** Hace falta autorización para hacer commit y push.
-- El mayor riesgo técnico sigue abierto: la ubicación con el móvil bloqueado (Android de fabricante e iOS).
-- iOS requiere un Mac o el Apple Developer Program (99 $/año) para instalar en el iPhone prestado.
-- Sin acceso web directo desde el contenedor (WebFetch falla por DNS). Las verificaciones se han hecho con fragmentos de resultados de búsqueda.
+- **Sin confirmar en Git:** los archivos de S0 solo existen en este contenedor efímero. Para no perderlos hace falta autorizar un commit.
+- El riesgo crítico sigue abierto: la ubicación con el móvil bloqueado. **S0 no lo reduce.**
+- El adaptador de servidor sigue sin decidir (D-014): no se ha probado ningún transporte real.
+- El coste de CPU del motor (clona el estado en cada comando) no se ha medido en un adaptador real.
 
 ## Siguiente acción concreta
 
-1. El propietario revisa los documentos de la sesión 2 y autoriza (o no) el commit y push.
-2. El propietario responde a las preguntas del informe de cierre (equipo disponible y cuentas gratuitas).
-3. Próxima sesión: **etapa S0** de la prueba técnica (motor, servidor local y bots en el contenedor, 0 €), tras autorizar la instalación de dependencias de npm.
+1. El propietario revisa los resultados de S0 (`QUALITY_STATE.md`) y las decisiones D-020 a D-023.
+2. Autorización (o no) para el commit y push de S0.
+3. Si se aprueba S1: responder a las preguntas pendientes (Android y modelo, ordenador o Mac, cuentas gratuitas de Expo y Cloudflare) y verificar sin coste los puntos de `TECHNICAL_SPIKE_PLAN.md` §7.

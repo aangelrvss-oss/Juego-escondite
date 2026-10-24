@@ -88,3 +88,23 @@ Formato: ID · fecha · estado (Propuesta / Aprobada / Rechazada / Sustituida) �
 ### D-019 · Propuesta
 **Decisión:** límites del MVP: de 2 a 20 jugadores, de 10 a 120 min, y zona de 150 m a 2 km de radio.
 **Motivo:** son límites técnicos para poder probar el MVP, no un muro de pago.
+
+---
+
+## Sesión 3 · 24/10/2026 (etapa S0)
+
+### D-020 · Propuesta (corrección de diseño detectada en S0)
+**Decisión:** el número de secuencia de los eventos es **por destinatario**, no por sala.
+**Motivo:** con el filtrado por audiencia, un `seq` global produce saltos legítimos que el cliente no puede distinguir de pérdidas reales. Ver `GAME_STATE_MACHINE.md` §5.7.
+
+### D-021 · Propuesta (corrección de diseño detectada en S0)
+**Decisión:** una muestra con hora futura se marca como sospechosa y nunca es `CURRENT`. Una muestra con hora pasada conserva su antigüedad real, aunque sea de hace minutos.
+**Motivo:** la regla anterior ("usar `received_at` si la diferencia supera 60 s") haría parecer actual una muestra guardada sin cobertura. Ver `GAME_STATE_MACHINE.md` §6.1.
+
+### D-022 · Propuesta
+**Decisión:** S0 se ejecuta sin dependencias de producción, con el ejecutor de TypeScript nativo de Node ≥ 22.18 y `node --test`. Solo dos dependencias de desarrollo con versión exacta (`typescript@5.9.3` y `@types/node@22.19.1`), instaladas con `--ignore-scripts`.
+**Alternativas:** Vitest o Jest (más dependencias) y TypeScript 7 (versión nativa reciente; se descarta hasta que madure).
+**Motivo:** mínima superficie de dependencias.
+
+### D-023 · Propuesta
+**Decisión:** aceptar las aclaraciones de reglas tomadas al implementar S0 (`GAME_STATE_MACHINE.md` §7 bis), o cambiarlas. Incluye resolver la **incoherencia** sobre quién se expone fuera de la zona (`PRODUCT_STRATEGY.md` §5 frente a `GAME_STATE_MACHINE.md` §6.4).
