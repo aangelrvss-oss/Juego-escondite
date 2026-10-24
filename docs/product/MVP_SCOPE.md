@@ -54,6 +54,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 - Historial de recorridos, público o privado. Tarjetas para compartir con trazado.
 - Cualquier función dirigida a menores.
 - Modos alternativos (infección, asesino, sardinas…), zona que se reduce [P: candidata a la primera ampliación], capturados que se pasan a cazadores y objetos o poderes.
+  > ⚠ **En revisión (sesión 4):** el propietario ha definido el modo **Infección** (los capturados se convierten en cazadores), la **zona dinámica** (encoge y se mueve) y un **escáner** limitado. La exclusión de la zona dinámica era solo una propuesta [P], no una decisión aprobada. La de los modos alternativos sí estaba aprobada. Ver §6 y D-030.
 - Kit de organizador, eventos, árbitro con vista global y torneos (enfoque C).
 - Cuentas con correo o contraseña. Sincronizar el historial entre dispositivos.
 - Detección automática de zonas peligrosas con datos de mapa.
@@ -65,7 +66,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 |---|---|
 | Eventos y organizadores (C) | `Room` separada de `Game` (una sala, varias partidas). Rol `host` con permisos en una tabla de capacidades, ampliable a `referee` |
 | Más modos | Motor con reglas encapsuladas por `mode`. El protocolo incluye `mode` desde la versión 1 |
-| Zona que se reduce | `Zone` versionada con un calendario de cambios (en el MVP, una sola versión) |
+| Zona que se reduce | `Zone` versionada con un calendario de cambios (en el MVP, una sola versión). ⚠ Sesión 4: la zona dinámica se propone **dentro** del MVP (§6) |
 | Cuentas | Identidad de invitado que más adelante se puede vincular a Apple o Google |
 | Moderación | Registro de eventos y bloqueos por jugador |
 
@@ -75,3 +76,20 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 - Sin dominio propio por ahora. [APROBADA]
 - Datos preferentemente en la UE, comprobando las condiciones reales de cada proveedor. [APROBADA]
 - Arquitectura **no aprobada**: depende de la prueba técnica.
+
+## 6. Cambios de alcance propuestos (sesión 4) [PENDIENTES de aprobación: D-030]
+
+Las reglas de cada elemento están en [`GAME_MODES_AND_RULES.md`](./GAME_MODES_AND_RULES.md).
+
+| Elemento | Alcance actual | Propuesta | Orden de implementación propuesto |
+|---|---|---|---|
+| Modo Clásico | Dentro | Dentro (sin cambios) | Ya implementado en S0, con zona fija |
+| Zona dinámica (encoger y mover) | Fuera [P] | **Dentro**, opcional por sala | 1.º, después de S1 |
+| Asignación automática o manual con proporción configurable (sustituye a M7) | Parcial (preferencias más sorteo) | **Dentro** | 1.º, con la zona |
+| Opciones de ronda A, B y C (sustituyen al "intercambiar roles" de M17) | "Intercambiar roles" | **Dentro**: A y B; C cuando se apruebe su regla | 2.º |
+| Vía de disputa de capturas | Parcial (rechazo y caducidad) | **Dentro** | 2.º |
+| Modo Infección | Fuera (**decisión aprobada** en la sesión 2) | **Dentro** como segundo modo, **solo si el propietario cambia esa decisión** | 3.º |
+| Escáner limitado | No existía | **Dentro**, en su versión mínima (un recuento) | 4.º |
+| Sonido opcional en avisos | Solo vibración (M15) | Vibración por defecto y sonido opcional (D-036) | Con los avisos, tras S1 |
+
+**S1 no cambia:** valida la ubicación con el móvil bloqueado usando Clásico con zona fija. Ninguno de estos elementos altera esa pregunta. El escáner y la zona dinámica solo añaden eventos, no más envíos de ubicación.

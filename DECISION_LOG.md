@@ -108,3 +108,58 @@ Formato: ID · fecha · estado (Propuesta / Aprobada / Rechazada / Sustituida) �
 
 ### D-023 · Propuesta
 **Decisión:** aceptar las aclaraciones de reglas tomadas al implementar S0 (`GAME_STATE_MACHINE.md` §7 bis), o cambiarlas. Incluye resolver la **incoherencia** sobre quién se expone fuera de la zona (`PRODUCT_STRATEGY.md` §5 frente a `GAME_STATE_MACHINE.md` §6.4).
+
+---
+
+## Sesión 4 · 24/10/2026 (cierre de diseño)
+
+Reglas completas en `docs/product/GAME_MODES_AND_RULES.md`. Las entradas "Aprobada" recogen **solo** lo que el propietario definió en esta sesión. Los parámetros, algoritmos y el alcance siguen pendientes.
+
+### D-024 · **Aprobada** (propietario)
+**Decisión:** modo Clásico con **equipos fijos**. Los fugitivos ganan si queda alguno libre al final; los cazadores, si capturan a todos antes. Puede usar zona dinámica y pistas.
+**Consecuencia:** confirma que en Clásico los capturados no se unen a los cazadores.
+
+### D-025 · **Aprobada** (propietario)
+**Decisión:** modo **Infección**. Uno o varios cazadores iniciales. Cada captura confirmada convierte al fugitivo en cazador en esa partida. Termina cuando todos son cazadores o se agota el tiempo; si quedan fugitivos libres, ganan los supervivientes.
+**Pendiente:** la duración de la transición y la ventaja inicial (parámetros), y si entra en el MVP (D-030).
+
+### D-026 · **Aprobada** (propietario)
+**Decisión:** al crear la sala se elige **sorteo automático o selección manual**, con una **proporción configurable de cazadores** y límites seguros según el tamaño del grupo.
+**Pendiente:** los límites concretos (D-031) y si el sorteo respeta preferencias.
+
+### D-027 · **Aprobada** (propietario)
+**Decisión:** para rondas sucesivas se documentan tres opciones: sorteo nuevo, primeros capturados como cazadores iniciales y rotación equilibrada.
+**Pendiente:** cuáles se ofrecen y la regla definitiva de la rotación equilibrada.
+
+### D-028 · **Aprobada** (propietario)
+**Decisión:** la zona puede **encogerse y cambiar de posición** durante la partida.
+**Pendiente:** los avisos previos, límites, tiempos y condiciones de victoria (parámetros), y su alcance en el MVP (D-030).
+
+### D-029 · **Aprobada** (propietario)
+**Decisión:** las pistas muestran la antigüedad real. El escáner es limitado y no revela más de lo necesario. Las capturas requieren validación y una vía de disputa. La ubicación exacta, los avisos sonoros y el segundo plano se validan en dispositivos reales.
+
+### D-030 · Propuesta (requiere aprobación: **cambia una decisión aprobada en la sesión 2**)
+**Decisión propuesta:** incluir en el MVP la zona dinámica (opcional por sala), la asignación con proporción, las opciones de ronda A y B, las disputas, el modo **Infección** (segundo modo) y el escáner mínimo. El orden de implementación está en `MVP_SCOPE.md` §6. S1 no cambia.
+**Conflicto:** la sesión 2 aprobó dejar fuera "los modos alternativos que no sean necesarios para validar el núcleo". Incluir la Infección exige que el propietario cambie esa decisión. La exclusión de la zona dinámica, en cambio, solo era una propuesta.
+**Alternativa:** un MVP solo con Clásico y zona dinámica, dejando la Infección y el escáner para la primera ampliación.
+
+### D-031 · Propuesta
+**Decisión:** límites seguros: siempre ≥ 1 cazador y ≥ 1 fugitivo. En Clásico, cazadores ≤ `floor(n/2)`. En Infección, cazadores iniciales ≤ `max(1, floor(n/4))`. Proporciones predefinidas: 1/5, 1/3 y 1/2 (esta última solo en Clásico).
+
+### D-032 · Propuesta
+**Decisión:** seguridad de la zona dinámica: cada zona nueva queda dentro de la anterior, nadie necesita recorrer más de `v_paso × T_aviso` (1,2 m/s), el radio mínimo es `R_min` y no se elimina a nadie por la zona.
+
+### D-033 · Propuesta (resuelve la incoherencia señalada en D-023)
+**Decisión:** un **cazador** fuera de la zona recibe un aviso y no puede capturar, pero **no se expone** a los fugitivos. Solo los fugitivos se exponen.
+
+### D-034 · Propuesta
+**Decisión:** el escáner devuelve **solo un recuento** de fugitivos con ubicación `CURRENT` a menos de `R_escaneo`, con cupo y enfriamiento. Queda abierto si se avisa al escaneado.
+
+### D-035 · Propuesta
+**Decisión:** vía de disputa: el rechazo deja la reclamación como "disputada", con enfriamiento por pareja, un recuento visible en el resultado y sin arbitraje del anfitrión (el árbitro queda para el enfoque C). Sin respuesta en 30 s, sigue sin haber captura (pendiente de confirmar).
+
+### D-036 · Propuesta (contradicción con M15)
+**Decisión:** avisos con vibración por defecto y sonido opcional, desactivado por defecto y configurable por jugador. Hay que validarlo en dispositivo.
+
+### D-037 · Propuesta (contradicción con S0 y con F13)
+**Decisión:** sustituir "intercambiar roles" por las políticas de ronda (A, B, C y manual), o conservarlo solo como atajo manual.

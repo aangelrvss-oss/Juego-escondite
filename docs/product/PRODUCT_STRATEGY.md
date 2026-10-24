@@ -56,6 +56,8 @@ Jugar al escondite o a la persecución entre adultos en una ciudad **no escala s
 
 **Un solo modo, "Clásico".** Los modos alternativos quedan fuera hasta validar el núcleo. [APROBADA: los modos no necesarios quedan fuera]
 
+> ⚠ **En revisión (sesión 4):** el propietario ha definido el modo **Infección** y la **zona dinámica** (§5 bis). Si la Infección entra en el MVP, cambia la decisión aprobada en la sesión 2. Está pendiente de aprobación en D-030.
+
 - Dos equipos: **cazadores** y **fugitivos**.
 - Los fugitivos tienen una **ventaja inicial**. Durante ese tiempo los cazadores esperan y no reciben ninguna ubicación de los fugitivos.
 - **Pistas** periódicas: cada N minutos, los cazadores reciben la última posición conocida de cada fugitivo libre, con su antigüedad.
@@ -63,6 +65,21 @@ Jugar al escondite o a la persecución entre adultos en una ciudad **no escala s
 - **Zona circular**. Quien pasa más de 30 s fuera (con margen por la precisión) es visible en directo para el otro equipo mientras siga fuera.
 - **Captura** confirmada (ver `GAME_STATE_MACHINE.md`). Los capturados quedan fuera y pasan a espectadores con retraso. En el MVP no se unen a los cazadores [P].
 - **Victoria**: cazadores si capturan a todos los fugitivos; fugitivos si queda al menos uno libre al acabar el tiempo.
+
+> **Sesión 4:** en Clásico los equipos son fijos [PROPIETARIO], así que queda confirmado que los capturados **no** se unen a los cazadores. La salida de zona sigue la propuesta D-033: los cazadores fuera de la zona no se exponen, pero no pueden capturar.
+
+## 5 bis. Diseño de juego acordado (sesión 4)
+
+Las reglas completas, con su estado (propietario, propuesta, parámetro), están en [`GAME_MODES_AND_RULES.md`](./GAME_MODES_AND_RULES.md). Resumen de lo definido por el propietario:
+
+- **Clásico:** equipos fijos. Los fugitivos ganan si queda alguno libre al final; los cazadores, si capturan a todos antes.
+- **Infección:** uno o varios cazadores iniciales. Cada captura confirmada convierte al fugitivo en cazador. Termina cuando todos son cazadores (ganan los cazadores) o cuando se agota el tiempo (ganan los supervivientes). La transición y la ventaja inicial son parámetros.
+- **Equipos:** sorteo automático o selección manual al crear la sala, con una proporción de cazadores configurable y límites seguros.
+- **Rondas:** tres opciones documentadas (sorteo nuevo, primeros capturados como cazadores, rotación equilibrada), sin algoritmo definitivo.
+- **Zona dinámica:** puede encogerse y moverse. Avisos, límites, tiempos y victoria son parámetros.
+- **Pistas** con antigüedad real, un **escáner** limitado y **capturas** validadas con una vía de disputa.
+
+Qué parte entra en el MVP está **pendiente** (D-030).
 
 Mecánicas que este modo comparte con la categoría (pings periódicos, ventaja inicial, zona): son mecánicas genéricas del género, no expresión protegible. Nuestra implementación, textos, identidad visual y nombres serán propios. [P: revisión legal antes del lanzamiento]
 

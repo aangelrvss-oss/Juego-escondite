@@ -95,3 +95,67 @@ Los umbrales marcados con [H] se recalibrarán tras la prueba técnica. **Ningú
 | AC-H2 | Consumo de batería con la pantalla apagada, en una partida de 60 min con envío cada 5 s: ≤ 10 %/h en el Android de referencia | D |
 | AC-H3 | La app funciona en el Android del propietario y en un iPhone (versiones mínimas por fijar tras la prueba técnica) | D |
 | AC-H4 | Toda la comunicación va cifrada (TLS) y el secreto de sesión se guarda en el almacenamiento seguro del sistema | M |
+
+---
+
+## Criterios añadidos en la sesión 4 [BORRADOR]
+
+Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. Los valores van en forma simbólica (`T_transición`, `K`…) hasta que se aprueben. **Ninguno está implementado ni probado.**
+
+## I. Modo Infección
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-I1 | **Dada** una captura confirmada en Infección, **entonces** en el mismo paso el fugitivo pasa a `team = hunter` y se emite un único `runner_infected` con un `captureId` único | U |
+| AC-I2 | **Desde** la conversión, el convertido no recibe ninguna posición de fugitivos ni ningún evento con audiencia de fugitivos. Los fugitivos no reciben ninguna posición suya | U, I |
+| AC-I3 | El convertido no puede declarar capturas antes de `canTagFrom` (`forbidden` o `transition_active`) | U |
+| AC-I4 | Dos confirmaciones simultáneas sobre el mismo fugitivo producen una conversión y un rechazo. Repetir el `commandId` no produce una segunda conversión | U, I |
+| AC-I5 | Si no queda ningún fugitivo activo por conversiones: FINISHED con victoria de los cazadores. Si se agota el tiempo con ≥ 1 fugitivo libre: victoria de los supervivientes | U |
+| AC-I6 | Al reconectar, el convertido no recibe mensajes de cazador anteriores a su conversión ni posiciones antiguas de fugitivos | I |
+| AC-I7 | Las muestras de ubicación que tenía como fugitivo se borran en la conversión | U |
+
+## J. Asignación de equipos y rondas
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-J1 | El servidor rechaza cualquier configuración con 0 cazadores o 0 fugitivos, o fuera de los límites seguros aprobados para el modo y el tamaño `n` | U |
+| AC-J2 | Sorteo automático: con la misma semilla, sala y ronda, el reparto es idéntico. El número de cazadores es `clamp(round(n × proporción), mín, máx)` | U |
+| AC-J3 | Selección manual: solo el anfitrión asigna equipos. [Empezar] se rechaza si un equipo está vacío | U |
+| AC-J4 | Opción B: los `K` primeros capturados por orden del servidor son los cazadores iniciales. Se aplican los casos límite aprobados (menos de `K` capturas, ausentes, sin capturas) | U |
+| AC-J5 | Opción C (cuando se apruebe la regla): a lo largo de `m` rondas con `n` constante, la diferencia entre el jugador con más y el de menos rondas de cazador es ≤ 1 | U |
+
+## K. Zona dinámica
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-K1 | Cada cambio de zona se anuncia exactamente `T_aviso` antes, con la zona nueva incluida en el aviso | U |
+| AC-K2 | Toda zona generada cumple la contención y la regla "nadie necesita correr" (`GAME_MODES_AND_RULES.md` §6.3). El generador nunca produce un calendario que las incumpla (prueba con muchas semillas) | U |
+| AC-K3 | Tras un cambio, el estado dentro o fuera de cada jugador se recalcula con su última muestra, y la gracia se reinicia (`T_gracia_cambio`) | U |
+| AC-K4 | Un cazador fuera de la zona no puede declarar capturas y nunca se expone a los fugitivos | U, I |
+| AC-K5 | El radio nunca baja de `R_min` | U |
+| AC-K6 | El aviso de cambio de zona llega con el móvil bloqueado | **D** |
+
+## L. Pistas y escáner
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-L1 | Toda entrada de una pista incluye una antigüedad calculada con `measured_at` (o marcada como sospechosa) y nunca se presenta como actual si `age > 15 s` | U (ya cubierto en S0) |
+| AC-L2 | El escáner solo devuelve un número. La respuesta no contiene identificadores, posiciones, distancias ni direcciones | U, I |
+| AC-L3 | El escáner respeta el cupo y el enfriamiento. Fuera de `ACTIVE` se rechaza | U |
+| AC-L4 | El escáner solo cuenta muestras `CURRENT` de fugitivos activos | U |
+| AC-L5 | La exactitud real de la ubicación de las pistas, comparada con un punto de referencia, se mide y documenta | **D** (T12) |
+
+## M. Disputas
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-M1 | Un rechazo deja la reclamación como disputada, avisa a ambos y aplica el enfriamiento entre esa pareja | U |
+| AC-M2 | Durante el enfriamiento, una nueva reclamación de ese cazador sobre ese fugitivo se rechaza. Pasado el enfriamiento, se evalúa con posiciones nuevas | U |
+| AC-M3 | El resultado final incluye el recuento de disputas por jugador, sin coordenadas | U |
+
+## N. Avisos
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-N1 | Por defecto, todos los avisos solo vibran. El sonido solo suena si el jugador lo activa | **D** |
+| AC-N2 | El comportamiento con el modo silencio y no molestar en Android e iOS queda documentado | **D** |

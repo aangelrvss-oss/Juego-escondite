@@ -39,7 +39,7 @@ Principio de diseño: **mirar la pantalla lo mínimo mientras se camina.** Lo im
 
 ## F4. Sala de espera
 1. Lista de jugadores: nombre, equipo, ✓ listo y conectado o desconectado.
-2. Cada jugador elige **Cazador, Fugitivo o Aleatorio**.
+2. Cada jugador elige **Cazador, Fugitivo o Aleatorio**. ⚠ *Sesión 4: lo sustituye la asignación por sala (F15). Si se mantienen las preferencias en el sorteo está pendiente.*
 3. **Comprobación de permisos** al pulsar "Estoy listo":
    - Explicación previa: "Durante la partida tu ubicación se comparte solo con tu equipo y según las reglas. Al terminar, se deja de compartir y se borra."
    - Petición de permiso del sistema (la variante concreta depende de la prueba técnica).
@@ -110,8 +110,51 @@ Menú → [Abandonar partida] → confirmación: "Dejarás de compartir tu ubica
 4. Texto: "Ya no se comparte tu ubicación."
 
 ## F13. Revancha
-1. El anfitrión pulsa [Revancha] → elige "mismos equipos" o "intercambiar roles" → nueva sala de espera con el mismo código.
+1. El anfitrión pulsa [Revancha] → elige "mismos equipos" o "intercambiar roles" → nueva sala de espera con el mismo código. ⚠ *Sesión 4: lo sustituyen las opciones de ronda de F20 (D-037, pendiente).*
 2. Quien acepta vuelve a la sala de espera, con la configuración anterior precargada.
 
 ## F14. Bloquear o denunciar [Recomendable]
 Mantener pulsado sobre un jugador en la sala de espera o en los resultados → [Bloquear] / [Denunciar] (abre el correo de contacto con el código de la partida).
+
+---
+
+## Flujos añadidos en la sesión 4 [BORRADOR: dependen de D-030 y de los parámetros de `GAME_MODES_AND_RULES.md`]
+
+## F15. Crear sala: modo y equipos
+1. [Crear partida] → elegir **modo**: Clásico o Infección (si D-030 lo aprueba).
+2. Elegir **asignación de equipos**: [Sorteo automático] o [Selección manual].
+3. Elegir **proporción de cazadores**: Pocos, Equilibrado o Muchos (este último solo en Clásico). La app muestra el resultado con el tamaño actual ("Con 8 jugadores: 2 cazadores").
+4. **Manual:** en la sala de espera, el anfitrión arrastra a cada jugador a su equipo. [Empezar] se bloquea si algún equipo queda vacío. Salirse de la proporción: aviso o bloqueo (pendiente).
+5. **Automático:** el sorteo se hace al pulsar [Empezar] y cada jugador ve su rol en la pantalla de F6.
+
+## F16. Infección: convertirse en cazador
+1. Se confirma la captura (F9) → el convertido recibe una pantalla completa con vibración: **"Te han infectado. Ahora eres CAZADOR. Podrás capturar en 60 s"** (valor de `T_transición` pendiente).
+2. Su mapa cambia al instante: deja de ver a los fugitivos y ve a los cazadores (según el parámetro de §3.3).
+3. Cuenta atrás visible hasta poder capturar. El botón [He pillado a…] está desactivado hasta entonces.
+4. Los demás reciben "Pablo ha sido infectado por Ana".
+5. Final: "¡Todos infectados! Ganan los cazadores" o "¡Tiempo! Ganan los supervivientes".
+
+## F17. Zona dinámica: aviso y cambio
+1. `T_aviso` antes del cambio: vibración y **"La zona cambia en 3 min"**. El mapa muestra la zona nueva superpuesta.
+2. Si el jugador está fuera de la zona nueva: "Muévete con calma hacia la zona marcada. Tienes 3 min." Nunca "corre".
+3. En el cambio: vibración, la zona nueva pasa a ser la vigente y empieza la gracia de `T_gracia_cambio`.
+4. Pasada la gracia, un fugitivo que siga fuera queda expuesto (como en F8). Un cazador fuera no puede capturar (D-033).
+
+## F18. Escáner (cazador)
+1. Botón [Escanear (2)] con los usos restantes. Desactivado durante el enfriamiento (cuenta atrás visible).
+2. Resultado: **"2 fugitivos a menos de 100 m (según ubicaciones recientes)"**. Sin mapa, dirección ni nombres.
+3. Si se aprueba avisar al escaneado: los fugitivos dentro del radio sienten una vibración y leen "Un cazador ha escaneado tu zona".
+
+## F19. Disputa de una captura
+1. El fugitivo pulsa [No] ante "¿Te ha pillado Ana?".
+2. Ambos ven: **"Captura disputada. Seguid jugando."** El cazador ve la cuenta atrás del enfriamiento antes de poder volver a reclamar a ese fugitivo.
+3. En el resultado final: "Capturas disputadas: Pablo (2)".
+4. Recordatorio fijo en F9: la captura es un toque suave; no se discute en la calzada.
+
+## F20. Siguiente ronda
+1. En el resultado, el anfitrión pulsa [Otra ronda] → elige cómo formar los equipos (según lo que se apruebe):
+   - **Sorteo nuevo**
+   - **Los primeros capturados empiezan cazando**
+   - **Rotación equilibrada**
+   - **Manual**
+2. La app muestra la previsión de equipos antes de confirmar. Los jugadores aceptan la invitación (como en F13).

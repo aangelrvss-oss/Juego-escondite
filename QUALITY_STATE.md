@@ -92,7 +92,7 @@ La subida coincide con el modelo (720 posiciones por hora más comandos). La baj
 - No hay WebSocket ni adaptador real (Durable Objects o Node). La serialización de comandos por partida la garantiza el servidor simulado, no una plataforma real.
 - Los bots siguen reglas simples (paseo aleatorio, persecución hacia la última pista) y confirman con honestidad.
 - El motor clona el estado completo en cada comando (`structuredClone`). Es suficiente para el MVP en simulación, pero **su coste de CPU con 20 jugadores en un adaptador real no se ha medido**.
-- La zona que se reduce o se desplaza: solo se ha probado la geometría de la estructura versionada. Sus reglas de juego no existen (fuera del MVP).
+- La zona que se reduce o se desplaza: solo se ha probado la geometría de la estructura versionada. Sus reglas de juego no existen (fuera del MVP). ⚠ *Sesión 4: el propietario ha definido la zona dinámica y se propone incluirla en el MVP (D-030). Sus reglas están en `docs/product/GAME_MODES_AND_RULES.md` §6, todavía sin implementar ni probar.*
 - El filtro de palabras ofensivas de los nombres no está implementado (pendiente).
 
 ## Calidad de la investigación (sesiones anteriores)

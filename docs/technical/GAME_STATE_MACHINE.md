@@ -196,3 +196,54 @@ La documentación no fijaba estos puntos. El motor de S0 los implementa así, y 
 | Bandera de ubicación simulada | Detecta la simulación más básica | Es eludible en dispositivos con root o jailbreak |
 | Velocidad máxima plausible (> 12 m/s sostenidos → marcar) | Detecta saltos y vehículos | No detecta una simulación lenta |
 | Registro de los marcados, visible en el resultado [P] | Presión social entre amigos | No impide la trampa |
+
+---
+
+## 9. Extensiones de diseño de la sesión 4 [PROPUESTA técnica: no implementada]
+
+Las reglas están en `docs/product/GAME_MODES_AND_RULES.md`. Esta sección describe **cómo** encajarían en el motor. El motor y las pruebas de S0 **no se han modificado**.
+
+### 9.1 Modo como estrategia de reglas
+- La configuración tiene `mode: 'classic' | 'infection'`, congelada al empezar.
+- Las diferencias se concentran en tres puntos del motor:
+  1. `onCaptureConfirmed`: en Clásico, el capturado pasa a espectador; en Infección, se convierte (§9.2).
+  2. `checkEnd`: las condiciones de victoria de cada modo.
+  3. `canTag`: en Infección comprueba también `canTagFrom`.
+- La máquina de estados (§2–§3) **no cambia**: los dos modos recorren las mismas fases.
+
+### 9.2 Infección: transición en el motor
+- Campos nuevos en `Player`: `convertedAt`, `infectedBy`, `canTagFrom`.
+- Un solo paso: el fugitivo debe estar activo → se registra la captura con `captureId` → se borran sus muestras → `team = 'hunter'` → se emiten `runner_infected` (a todos) y `role_changed` (al convertido) → `checkEnd`.
+- **Permisos:** `visiblePositions` y `canReceive` ya calculan con el equipo *actual*, así que el cambio de visibilidad es inmediato. Las bandejas por destinatario (D-020) guardan mensajes ya filtrados, de modo que una reconexión no filtra nada nuevo. Falta decidir, por parámetro, si `lastPing` se le muestra en la instantánea.
+- **Plazo nuevo** (`dueList`): ninguno es estrictamente necesario, porque `canTagFrom` se comprueba al reclamar. Opcionalmente, un evento `tag_enabled` a `canTagFrom` para avisar al convertido.
+
+### 9.3 Asignación de equipos y rondas
+- La configuración de la sala tiene `teamAssignment: { method: 'auto' | 'manual', hunterRatio }` y `roundPolicy: 'redraw' | 'first_captured' | 'balanced' | 'manual'`.
+- `resolveTeams` se sustituye por un reparto puro por política, que recibe `(jugadores, política, historial de la sesión, semilla)`. El historial de la sesión (rondas de cada jugador como cazador inicial, orden de capturas de la última ronda) vive en `RoomState` y **se borra con la sala**.
+- Comandos nuevos: `assign_team` manual (ya existe, pero hoy trabaja con preferencias) y `rematch { roundPolicy }`, que sustituye a `swapRoles` (D-037).
+
+### 9.4 Zona dinámica
+- `config.zone` pasa a admitir **varias versiones** (hoy el validador de S0 las rechaza: `LIMITS.maxZoneVersions = 1`). Lo más probable es que el servidor genere el calendario al empezar a partir de los parámetros, y lo valide con las reglas de seguridad (§6.3 de las reglas).
+- Plazos nuevos en `dueList`: `zone_warning` a `cambio − T_aviso` y `zone_change` en `cambio`.
+- En `zone_change` se **reevalúa a todos** los jugadores activos con su última muestra (hoy solo se evalúa al llegar una muestra) y se reinicia `outsideSince` con la gracia de cambio.
+- **Cazadores fuera de la zona (D-033):** se registra `outsideSince` también para ellos. Su única consecuencia es que `canTag` sea falso; nunca se exponen.
+
+### 9.5 Escáner
+- Comando `scan` (solo cazadores en `ACTIVE`). El servidor cuenta los fugitivos activos con muestra `CURRENT` a menos de `R_escaneo` y responde **solo** `{ count }`.
+- Estado por cazador: `scansLeft` y `scanCooldownUntil`. Evento opcional `scanned` a los fugitivos dentro del radio, sin datos del cazador.
+
+### 9.6 Disputas
+- `TagClaim` gana el estado `disputed`, y la sala guarda los enfriamientos por pareja `(cazador, fugitivo) → hasta`.
+- `claimTag` rechaza con `dispute_cooldown` durante el enfriamiento. El resultado incluye `disputes` por jugador.
+
+### 9.7 Desfase entre S0 y el diseño de la sesión 4
+| Punto | S0 | Diseño de la sesión 4 |
+|---|---|---|
+| Versiones de zona | Una (el validador rechaza más) | Varias |
+| Reevaluación de la zona | Al llegar una muestra | También en cada cambio de zona |
+| Cazadores fuera de la zona | Sin efecto | No pueden capturar (D-033) |
+| Reparto | Preferencias + `ceil(n/4)` | Automático o manual con proporción y límites |
+| Revancha | `swapRoles` | Políticas de ronda |
+| Rechazo de captura | Termina la reclamación | Disputa con enfriamiento |
+| Modos | Solo Clásico | Clásico e Infección |
+| Comentarios del código | `engine/src/constants.ts` y `engine/test/zone.test.ts` dicen "fuera del MVP" | Habrá que actualizarlos cuando se apruebe D-030 (sin tocarlos en esta sesión) |
