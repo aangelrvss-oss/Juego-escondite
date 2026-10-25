@@ -1,0 +1,30 @@
+/* GENERADO por scripts/sync-brand.mjs desde demo/src/styles.css. No editar a mano. */
+:root {
+  --bg: #0a0b0d;
+  --surface: #15171b;
+  --surface-2: #1e2126;
+  --surface-3: #2a2e35;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #f2f3f5;
+  --muted: #a3a8b2;
+  --faint: #8a909b;
+  --brand: #ff6b1f;
+  --brand-ink: #1a0900;
+  --brand-soft: rgba(255, 107, 31, 0.15);
+  --me: #ffffff;
+  --me-soft: rgba(255, 255, 255, 0.14);
+  --hunter: var(--brand);
+  --hunter-soft: var(--brand-soft);
+  --runner: #33c3e6;
+  --runner-soft: rgba(51, 195, 230, 0.16);
+  --danger: #ff5c72;
+  --danger-soft: rgba(255, 92, 114, 0.14);
+  --r-lg: 22px;
+  --r-md: 14px;
+  --r-sm: 8px;
+  --tap: 52px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}

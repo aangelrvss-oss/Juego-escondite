@@ -1,0 +1,82 @@
+{
+  "description": "Contrato del módulo nativo de ubicación de THE OUTRUN. Lo implementa Android (Java) en H1 y deberá implementarlo iOS (Swift) con los mismos nombres, tipos y estados. Las pruebas de ambos lados comparan su comportamiento con este archivo.",
+  "plugin": "OutrunLocation",
+  "methods": {
+    "checkPermissions": "() -> Permissions",
+    "requestPermissions": "() -> Permissions",
+    "getProviderStatus": "() -> ProviderStatus",
+    "startSession": "({ intervalMs }) -> Status",
+    "stopSession": "() -> Status",
+    "getStatus": "() -> Status",
+    "exportSession": "() -> { saved: boolean, name: string | null }"
+  },
+  "events": {
+    "reading": "Reading",
+    "status": "Status"
+  },
+  "types": {
+    "Permissions": {
+      "location": "string",
+      "notifications": "string"
+    },
+    "ProviderStatus": {
+      "locationEnabled": "boolean",
+      "provider": "string|null",
+      "fusedAvailable": "boolean",
+      "gpsEnabled": "boolean"
+    },
+    "Reading": {
+      "sessionId": "string",
+      "lat": "number",
+      "lng": "number",
+      "accuracyM": "number|null",
+      "ageMs": "number",
+      "receivedAt": "number",
+      "measuredAt": "number",
+      "provider": "string",
+      "isMock": "boolean",
+      "speedMps": "number|null"
+    },
+    "Status": {
+      "running": "boolean",
+      "sessionId": "string|null",
+      "intervalMs": "number",
+      "fixes": "number",
+      "gaps": "number",
+      "gapOpen": "boolean",
+      "provider": "string|null",
+      "lastError": "string|null",
+      "message": "string|null"
+    }
+  },
+  "enums": {
+    "permissionLocation": ["precise", "approximate", "denied", "denied_permanently", "prompt"],
+    "permissionNotifications": ["granted", "denied", "prompt", "not_required"],
+    "errors": [
+      "permission_missing",
+      "provider_disabled",
+      "service_start_denied",
+      "session_file_error",
+      "request_updates_denied",
+      "already_running",
+      "not_running",
+      "invalid_interval",
+      "no_session",
+      "export_cancelled",
+      "export_failed",
+      "service_destroyed",
+      "abnormal_end"
+    ]
+  },
+  "interval": {
+    "note": "Intervalo solicitado al sistema: parámetro EXPERIMENTAL (D-038), ajustable para las pruebas. El sistema puede entregar lecturas más espaciadas.",
+    "minMs": 1000,
+    "maxMs": 60000,
+    "defaultMs": 5000
+  },
+  "privacy": {
+    "storesCoordinates": false,
+    "sendsToNetwork": false,
+    "note": "lat/lng solo viajan del módulo nativo a la pantalla, en memoria. El CSV de sesión no tiene columnas de coordenadas."
+  }
+}

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Símbolo de THE OUTRUN (mismos trazados que demo/src/ui.js, vía www/js/brand.generated.js). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <group android:scaleX="0.5179" android:scaleY="0.5179" android:translateX="15.37" android:translateY="14.38">
+        <path android:fillColor="#FFFFFF" android:pathData="M40 41.3L62.8 22.0L119.8 22.0L123 25.8L95.6 50.0L69.3 50.0L63 55.5L55.5 84.2L20.8 113.7ZM128.4 51.3L112.6 111.6L89.8 131.0L27.6 131.0L60.3 103.3L80.8 103.3L84.8 101.0L88 97.8L92.1 82.2Z" />
+        <path android:fillColor="#FF6B1F" android:pathData="M99.4 54.6L125.5 32.3L128.4 51.3L92.1 82.2ZM54.7 92.5L52.1 102.2L21.6 128.1L24.2 118.4Z" />
+    </group>
+</vector>

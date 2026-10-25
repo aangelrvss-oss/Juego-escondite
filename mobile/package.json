@@ -1,0 +1,23 @@
+{
+  "name": "the-outrun-mobile",
+  "private": true,
+  "version": "0.1.0",
+  "description": "THE OUTRUN · H1: app Android (Capacitor 8) con módulo nativo de ubicación y diagnóstico GPS. Sin red ni multijugador.",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "scripts": {
+    "brand": "node scripts/sync-brand.mjs",
+    "vendor": "node scripts/copy-vendor.mjs",
+    "test": "node --test \"test/*.test.mjs\"",
+    "sync": "npm run brand && npm run vendor && cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/core": "8.5.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.5.3"
+  }
+}
