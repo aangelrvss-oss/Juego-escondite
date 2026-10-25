@@ -112,7 +112,7 @@ async function runViewport(browser, vp) {
   await page.goBack();
 
   // Unirse: error y código válido
-  await tap(page, 'Unirse con código');
+  await tap(page, 'Unirse a sala');
   await page.fill('#code', 'ab01');
   await tap(page, 'Entrar en la sala');
   await page.getByText('Código no válido').waitFor();

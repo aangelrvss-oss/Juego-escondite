@@ -9,8 +9,12 @@ const read = (p) => readFileSync(new URL(p, root), 'utf8');
 
 const sim = read('src/sim.js');
 const ui = read('src/ui.js');
-const css = read('src/styles.css');
 const template = read('index.html');
+// Portada local (sin red): se incrusta en el CSS como data URI donde aparece «@COVER@».
+const cover = readFileSync(new URL('src/assets/cover.webp', root));
+const cssSource = read('src/styles.css');
+if (!cssSource.includes('@COVER@')) throw new Error('styles.css debe referenciar la portada con @COVER@');
+const css = cssSource.replace('@COVER@', () => `data:image/webp;base64,${cover.toString('base64')}`);
 
 const exported = [...sim.matchAll(/^export (?:const|function|let) (\w+)/gm)].map((m) => m[1]);
 const simBody = sim.replace(/^export /gm, '');
@@ -21,7 +25,7 @@ for (const [name, code] of [['sim.js', simBody], ['ui.js', uiBody]]) {
   if (/^\s*(import|export)\b/m.test(code)) throw new Error(`${name}: quedan import/export sin resolver`);
 }
 
-const build = createHash('sha256').update(sim).update(ui).update(css).update(template).digest('hex').slice(0, 8);
+const build = createHash('sha256').update(sim).update(ui).update(cssSource).update(cover).update(template).digest('hex').slice(0, 8);
 const js = `(() => {
 'use strict';
 const __BUILD__ = 'build ${build}';

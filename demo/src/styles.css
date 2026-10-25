@@ -1,11 +1,12 @@
-/* DEMO VISUAL · identidad provisional propia de Rastro (sin recursos de terceros).
-   Dirección «noche urbana, señal única» (sesión 12):
-   - Base neutra carbón, sin tinte.
-   - Un solo color de marca, el lima: «tú» y «lo que debes hacer ahora» (acción principal, confirmado).
-   - Equipos: naranja (cazadores) y cian (fugitivos), solo en formas, iconos, rol y avatares.
+/* DEMO VISUAL · identidad THE OUTRUN («RUN. HIDE. STAY AHEAD.»). Paleta reducida:
+   - Negro carbón: fondo. Blanco: texto, logotipo y «tú» (el máximo contraste del mapa).
+   - Naranja intenso: marca, acción principal y elementos destacados. Los cazadores comparten el
+     naranja (el equipo se distingue sobre todo por la forma: triángulo).
+   - Cian: información secundaria del mapa (fugitivos, pistas y rastro).
    - Rojo: peligro, disputa e irreversible.
    - «Simulado», «experimental» y «pendiente» son neutros con borde discontinuo o icono, nunca otro color.
-   Contraste comprobado (WCAG AA): texto ≥ 4,5:1 sobre bg, surface y surface-2. */
+   Contraste comprobado (WCAG AA): naranja sobre carbón 6,9:1, sobre surface-2 5,7:1; texto oscuro
+   sobre naranja 6,8:1; resto de textos ≥ 4,5:1 sobre bg, surface y surface-2. */
 :root {
   --bg: #0a0b0d;
   --surface: #15171b;
@@ -16,11 +17,13 @@
   --text: #f2f3f5;
   --muted: #a3a8b2;
   --faint: #8a909b;
-  --lime: #c6f432;
-  --lime-ink: #182000;
-  --lime-soft: rgba(198, 244, 50, 0.13);
-  --hunter: #ff6a3d;
-  --hunter-soft: rgba(255, 106, 61, 0.16);
+  --brand: #ff6b1f;
+  --brand-ink: #1a0900;
+  --brand-soft: rgba(255, 107, 31, 0.15);
+  --me: #ffffff;
+  --me-soft: rgba(255, 255, 255, 0.14);
+  --hunter: var(--brand);
+  --hunter-soft: var(--brand-soft);
   --runner: #33c3e6;
   --runner-soft: rgba(51, 195, 230, 0.16);
   --danger: #ff5c72;
@@ -47,7 +50,7 @@ body {
 button, input { font: inherit; color: inherit; }
 button { cursor: pointer; }
 button:disabled { cursor: not-allowed; }
-:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+:focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
 .num { font-variant-numeric: tabular-nums; }
 .mono { font-family: ui-monospace, "Roboto Mono", "SFMono-Regular", Menlo, monospace; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
@@ -92,8 +95,8 @@ button:disabled { cursor: not-allowed; }
   transition: transform 0.08s ease, background-color 0.12s ease;
 }
 .btn:active:not(:disabled) { transform: scale(0.98); background: var(--surface-3); }
-.btn-primary { background: var(--lime); color: var(--lime-ink); font-weight: 700; }
-.btn-primary:active:not(:disabled) { background: var(--lime); filter: brightness(0.9); }
+.btn-primary { background: var(--brand); color: var(--brand-ink); font-weight: 700; }
+.btn-primary:active:not(:disabled) { background: var(--brand); filter: brightness(0.9); }
 .btn-outline { background: transparent; border-color: var(--line-strong); }
 .btn-ghost { background: transparent; color: var(--muted); }
 .btn-danger { background: var(--surface-2); color: var(--danger); }
@@ -104,20 +107,42 @@ button:disabled { cursor: not-allowed; }
 .btn-row { display: flex; gap: 10px; }
 .btn-row > * { flex: 1; }
 .btn small { font-weight: 500; opacity: 0.85; }
-.link-btn { background: none; border: 0; color: var(--lime); padding: 12px 0; min-height: 44px; font-size: 15px; font-weight: 600; }
+.link-btn { background: none; border: 0; color: var(--brand); padding: 12px 0; min-height: 44px; font-size: 15px; font-weight: 600; }
+
+/* ---------- marca THE OUTRUN ---------- */
+/* Símbolo y logotipo son vectores (ui.js): nítidos a cualquier tamaño y siempre los mismos. */
+.mark { display: inline-block; flex: none; width: 1em; height: 1em; }
+.mark svg { width: 100%; height: 100%; display: block; }
+.mark-tile { display: inline-block; flex: none; width: 44px; height: 44px; }
+.app-icon { width: 100%; height: 100%; display: block; }
+.wordmark { display: block; width: 100%; height: auto; }
+.logo { margin: 0; }
+.lockup { display: inline-flex; align-items: center; gap: 6px; height: 20px; }
+.lockup .mark { font-size: 20px; }
+.lockup .wordmark { width: auto; height: 100%; }
+.slogan { margin: 8px 0 0; font-size: 12px; font-weight: 600; letter-spacing: 0.34em; color: #fff; text-align: center; white-space: nowrap; }
+.demo-pill .mark { font-size: 14px; }
 
 /* ---------- inicio ---------- */
-.home { justify-content: space-between; }
-.home-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 8px 0 16px; }
-.hero-art { width: min(74vw, 300px); height: auto; align-self: center; margin-bottom: 8px; }
-.brand { display: flex; align-items: baseline; gap: 10px; }
-.brand-name { font-size: 52px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
-.brand-sub { color: var(--faint); font-size: 12px; }
-.home-tagline { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
-.home-tagline em { font-style: normal; color: var(--muted); }
-.home-text { color: var(--muted); margin: 0; max-width: 36ch; font-size: 15px; }
-.home-actions { display: grid; gap: 10px; }
-.home-foot { color: var(--faint); font-size: 12px; text-align: center; margin: 4px 0 0; }
+.home { gap: 10px; }
+.home .topbar { justify-content: space-between; min-height: 48px; }
+/* Portada: franja superior oscura con el logotipo y, debajo, la imagen local (incrustada al
+   compilar). El margen superior de la imagen crece en pantallas estrechas para que el lema quede
+   siempre por encima de la figura (la cabeza está al ~21 % de la altura de la imagen). */
+.cover { position: relative; flex: none; border-radius: var(--r-lg); overflow: hidden; background: #0d0f13; }
+.cover-brand { position: absolute; z-index: 1; top: 16px; left: 18px; display: inline-grid; width: min(calc(100% - 36px), 300px); }
+.cover-art {
+  position: relative; margin-top: max(50px, calc(132px - 20.7%)); aspect-ratio: 640 / 560;
+  background: url("@COVER@") center top / cover no-repeat;
+}
+.cover-art::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, #0d0f13 0%, rgba(13, 15, 19, 0.55) 16%, rgba(13, 15, 19, 0) 34%, rgba(13, 15, 19, 0) 70%, rgba(10, 11, 13, 0.9) 100%);
+}
+.home-text { color: var(--muted); margin: 0; font-size: 15px; }
+.home-actions { display: grid; gap: 10px; margin-top: auto; }
+.home-actions .btn-ghost { min-height: 44px; padding: 8px 18px; }
+.home-foot { color: var(--faint); font-size: 12px; text-align: center; margin: 0; }
 
 /* ---------- tarjetas y formularios ---------- */
 .card { background: var(--surface); border-radius: var(--r-lg); padding: 16px; }
@@ -128,9 +153,9 @@ button:disabled { cursor: not-allowed; }
 .seg { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); padding: 4px; }
 .seg button { flex: 1; min-height: 46px; border: 0; border-radius: var(--r-sm); background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); padding: 6px 8px; }
 .seg button:active { background: var(--surface-2); }
-.seg button[aria-pressed="true"] { background: var(--lime-soft); color: var(--lime); }
+.seg button[aria-pressed="true"] { background: var(--brand-soft); color: var(--brand); }
 .mode-grid { display: grid; gap: 8px; }
-.mode-card { text-align: left; border-radius: var(--r-md); border: 2px solid var(--lime); background: var(--lime-soft); padding: 12px 14px; min-height: var(--tap); }
+.mode-card { text-align: left; border-radius: var(--r-md); border: 2px solid var(--brand); background: var(--brand-soft); padding: 12px 14px; min-height: var(--tap); }
 .mode-card b { display: block; font-size: 16px; }
 .mode-card span { color: var(--muted); font-size: 13px; }
 .mode-card.future { border: 0; background: none; padding: 4px 2px; min-height: 44px; width: 100%; color: var(--faint); }
@@ -157,8 +182,8 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--tap); }
 .switch button { width: 56px; height: 34px; border-radius: 999px; border: 0; background: var(--surface-3); position: relative; flex: none; }
 .switch button::after { content: ""; position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--faint); transition: transform 0.15s ease; }
-.switch button[aria-checked="true"] { background: var(--lime-soft); }
-.switch button[aria-checked="true"]::after { transform: translateX(22px); background: var(--lime); }
+.switch button[aria-checked="true"] { background: var(--brand-soft); }
+.switch button[aria-checked="true"]::after { transform: translateX(22px); background: var(--brand); }
 .switch button:disabled { opacity: 0.5; }
 .sticky-foot { position: sticky; bottom: 0; padding: 14px 0 calc(4px + var(--safe-bottom)); background: linear-gradient(transparent, var(--bg) 26%); margin-top: auto; }
 
@@ -166,7 +191,7 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
   width: 100%; min-height: 72px; font-size: 32px; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
   border-radius: var(--r-md); border: 2px solid var(--surface-3); background: var(--bg); padding: 8px 4px 8px 0.3em;
 }
-.code-input:focus { border-color: var(--lime); outline: none; }
+.code-input:focus { border-color: var(--brand); outline: none; }
 .code-input[aria-invalid="true"] { border-color: var(--danger); background: var(--danger-soft); }
 .error-text { color: var(--danger); font-size: 14px; margin-top: 8px; min-height: 1.4em; }
 .error-text:empty { min-height: 0; margin: 0; }
@@ -199,7 +224,7 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .player .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .player .who small { color: var(--muted); font-size: 12px; }
 .ready { font-weight: 700; color: var(--faint); }
-.ready.on { color: var(--lime); }
+.ready.on { color: var(--brand); }
 .team-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 3px; gap: 2px; flex: none; }
 .team-toggle button { min-width: 52px; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 700; font-size: 13px; color: var(--faint); padding: 0 8px; }
 .team-toggle button[aria-pressed="true"].hunter { background: var(--surface-3); color: var(--hunter); }
@@ -212,11 +237,11 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .issue { font-size: 14px; padding: 9px 12px; border-radius: var(--r-sm); display: flex; gap: 8px; border-left: 3px solid; }
 .issue.error { background: var(--danger-soft); color: var(--text); border-color: var(--danger); }
 .issue.warning { background: var(--surface-2); color: var(--text); border-color: var(--faint); border-left-style: dashed; }
-.issue.ok { background: var(--lime-soft); color: var(--text); border-color: var(--lime); }
+.issue.ok { background: var(--brand-soft); color: var(--text); border-color: var(--brand); }
 .foot-status { font-size: 13px; font-weight: 600; margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
 .foot-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
 .foot-status.error { color: var(--danger); }
-.foot-status.ok { color: var(--lime); }
+.foot-status.ok { color: var(--brand); }
 .foot-status.wait { color: var(--muted); }
 
 /* ---------- partida ---------- */
@@ -229,12 +254,12 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .glass { background: rgba(10, 11, 13, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 16px; }
 /* Fase en el reloj: espera (neutra), caza (lima = acción), resolución (rojo). Además lleva su nombre. */
 .hud-card { flex: 1; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-left: 4px solid var(--faint); }
-.hud-card.phase-hunt { border-left-color: var(--lime); }
+.hud-card.phase-hunt { border-left-color: var(--brand); }
 .hud-card.phase-resolving { border-left-color: var(--danger); }
 .hud-card.phase-finished { border-left-color: var(--faint); }
 .timer { display: flex; flex-direction: column; }
 .timer .label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-.phase-hunt .timer .label { color: var(--lime); }
+.phase-hunt .timer .label { color: var(--brand); }
 .phase-resolving .timer .label { color: var(--danger); }
 .timer .clock { font-size: 36px; font-weight: 800; line-height: 1.05; }
 .role { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; padding: 6px 10px; border-radius: 999px; }
@@ -252,7 +277,7 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 /* Indicación del siguiente paso: neutra salvo «actúa» (lima), «cambio de zona» (blanco) y peligro o disputa (rojo, con fondo). */
 .banner { font-size: 15px; }
 .banner.zone { border-left-color: var(--text); }
-.banner.go { border-left-color: var(--lime); }
+.banner.go { border-left-color: var(--brand); }
 .banner.danger { background: rgba(64, 12, 20, 0.94); border-left-color: var(--danger); }
 .banner.spect { border-left-color: var(--faint); color: var(--muted); }
 .banner.hint { font-weight: 500; color: var(--muted); padding: 6px 12px; font-size: 13px; display: inline-block; border-left-color: var(--faint); }
@@ -290,7 +315,7 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .section-label.runner { color: var(--runner); }
 .state { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
 .state.pending { background: var(--surface-3); color: var(--text); }
-.state.confirmed, .state.accepted { background: var(--lime-soft); color: var(--lime); }
+.state.confirmed, .state.accepted { background: var(--brand-soft); color: var(--brand); }
 .state.disputed { background: var(--danger-soft); color: var(--danger); }
 .state.closed { background: var(--surface-3); color: var(--muted); }
 .empty { color: var(--muted); font-size: 14px; padding: 4px 2px; margin: 0; }
@@ -304,7 +329,7 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 .modal p { margin: 0; color: var(--muted); }
 .big-state { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2); font-weight: 700; border-left: 4px solid var(--line-strong); }
 .big-state.pending { border-left-color: var(--faint); }
-.big-state.ok { border-left-color: var(--lime); color: var(--lime); }
+.big-state.ok { border-left-color: var(--brand); color: var(--brand); }
 .big-state.dispute { border-left-color: var(--danger); color: var(--danger); }
 .big-state.closed { border-left-color: var(--faint); color: var(--muted); }
 .disclaimer { font-size: 13px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 10px; }
@@ -312,14 +337,16 @@ details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
 @keyframes spin { to { transform: rotate(360deg); } }
 /* Tarjeta de rol: se lee con el reloj parado y se cierra solo con «Entendido». */
 .role-card .role { margin-left: 0; justify-self: start; }
+.role-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.card-brand { display: inline-flex; align-items: center; flex: none; }
 .role-card.hunter { border-top: 4px solid var(--hunter); }
 .role-card.runner { border-top: 4px solid var(--runner); }
 .role-step { display: grid; gap: 2px; }
 .role-step .section-label { margin: 0; }
 .role-step p { color: var(--text); font-size: 16px; }
-.role-card .safety { color: var(--text); font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-2); border-left: 4px solid var(--lime); }
+.role-card .safety { color: var(--text); font-size: 14px; font-weight: 600; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-2); border-left: 4px solid var(--brand); }
 .countdown { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(10, 11, 13, 0.95); pointer-events: none; padding: 24px; }
-.countdown b { display: block; text-align: center; font-size: 140px; font-weight: 800; color: var(--lime); line-height: 1; }
+.countdown b { display: block; text-align: center; font-size: 140px; font-weight: 800; color: var(--brand); line-height: 1; }
 .countdown small { display: block; text-align: center; font-size: 18px; font-weight: 600; color: var(--text); margin-top: 12px; max-width: 30ch; }
 .toasts { position: fixed; left: 12px; right: 12px; bottom: calc(150px + var(--safe-bottom)); z-index: 20; display: grid; gap: 8px; pointer-events: none; justify-items: center; }
 body.in-game .toasts { bottom: calc(180px + var(--safe-bottom)); }
@@ -327,9 +354,10 @@ body.in-game .toasts { bottom: calc(180px + var(--safe-bottom)); }
    de los banners (--toast-top lo calcula ui.js con la altura real del HUD): nunca tapan un peligro. */
 body.in-game.sheet-open .toasts { bottom: auto; top: var(--toast-top, calc(150px + var(--safe-top))); }
 .toast { max-width: 480px; width: 100%; padding: 11px 14px; border-radius: var(--r-md); background: rgba(42, 46, 53, 0.97); border-left: 4px solid var(--faint); font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); animation: toast-in 0.16s ease-out; }
-.toast.info { border-left-color: var(--lime); }
+.toast.info { border-left-color: var(--brand); }
 .toast.zone { border-left-color: var(--text); }
 .toast.dispute { border-left-color: var(--danger); }
+.toast.ping { border-left-color: var(--runner); }
 .toast .ico { display: none; }
 @keyframes toast-in { from { opacity: 0; transform: translateY(6px); } }
 
@@ -353,7 +381,7 @@ body.in-game.sheet-open .toasts { bottom: auto; top: var(--toast-top, calc(150px
 .mz-park { fill: #18201b; }
 .mz-out { fill: rgba(0, 0, 0, 0.6); }
 .mz-zone { fill: rgba(242, 243, 245, 0.035); stroke: var(--text); stroke-opacity: 0.8; stroke-width: 3; }
-.mz-next { fill: none; stroke: var(--lime); stroke-width: 2.5; stroke-dasharray: 8 6; }
+.mz-next { fill: none; stroke: var(--brand); stroke-width: 2.5; stroke-dasharray: 8 6; }
 .mz-note { fill: var(--faint); }
 .mk-h { fill: var(--hunter); stroke: var(--bg); }
 .mk-r { fill: var(--runner); stroke: var(--bg); }
@@ -362,15 +390,15 @@ body.in-game.sheet-open .toasts { bottom: auto; top: var(--toast-top, calc(150px
 .mk-meet { fill: var(--muted); }
 /* Rastro propio: la misma forma con la que los cazadores ven una pista (discontinua = no es «ahora»). */
 .mk-trail { fill: var(--runner-soft); stroke: var(--runner); }
-.mk-reach, .mk-scan { fill: rgba(255, 106, 61, 0.09); stroke: var(--hunter); }
-.mk-route { fill: none; stroke: var(--lime); }
-.mk-me-halo { fill: var(--lime-soft); }
+.mk-reach, .mk-scan { fill: rgba(255, 107, 31, 0.09); stroke: var(--hunter); }
+.mk-route { fill: none; stroke: var(--me); }
+.mk-me-halo { fill: var(--me-soft); }
 .mk-me-ring { fill: var(--bg); }
 .mk-me-ring.hunter { stroke: var(--hunter); }
 .mk-me-ring.runner { stroke: var(--runner); }
-.mk-me-core { fill: var(--lime); }
+.mk-me-core { fill: var(--me); }
 .m-label { font-weight: 700; paint-order: stroke; stroke: #101114; stroke-linejoin: round; fill: var(--text); }
-.m-label.me { fill: var(--lime); }
+.m-label.me { fill: var(--me); font-weight: 800; }
 .m-label.dim { fill: var(--muted); }
 .m-label.hunter { fill: var(--hunter); }
 .pulse { animation: pulse 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
@@ -382,8 +410,9 @@ body.in-game.sheet-open .toasts { bottom: auto; top: var(--toast-top, calc(150px
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
 }
 @media (max-height: 760px) {
-  .hero-art { width: min(48vw, 180px); }
-  .brand-name { font-size: 38px; }
-  .home-tagline { font-size: 22px; }
   .timer .clock { font-size: 26px; }
+}
+/* Pantallas altas: la imagen completa (la figura entera, de pie). */
+@media (min-height: 860px) {
+  .cover-art { aspect-ratio: 640 / 620; }
 }

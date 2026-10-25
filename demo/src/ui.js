@@ -49,16 +49,25 @@ const ICON = {
   spect: '<svg class="dot" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
 };
 
-const HERO_ART = `<svg class="hero-art" viewBox="0 0 260 200" aria-hidden="true">
-  <g stroke="#1e2126" stroke-width="7" stroke-linecap="round"><path d="M10 52H250M10 118H250M10 176H250M58 8V196M132 8V196M206 8V196"/></g>
-  <circle cx="132" cy="102" r="86" fill="rgba(242,243,245,0.035)" stroke="#f2f3f5" stroke-opacity=".8" stroke-width="3"/>
-  <circle cx="150" cy="92" r="52" fill="none" stroke="#c6f432" stroke-width="2" stroke-dasharray="6 6" opacity=".6"/>
-  <circle cx="92" cy="140" r="3" fill="#c6f432" opacity=".35"/><circle cx="104" cy="128" r="3.5" fill="#c6f432" opacity=".55"/><circle cx="118" cy="118" r="4" fill="#c6f432" opacity=".8"/>
-  <circle cx="134" cy="108" r="10" fill="#c6f432" stroke="#0a0b0d" stroke-width="3"/>
-  <circle cx="178" cy="70" r="7" fill="#33c3e6" stroke="#0a0b0d" stroke-width="2.5"/><circle cx="96" cy="64" r="7" fill="#33c3e6" stroke="#0a0b0d" stroke-width="2.5"/>
-  <circle cx="190" cy="132" r="10" fill="rgba(51,195,230,0.15)" stroke="#33c3e6" stroke-width="2" stroke-dasharray="4 3"/>
-  <path d="M64 168l9-16 9 16z" fill="#ff6a3d" stroke="#0a0b0d" stroke-width="2"/>
-</svg>`;
+// ------------------------------------------------------------------ marca THE OUTRUN
+
+const BRAND = { name: 'THE OUTRUN', slogan: 'RUN. HIDE. STAY AHEAD.' };
+
+/**
+ * Símbolo y logotipo: vectores reconstruidos a partir de la referencia elegida (calco de sus
+ * regiones blancas y naranjas, con limpieza a mano de defectos del original). Sin texto en imagen:
+ * se dibujan nítidos a cualquier tamaño. El símbolo es el mismo en el icono, el favicon y las cabeceras.
+ */
+const SYMBOL_PATHS = '<path fill="#fff" d="M40 41.3L62.8 22.0L119.8 22.0L123 25.8L95.6 50.0L69.3 50.0L63 55.5L55.5 84.2L20.8 113.7ZM128.4 51.3L112.6 111.6L89.8 131.0L27.6 131.0L60.3 103.3L80.8 103.3L84.8 101.0L88 97.8L92.1 82.2Z"/><path fill="#ff6b1f" d="M99.4 54.6L125.5 32.3L128.4 51.3L92.1 82.2ZM54.7 92.5L52.1 102.2L21.6 128.1L24.2 118.4Z"/>';
+const WORDMARK_PATHS = '<path fill="#fff" d="M36.8 12.0L59.2 12.5L57.8 18.0L50 18.2L44.8 39.0L38 38.8L43 18.2L35.2 18.0L35 15.8ZM64.2 12.0L70 12.2L68 22.0L74.8 22.8L79.8 22.2L83 12.0L88.5 12.2L83 37.2L81.8 39.0L76 38.8L77.8 28.8L66.2 29.0L64 38.8L57.8 38.8ZM95.2 12.0L118 12.5L116.8 18.0L100.2 18.0L99 20.8L99.2 23.0L113.5 23.5L113 27.2L111.5 28.5L98.8 28.2L97 29.2L96 32.0L96.5 33.2L111.5 33.0L112 36.8L110.8 39.0L88.8 38.8L91 26.0ZM38.2 49.0L87 49.0L94 56.0L71.8 74.0L68 71.0L45 71.0L43.2 72.0L40 74.5L35 94.8L16.8 110.0L7.2 116.0L8 108.2L9 107.2L20 63.2ZM109.2 50.2L129 51.2L117 96.0L118.2 99.0L139.8 99.0L152.2 50.5L171.8 50.2L173 51.0L159.8 106.2L146.2 118.8L101.2 119.0L94 108.8L94 105.5L99 89.5L108 51.5ZM180.5 50.2L234.5 50.2L235 51.8L217.8 69.0L211.2 70.0L209 79.8L184.2 102.0L191.5 70.2L175 69.8L178 54.5L179.2 50.8ZM308.5 50.2L322.2 50.2L327.8 51.2L318 89.2L316.5 99.0L336.8 98.5L348.2 50.8L365.8 50.2L369 51.0L356 107.0L342.8 119.0L301 119.0L294 109.5L294 105.2L299 87.5L301 76.0L306 58.8L307 51.8ZM377.5 50.2L396.5 50.5L413.2 85.2L415 82.8L422 51.2L423.2 50.2L442.8 50.8L425.8 119.0L406.5 119.0L390 85.2L389 85.2L388 92.5L381 118.8L361 118.5ZM289.2 51.0L293 54.2L298 61.2L297 62.2L291.8 87.8L281.8 96.0L279 96.5L288.2 118.8L266 119.0L258 99.2L256.8 98.0L253.5 97.8L254 95.2L263.2 82.0L273 81.8L275.5 70.2L270.8 70.0L270.5 69.0ZM255 70.0L256 70.2L256 72.0L251 87.8L251 91.0L244 118.8L224.2 119.0L224 116.5L230.2 90.5Z"/><path fill="#ff6b1f" d="M244 50.2L286.5 50.5L288.2 51.2L287 53.5L269.5 69.5L254.2 70.0L251.2 72.0L205 112.0L192.5 119.0L178.8 118.8L178.2 116.2ZM95.8 62.0L97.2 62.5L96.8 67.2L95 71.0L94.8 75.2L93 78.5L84.8 111.5L68 127.0L65.8 128.0L6.5 127.2L11 122.0L32.5 104.2L58.5 105.0L61.2 103.5L65 98.8L67.5 86.0L71.2 81.0Z"/>';
+/** Símbolo compacto (sin fondo). */
+const MARK = `<span class="mark"><svg viewBox="18.6 20.5 112 112" aria-hidden="true" focusable="false">${SYMBOL_PATHS}</svg></span>`;
+/** Icono de la app: el mismo símbolo centrado en una baldosa oscura (igual que el favicon). */
+const APP_ICON = `<svg class="app-icon" viewBox="-1.4 0.5 152 152" aria-hidden="true" focusable="false"><rect x="-1.4" y="0.5" width="152" height="152" rx="34" fill="#121317"/>${SYMBOL_PATHS}</svg>`;
+const WORDMARK = `<svg class="wordmark" viewBox="4 10 442 120" aria-hidden="true" focusable="false">${WORDMARK_PATHS}</svg>`;
+/** Logotipo completo (portada) y versión horizontal para cabeceras. */
+const LOGO = `<h1 class="logo"><span class="sr-only">${BRAND.name}</span>${WORDMARK}</h1>`;
+const LOCKUP = `<span class="lockup" role="img" aria-label="${BRAND.name}">${MARK}${WORDMARK}</span>`;
 
 // ------------------------------------------------------------------ navegación
 
@@ -189,22 +198,21 @@ const topbar = (title, back = 'inicio') => `
   <div class="topbar">
     <button class="icon-btn" data-action="go" data-to="${back}" aria-label="Volver">${ICON.back}</button>
     <h1>${title}</h1>
-    <span class="demo-pill">Simulada</span>
+    <span class="demo-pill">${MARK} Simulada</span>
   </div>`;
 
 const SCREENS = {
   inicio: () => `
   <main class="screen home">
-    <div class="topbar"><span class="demo-pill">Demo simulada · sin GPS real</span></div>
-    <section class="home-hero">
-      ${HERO_ART}
-      <div class="brand"><span class="brand-name">${S.APP_NAME}</span><span class="brand-sub">nombre provisional</span></div>
-      <p class="home-tagline">El escondite de siempre, <em>con la calle como tablero.</em></p>
-      <p class="home-text">Prueba cómo sería una partida del modo Clásico. Todo es ficticio: no usa tu ubicación ni se conecta a ningún servidor.</p>
+    <div class="topbar"><span class="mark-tile">${APP_ICON}</span><span class="demo-pill">Demo simulada · sin GPS real</span></div>
+    <section class="cover">
+      <div class="cover-brand">${LOGO}<p class="slogan">${BRAND.slogan}</p></div>
+      <div class="cover-art" role="img" aria-label="Una persona con mochila observa la ciudad al atardecer desde una azotea"></div>
     </section>
+    <p class="home-text">Escondite urbano por equipos. Partida simulada: sin GPS real ni servidor.</p>
     <div class="home-actions">
       <button class="btn btn-primary btn-block" data-action="go" data-to="crear">Crear sala</button>
-      <button class="btn btn-outline btn-block" data-action="go" data-to="unirse">Unirse con código</button>
+      <button class="btn btn-outline btn-block" data-action="go" data-to="unirse">Unirse a sala</button>
       <button class="btn btn-ghost btn-block" data-action="go" data-to="reglas">Cómo se juega</button>
     </div>
     <p class="home-foot">Versión de demostración · ${esc(BUILD)}</p>
@@ -393,9 +401,9 @@ const SCREENS = {
     const disputes = sum.disputes;
     return `
   <main class="screen">
-    <div class="topbar"><h1>Fin de la ronda ${g.round}</h1><span class="demo-pill">Simulada</span></div>
+    <div class="topbar"><h1>Fin de la ronda ${g.round}</h1><span class="demo-pill">${MARK} Simulada</span></div>
     <section class="result-hero ${win ?? ''}">
-      <span class="chip">${win ? teamName(win, true) : 'Sin ganador'}</span>
+      <div class="role-head"><span class="chip">${win ? teamName(win, true) : 'Sin ganador'}</span><span class="card-brand">${LOCKUP}</span></div>
       <h1>${esc(sum.outcome.title)}</h1>
       <p>${esc(sum.outcome.subtitle)}</p>
       <div class="stats">
@@ -961,7 +969,7 @@ function roleCard(g) {
   const team = S.self(g).team;
   const t = ROLE_TEXT[team];
   return `<div class="overlay"><div class="modal role-card ${team}" role="dialog" aria-modal="true" aria-labelledby="role-title">
-    <div class="role ${team}">${ICON[team]} ${teamName(team)}</div>
+    <div class="role-head"><div class="role ${team}">${ICON[team]} ${teamName(team)}</div><span class="card-brand">${LOCKUP}</span></div>
     <h2 id="role-title">${t.title}</h2>
     <div class="role-step"><span class="section-label">Objetivo</span><p>${t.goal}</p></div>
     <div class="role-step"><span class="section-label">Ahora</span><p>${esc(t.now(g))}</p></div>
