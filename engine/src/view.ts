@@ -138,7 +138,8 @@ export function snapshotFor(state: RoomState, viewerId: string, now: number): Sn
       .map((p) => ({
         id: p.id,
         name: p.name,
-        team: p.team,
+        // D-042: durante la cuenta atrás no se revela ningún equipo, tampoco el propio.
+        team: state.phase === 'COUNTDOWN' ? null : p.team,
         teamPref: p.teamPref,
         status: p.status,
         ready: p.ready,

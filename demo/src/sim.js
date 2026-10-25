@@ -11,8 +11,9 @@ export const EXPERIMENTAL = Object.freeze({
   ratios: { pocos: 1 / 5, equilibrado: 1 / 3, muchos: 1 / 2 },
   durationsMin: [10, 20, 30],
   zoneRadiiM: [250, 400, 600],
-  countdownS: 3,
-  headStartS: 120,
+  countdownS: 5, // aprobado (D-042)
+  headStartS: 120, // tiempo de huida: mínimo y valor por defecto aprobados, 2 min (D-042)
+  headStartOptionsMin: [2, 3, 5], // opciones de la demo: 2 aprobado; 3 y 5 son experimentales (D-038)
   pingEveryS: 180,
   botUpdateEveryS: 5,
   demoSpeeds: [5, 10, 30],
@@ -122,6 +123,7 @@ export function defaultSettings() {
     assignment: 'auto',
     ratio: 'equilibrado',
     durationMin: 20,
+    headStartMin: EXPERIMENTAL.headStartS / 60,
     zoneRadiusM: 400,
     dynamicZone: true,
   };
@@ -165,8 +167,7 @@ export function joinRoom(rawCode) {
   room.code = code;
   room.players = buildPlayers(settings.players, mulberry32(seed + 1), false);
   room.joined = true;
-  // En una sala ajena el anfitrión simulado ya ha sorteado los equipos.
-  drawTeams(room);
+  // Sorteo automático y secreto (D-042): los equipos se sortean al empezar la partida.
   return { ok: true, room };
 }
 
@@ -206,8 +207,10 @@ export function botsReady(room) {
 export function validateLobby(room) {
   const issues = [];
   const { hunters, runners, unassigned, target } = teamCounts(room);
-  if (unassigned > 0) {
-    issues.push({ level: 'error', code: 'unassigned', message: room.settings.assignment === 'auto' ? 'Falta sortear los equipos.' : `Hay ${unassigned} jugador(es) sin equipo.` });
+  // D-042: en el sorteo automático los equipos se sortean en secreto al empezar; nadie los ve antes.
+  const secretDraw = room.settings.assignment === 'auto';
+  if (unassigned > 0 && !secretDraw) {
+    issues.push({ level: 'error', code: 'unassigned', message: `Hay ${unassigned} jugador(es) sin equipo.` });
   }
   if (unassigned === 0 && hunters < 1) issues.push({ level: 'error', code: 'no_hunters', message: 'Hace falta al menos 1 cazador.' });
   if (unassigned === 0 && runners < 1) issues.push({ level: 'error', code: 'no_runners', message: 'Hace falta al menos 1 fugitivo.' });
@@ -223,6 +226,12 @@ export const canStart = (room) => validateLobby(room).every((i) => i.level !== '
 
 // ------------------------------------------------------------------ partida
 
+/** Tiempo de huida en segundos: el que elige el anfitrión, nunca por debajo del mínimo (D-042). */
+export function headStartOf(settings) {
+  const chosen = Number(settings.headStartMin) * 60;
+  return Number.isFinite(chosen) ? Math.max(EXPERIMENTAL.headStartS, chosen) : EXPERIMENTAL.headStartS;
+}
+
 function zoneSchedule(settings, random) {
   const r0 = settings.zoneRadiusM;
   const zones = [{ at: 0, center: { x: 0, y: 0 }, r: r0 }];
@@ -237,7 +246,7 @@ function zoneSchedule(settings, random) {
     const shift = maxShift * (0.3 + random() * 0.6);
     const center = { x: prev.center.x + Math.cos(angle) * shift, y: prev.center.y + Math.sin(angle) * shift };
     // Los cambios se cuentan desde el inicio de la caza (t = ventaja).
-    prev = { at: EXPERIMENTAL.headStartS + Math.round(total * frac), center, r };
+    prev = { at: headStartOf(settings) + Math.round(total * frac), center, r };
     zones.push(prev);
   }
   return zones;
@@ -262,6 +271,9 @@ function randomPointIn(center, radius, random) {
 
 export function startGame(room) {
   if (!canStart(room)) throw new Error('La sala no está lista');
+  // Sorteo secreto (modo automático): si los equipos no están ya decididos (p. ej., por la
+  // política de ronda «primeros capturados»), se sortean ahora y no se muestran hasta revelarlos.
+  if (room.settings.assignment === 'auto' && room.players.some((p) => p.team === null)) drawTeams(room);
   const seed = room.seed + room.round * 104729;
   const random = mulberry32(seed);
   const settings = room.settings;
@@ -283,7 +295,7 @@ export function startGame(room) {
     zones,
     phase: 'countdown',
     t: -EXPERIMENTAL.countdownS, // segundos de juego; 0 = empieza la ventaja
-    headStartS: EXPERIMENTAL.headStartS,
+    headStartS: headStartOf(settings),
     durationS: settings.durationMin * 60,
     players,
     pings: [],
@@ -324,7 +336,7 @@ function tick(game, dt) {
   const t = game.t;
   if (game.phase === 'countdown' && t >= 0) {
     game.phase = 'headstart';
-    emit(game, 'phase', 'Empieza la ventaja: los fugitivos se esconden.');
+    emit(game, 'phase', 'Empieza el tiempo de huida: los fugitivos se alejan y los cazadores esperan.');
   }
   if (game.phase === 'headstart' && t >= huntStart(game)) {
     game.phase = 'hunt';
@@ -698,9 +710,8 @@ export function nextStep(game) {
   const isOpen = (c) => c.state === 'pending' || c.state === 'disputed';
   if (game.phase === 'finished') return { tone: 'muted', text: 'Ronda terminada.' };
   if (game.phase === 'countdown') {
-    return me.team === 'hunter'
-      ? { tone: 'info', text: 'Eres cazador: captura a todos los fugitivos antes de que acabe el tiempo.' }
-      : { tone: 'info', text: 'Eres fugitivo: que no te capturen hasta que acabe el tiempo.' };
+    // D-042: durante la cuenta atrás nadie conoce su rol.
+    return { tone: 'info', text: 'Preparados: tu rol se revela al terminar la cuenta atrás.' };
   }
   if (me.status === 'captured') {
     return { tone: 'muted', text: `Te han capturado. Sigues la partida como espectador (posiciones con ${EXPERIMENTAL.spectatorDelayS} s de retraso).` };

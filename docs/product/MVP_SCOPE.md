@@ -39,7 +39,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 |---|---|---|
 | Jugadores por sala | 2–20 | Límite técnico del MVP para poder probarlo, no un muro de pago. 70 queda para más adelante |
 | Duración | 10–120 min | Rango razonable para el MVP. Por encima, el consumo de batería es dudoso |
-| Ventaja | 1–10 min | |
+| Ventaja (tiempo de huida) | 2–10 min | **Mínimo y valor por defecto, 2 min: aprobados (D-042).** El máximo sigue siendo propuesta |
 | Intervalo de pistas | 2–15 min | |
 | Zona | Círculo de 150 m a 2 km de radio | Por debajo de 150 m el error del GPS pesa demasiado [H] |
 | Envío de ubicación | Cada 5 s, ajustable en la prueba técnica | Ver `TECHNICAL_SPIKE_PLAN.md` |

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { MINUTE } from '../../engine/src/constants.ts';
+import { MINUTE, TIMING } from '../../engine/src/constants.ts';
 import { SimClient } from '../client.ts';
 import { CODE_ALPHABET, CODE_LENGTH, JOIN_RATE_LIMIT, SimHost, generateCode } from '../host.ts';
 import { CENTER, T0, deterministicHost, runBotGame, startedGame } from '../scenario.ts';
@@ -67,8 +67,8 @@ describe('sesiones y comandos de sistema', () => {
 describe('idempotencia (AC-C4)', () => {
   it('el mismo commandId repetido produce un único efecto y la misma respuesta', () => {
     const host = deterministicHost(1);
-    const lobby = startedGame(host, 1, 2, { headStartMs: MINUTE });
-    host.advance(10_000 + MINUTE);
+    const lobby = startedGame(host, 1, 2, { headStartMs: 2 * MINUTE });
+    host.advance(TIMING.countdownMs + 2 * MINUTE);
     const runner = lobby.runners[0]!;
     const first = runner.sendWithId('cmd-1', { type: 'self_tag' });
     const second = runner.sendWithId('cmd-1', { type: 'self_tag' });

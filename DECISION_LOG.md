@@ -250,3 +250,26 @@ Reglas completas en `docs/product/GAME_MODES_AND_RULES.md`. Las entradas "Aproba
 **Alternativas:** PWA (instalable, pero necesita servirse por HTTPS: sería un despliegue público, no autorizado) y APK con WebView (bloqueado por D-040).
 **Motivo:** es la única vía que se abre en el móvil sin coste, sin cuentas y sin desplegar nada. La demo no reutiliza `engine/` porque sus reglas aún no incluyen D-031, D-033, D-034 ni D-035, y el motor no se toca en esta sesión.
 **No decide:** el cliente final (D-005), los parámetros (D-038) ni la regla por defecto de las disputas. La demo aplica como **propuesta** "sin resolver = no hay captura" y "sin respuesta en 30 s = no hay captura", y lo dice en pantalla.
+
+---
+
+## Sesión 13 · 25/10/2026 (secuencia de inicio de partida)
+
+### D-042 · **Aprobada** (propietario, sesión 13: "Secuencia de inicio de partida")
+**Texto aprobado (resumen fiel):**
+1. **Cuenta atrás inicial:** cuando todos están listos y se inicia la partida, cuenta atrás visual de **5 s**, sincronizada entre todos los dispositivos. Durante ella **nadie conoce su rol**.
+2. **Revelación de roles:** al terminar la cuenta atrás, cada jugador descubre su rol **individualmente** (FUGITIVO o CAZADOR). Los fugitivos pueden desplazarse inmediatamente; los cazadores permanecen en la zona de salida hasta que termina el tiempo de huida.
+3. **Tiempo de huida configurable:** lo elige el creador de la sala antes de iniciar. **Mínimo 2 min; valor por defecto 2 min.** Temporizador visible para ambos equipos; los cazadores ven el tiempo restante y una indicación clara de que deben esperar.
+4. **Inicio de la persecución:** cuando el temporizador llega a cero, el **servidor** habilita la persecución para todos los cazadores a la vez. Todos los dispositivos siguen la hora oficial del servidor. Quien se desconecta y vuelve recupera la fase y el tiempo restante, sin reiniciar la partida.
+5. **Control del movimiento:** la app puede **advertir** a los cazadores que se alejan de la zona de salida durante el tiempo de huida, teniendo en cuenta la precisión y la antigüedad de las lecturas para no sancionar errores de localización. **No se modifican otras reglas.**
+
+**Implementación (sesión 13):**
+- **Motor S0:** cuenta atrás de 5 s (`TIMING.countdownMs`); `countdown_started` ya no lleva los equipos y la instantánea no muestra ningún equipo en `COUNTDOWN`; al terminar, un evento `role_revealed` **por jugador** (solo su rol); `LIMITS.headStartMs.min` = 2 min y `DEFAULTS.headStartMs` = 2 min si el anfitrión no lo indica; aviso `start_zone_warning` / `start_zone_returned` **solo al cazador**, sin coordenadas y **sin sanción**, únicamente con lecturas fiables (recientes, reloj no sospechoso, precisión ≤ `LOCATION.currentMaxAccuracyM`) que queden fuera incluso en el mejor caso (distancia − precisión > radio).
+- **Demo:** cuenta atrás de 5 s en tiempo real (no se acelera); rol oculto durante ella (HUD, mapa, panel y textos); tarjeta de revelación «Tu rol: CAZADOR/FUGITIVO» al terminar; tiempo de huida elegible al configurar la sala (2, 3 o 5 min); con el **sorteo automático**, los equipos se sortean **en secreto al empezar** y no se muestran en la sala.
+
+**Interpretaciones y parámetros pendientes (D-038):**
+- El **radio de la zona de salida** (50 m) y las opciones de 3 y 5 min de la demo son **experimentales**. El máximo de 10 min sigue siendo una propuesta.
+- **Modo manual (D-031):** el anfitrión que asigna los equipos los conoce necesariamente; el resto los descubre al terminar la cuenta atrás. Con preferencias de equipo explícitas en el motor (`set_team_pref`), un jugador puede intuir su rol.
+- Tras la revelación, la instantánea del motor sigue mostrando el equipo de todos los jugadores, como antes: D-042 no cambia esa regla.
+- En la **demo** el reloj se para mientras se lee la tarjeta (fase 2E). En la partida real manda la hora del servidor: la tarjeta no puede parar el tiempo de huida.
+- La demo no puede mostrar el aviso de zona de salida: allí el cazador no se mueve durante la huida.

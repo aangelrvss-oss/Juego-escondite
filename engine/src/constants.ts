@@ -9,7 +9,8 @@ export const LIMITS = {
   minPlayers: 2,
   maxPlayers: 20,
   durationMs: { min: 10 * MINUTE, max: 120 * MINUTE },
-  headStartMs: { min: 1 * MINUTE, max: 10 * MINUTE },
+  // Mínimo de 2 min aprobado (D-042). El máximo de 10 min sigue siendo una propuesta.
+  headStartMs: { min: 2 * MINUTE, max: 10 * MINUTE },
   pingIntervalMs: { min: 2 * MINUTE, max: 15 * MINUTE },
   zoneRadiusM: { min: 150, max: 2_000 },
   nameLength: { min: 2, max: 20 },
@@ -18,8 +19,13 @@ export const LIMITS = {
   maxZoneVersions: 1,
 } as const;
 
+// Valores por defecto aprobados (D-042).
+export const DEFAULTS = {
+  headStartMs: 2 * MINUTE,
+} as const;
+
 export const TIMING = {
-  countdownMs: 10 * SECOND,
+  countdownMs: 5 * SECOND, // aprobado (D-042)
   hostHandoverMs: 120 * SECOND,
   outOfZoneGraceMs: 30 * SECOND,
   tagConfirmMs: 30 * SECOND,
@@ -38,6 +44,12 @@ export const LOCATION = {
   futureToleranceMs: 2 * SECOND,
   maxPlausibleSpeedMps: 12,
   implausibleSpeedStreak: 3,
+} as const;
+
+// Zona de salida de los cazadores durante la ventaja (D-042): solo se avisa, nunca se sanciona.
+// El radio es un parámetro EXPERIMENTAL (D-038), no aprobado.
+export const START_ZONE = {
+  radiusM: 50,
 } as const;
 
 export const TAG = {

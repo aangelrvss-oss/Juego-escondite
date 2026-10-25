@@ -63,13 +63,14 @@ Principio de diseño: **mirar la pantalla lo mínimo mientras se camina.** Lo im
 6. Si la hora local está entre la puesta y la salida del sol (o, más simple, entre las 21:00 y las 7:00 [P]): aviso de juego nocturno con recomendaciones.
 
 ## F6. Inicio
-1. [Empezar] → cuenta atrás de 10 s en todos los móviles (sincronizada por el servidor).
-2. Pantalla completa del rol: **"Eres CAZADOR. Espera 3 min"** / **"Eres FUGITIVO. ¡Corre a esconderte!"**, con las normas clave (3 líneas como mucho).
+1. [Empezar] → cuenta atrás visual de **5 s** en todos los móviles (sincronizada por el servidor). **Nadie conoce su rol todavía** (D-042).
+2. Al terminar, cada jugador descubre **su** rol en pantalla completa: **"CAZADOR · espera en la zona de salida"** / **"FUGITIVO · aléjate caminando"**, con el tiempo de huida restante y las normas clave (3 líneas como mucho). En la partida real la revelación no para el tiempo de huida (manda la hora del servidor).
 3. Vibración y recordatorio: "Puedes bloquear el móvil. Te avisaremos."
 
 ## F7. Ventaja inicial
 - **Fugitivo**: mapa con la zona, sus compañeros, la cuenta atrás y el aviso "Quedan 30 s de ventaja".
-- **Cazador**: pantalla de espera con la cuenta atrás. No recibe ubicaciones de los fugitivos.
+- **Cazador**: pantalla de espera con la cuenta atrás. No recibe ubicaciones de los fugitivos. Si se aleja de la zona de salida con una lectura fiable, recibe un **aviso** (sin sanción, D-042).
+- **Tiempo de huida:** lo elige el anfitrión al configurar la sala; mínimo y valor por defecto, 2 min (D-042). Al llegar a cero, el servidor habilita la persecución para todos a la vez.
 - Al terminar: vibración en todos y "¡Empieza la caza!".
 
 ## F8. Partida activa

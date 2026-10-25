@@ -64,9 +64,15 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 - **Archivos:** nuevos `android/core/.../LiveReading.java`, `PermissionState.java` y `LiveReadingTest.java`; modificados `MainActivity.java` y `LocationTestService.java`. El CSV sigue sin coordenadas. Sin permisos nuevos.
 - **Compilar:** `ANDROID_HOME=/home/user/android-sdk gradle -p android :app:assembleDebug`. Resultados en `QUALITY_STATE.md`.
 
+## Sesión 13: secuencia de inicio de partida (D-042)
+
+- **Motor S0:** cuenta atrás de 5 s sin revelar equipos; revelación individual (`role_revealed`) al terminar; tiempo de huida con mínimo y valor por defecto de 2 min; aviso sin sanción al cazador que se aleja de la zona de salida, solo con lecturas fiables (radio experimental de 50 m). 112 pruebas (9 nuevas).
+- **Demo:** cuenta atrás de 5 s en tiempo real, rol oculto hasta la revelación, tiempo de huida elegible (2, 3 o 5 min) y sorteo automático secreto al empezar. 62 pruebas y E2E en 412×915 y 360×740.
+- Detalles, interpretaciones y parámetros pendientes en `DECISION_LOG.md` (D-042).
+
 ## Decisiones
 
-- **Aprobadas por el propietario:** D-002, D-003, D-004 (en parte), D-006, D-007, D-008, D-009, D-010, D-011, D-024 a D-029 (sesión 4) y D-030 a D-038 (sesión 5).
+- **Aprobadas por el propietario:** D-002, D-003, D-004 (en parte), D-006, D-007, D-008, D-009, D-010, D-011, D-024 a D-029 (sesión 4), D-030 a D-038 (sesión 5) y D-042 (sesión 13: secuencia de inicio de partida).
 - **Pendientes:** D-004 (invitado), D-005 (cliente final), D-012 a D-019, D-020 a D-023 y D-039 (técnica de S1). Bloqueo: D-040.
 - **Técnica de la demo:** D-041 (formato de la demo visual), tomada dentro de la autorización de la sesión 6. No afecta al cliente final (D-005).
 - **Abiertas tras la sesión 5:** si la zona dinámica entra en la *primera* versión jugable, la regla predeterminada de las disputas (`GAME_MODES_AND_RULES.md` §9.3) y todos los parámetros numéricos (D-038).

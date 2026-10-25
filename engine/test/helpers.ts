@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { MINUTE } from '../src/constants.ts';
+import { MINUTE, TIMING } from '../src/constants.ts';
 import { applyCommand, createRoom, tick } from '../src/engine.ts';
 import { offsetM } from '../src/geo.ts';
 import type { Command, CommandResult, EngineEvent, GameConfig, LatLng, RoomState, TeamPref } from '../src/types.ts';
@@ -83,7 +83,7 @@ export function activeGame(options: { hunters?: string[]; runners?: string[]; cf
   g.ok('h', { type: 'configure', config: config(options.cfg) });
   g.readyAll();
   g.ok('h', { type: 'start' });
-  g.advance(10_000); // cuenta atrás
+  g.advance(TIMING.countdownMs); // cuenta atrás
   g.advance(g.state.config?.headStartMs ?? 0);
   assert.equal(g.state.phase, 'ACTIVE');
   return g;

@@ -27,6 +27,10 @@ export interface GameConfig {
   safetyChecklistConfirmed: boolean;
 }
 
+// Configuración que envía el anfitrión: la ventaja es opcional y, si falta, se usa el valor por
+// defecto aprobado (D-042).
+export type ConfigInput = Omit<GameConfig, 'headStartMs'> & { headStartMs?: number };
+
 // Muestra tal como la envía el cliente. measuredAt ya está en la base de tiempo del
 // servidor (el cliente aplica el desfase obtenido al sincronizar el reloj).
 export interface LocationSample {
@@ -58,6 +62,8 @@ export interface Player {
   samples: StoredSample[]; // de más antigua a más reciente
   outsideSince: number | null;
   exposed: boolean;
+  // Cazador fuera de la zona de salida durante la ventaja (solo para avisar una vez, D-042).
+  outsideStartZone: boolean;
   rejectedTagCount: number;
   speedStreak: number;
   flags: string[];
@@ -153,7 +159,7 @@ export type Command =
   | { type: 'set_team_pref'; pref: TeamPref }
   | { type: 'assign_team'; targetId: string; pref: TeamPref }
   | { type: 'set_ready'; ready: boolean }
-  | { type: 'configure'; config: GameConfig }
+  | { type: 'configure'; config: ConfigInput }
   | { type: 'kick'; targetId: string }
   | { type: 'start' }
   | { type: 'abort' }

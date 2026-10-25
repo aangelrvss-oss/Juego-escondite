@@ -39,8 +39,8 @@ Hemos evaluado `LOBBY, READY, COUNTDOWN, HEAD_START, ACTIVE, FINISHED, CANCELLED
 | # | Desde → hasta | Quién la pide | Condiciones (las comprueba el servidor) |
 |---|---|---|---|
 | T1 | `LOBBY → COUNTDOWN` | Solo el anfitrión (`start`) | ≥ 2 jugadores conectados; ≥ 1 cazador y ≥ 1 fugitivo; configuración válida; punto de encuentro fijado; **lista de seguridad confirmada por el anfitrión**; todos marcados como listos *o* el anfitrión fuerza el inicio tras avisar (los no listos pasan a espectadores [P]) |
-| T2 | `COUNTDOWN → LOBBY` | Anfitrión (`abort`) | Antes de que acabe la cuenta atrás (10 s) |
-| T3 | `COUNTDOWN → HEAD_START` | **Temporizador del servidor** | `now ≥ countdown_end`. Se congela la configuración |
+| T2 | `COUNTDOWN → LOBBY` | Anfitrión (`abort`) | Antes de que acabe la cuenta atrás (5 s, D-042) |
+| T3 | `COUNTDOWN → HEAD_START` | **Temporizador del servidor** | `now ≥ countdown_end`. Se congela la configuración. **Se revela el rol de cada jugador, solo a él** (`role_revealed`); durante `COUNTDOWN` nadie ve ningún equipo (D-042) |
 | T4 | `HEAD_START → ACTIVE` | **Temporizador del servidor** | `now ≥ head_start_end` |
 | T5 | `ACTIVE → FINISHED` | **Servidor** | (a) `now ≥ game_end` o (b) no queda ningún fugitivo activo o (c) no queda ningún cazador activo (§5.3) |
 | T6 | `HEAD_START/ACTIVE → FINISHED` | Anfitrión (`end_game`) | Confirmación doble en la app. Resultado: "Terminada por el anfitrión", **sin ganador** |

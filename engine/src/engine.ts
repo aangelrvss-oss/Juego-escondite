@@ -2,7 +2,7 @@
 // El servidor (adaptador) le pasa la hora autoritativa `now` en cada llamada.
 // Referencia: docs/technical/GAME_STATE_MACHINE.md.
 
-import { LIMITS, TAG, TIMING } from './constants.ts';
+import { DEFAULTS, LIMITS, LOCATION, START_ZONE, TAG, TIMING } from './constants.ts';
 import { validateConfig, validateName } from './config.ts';
 import { distanceM, isOutsideZone, zoneAt } from './geo.ts';
 import { availabilityOf, isValidSample, latestSample, recordSample, toStoredSample } from './location.ts';
@@ -13,6 +13,7 @@ import type {
   CommandResult,
   EngineEvent,
   ErrorCode,
+  GameConfig,
   Outcome,
   PingEntry,
   Player,
@@ -61,6 +62,7 @@ function newPlayer(id: string, deviceId: string, name: string, now: number): Pla
     samples: [],
     outsideSince: null,
     exposed: false,
+    outsideStartZone: false,
     rejectedTagCount: 0,
     speedStreak: 0,
     flags: [],
@@ -73,6 +75,7 @@ function clearLocationState(p: Player): void {
   p.samples = [];
   p.outsideSince = null;
   p.exposed = false;
+  p.outsideStartZone = false;
   p.speedStreak = 0;
 }
 
@@ -231,7 +234,11 @@ function processDue(ctx: Ctx, d: Due): void {
   switch (d.kind) {
     case 'countdown_end':
       s.phase = 'HEAD_START';
-      s.headStartEnd = ctx.now + (s.config?.headStartMs ?? 0);
+      s.headStartEnd = ctx.now + (s.config?.headStartMs ?? DEFAULTS.headStartMs);
+      // D-042: cada jugador descubre su rol, individualmente, al terminar la cuenta atrás.
+      for (const p of playersInOrder(s)) {
+        if (p.status === 'active' && p.team) emit(ctx, 'role_revealed', toPlayers(p.id), { team: p.team });
+      }
       emit(ctx, 'head_start_started', ALL, { headStartEnd: s.headStartEnd });
       return;
     case 'head_start_end': {
@@ -239,6 +246,7 @@ function processDue(ctx: Ctx, d: Due): void {
       if (!config) throw new Error('missing config in HEAD_START');
       s.phase = 'ACTIVE';
       s.activeStart = ctx.now;
+      for (const p of playersInOrder(s)) p.outsideStartZone = false;
       s.gameEnd = ctx.now + config.durationMs;
       const firstPing = ctx.now + config.pingIntervalMs;
       s.nextPingAt = firstPing < s.gameEnd ? firstPing : null;
@@ -397,6 +405,29 @@ function capture(ctx: Ctx, runner: Player, hunterId: string | null, via: 'self' 
   checkEnd(ctx, 'capture');
 }
 
+/**
+ * D-042: durante la ventaja, avisa (solo avisa, nunca sanciona) al cazador que se aleja de la zona
+ * de salida. Para no castigar errores del GPS solo cuenta una lectura fiable (reciente, sin reloj
+ * sospechoso y con precisión suficiente) que quede fuera incluso en el mejor caso
+ * (distancia − precisión > radio). Vuelve a estar dentro con la mejor estimación (distancia ≤ radio).
+ * Los avisos no llevan coordenadas.
+ */
+function evaluateStartZone(ctx: Ctx, hunter: Player): void {
+  const meeting = ctx.s.config?.meetingPoint;
+  const last = latestSample(hunter);
+  if (!meeting || !last) return;
+  if (last.clockSuspect || ctx.now - last.effectiveAt > LOCATION.currentMaxAgeMs) return;
+  if (last.accuracyM > LOCATION.currentMaxAccuracyM) return;
+  const d = distanceM(last, meeting);
+  if (!hunter.outsideStartZone && d - last.accuracyM > START_ZONE.radiusM) {
+    hunter.outsideStartZone = true;
+    emit(ctx, 'start_zone_warning', toPlayers(hunter.id), { radiusM: START_ZONE.radiusM, headStartEnd: ctx.s.headStartEnd });
+  } else if (hunter.outsideStartZone && d <= START_ZONE.radiusM) {
+    hunter.outsideStartZone = false;
+    emit(ctx, 'start_zone_returned', toPlayers(hunter.id), {});
+  }
+}
+
 function evaluateZone(ctx: Ctx, runner: Player): void {
   const s = ctx.s;
   const last = latestSample(runner);
@@ -495,9 +526,10 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
     case 'configure': {
       if (!isHost) return err('forbidden');
       if (s.phase !== 'LOBBY') return err('wrong_phase');
-      const invalid = validateConfig(cmd.config);
+      const config: GameConfig = { ...cmd.config, headStartMs: cmd.config.headStartMs ?? DEFAULTS.headStartMs };
+      const invalid = validateConfig(config);
       if (invalid) return err('invalid_config', invalid);
-      s.config = structuredClone(cmd.config);
+      s.config = structuredClone(config);
       for (const lp of lobbyPlayers(s)) lp.ready = false;
       emit(ctx, 'config_updated', ALL, { config: s.config });
       return ok();
@@ -545,6 +577,7 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       const stored = toStoredSample(cmd.sample, now);
       const accepted = recordSample(p, stored, now);
       if (accepted && p.team === 'runner') evaluateZone(ctx, p);
+      if (accepted && p.team === 'hunter' && s.phase === 'HEAD_START') evaluateStartZone(ctx, p);
       return ok({ accepted, clockSuspect: stored.clockSuspect });
     }
 
@@ -670,7 +703,8 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
   s.captures = [];
   s.outcome = null;
   s.finishedAt = null;
-  emit(ctx, 'countdown_started', ALL, { countdownEnd: s.countdownEnd, teams: Object.fromEntries(teams) });
+  // D-042: durante la cuenta atrás nadie conoce su rol; se revela al terminar (role_revealed).
+  emit(ctx, 'countdown_started', ALL, { countdownEnd: s.countdownEnd });
   return ok();
 }
 

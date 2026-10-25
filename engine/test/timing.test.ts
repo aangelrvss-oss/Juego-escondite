@@ -31,7 +31,7 @@ describe('tiempo autoritativo (AC-C2, AC-C3, T09)', () => {
     assert.deepEqual(times, [...times].sort((a, b) => a - b));
     assert.deepEqual(
       step.events.map((e) => e.type).filter((t) => t !== 'ping_sent'),
-      ['head_start_started', 'hunt_started', 'ping', 'ping', 'ping', 'ping', 'game_finished'],
+      ['role_revealed', 'role_revealed', 'head_start_started', 'hunt_started', 'ping', 'ping', 'ping', 'ping', 'game_finished'],
     );
   });
 

@@ -100,7 +100,7 @@ Ocurre en **un único paso atómico** del servidor, al confirmarse la captura:
 | Parámetro | Propuesta inicial (no aprobada) | Motivo |
 |---|---|---|
 | Cazadores iniciales | Según §4 (límite propuesto: de 1 a `max(1, floor(n/4))`) | Si hay muchos cazadores iniciales, la partida se acaba demasiado rápido |
-| Ventaja inicial | De 1 a 10 min, como en Clásico | — |
+| Ventaja inicial | Como en Clásico: mínimo y valor por defecto 2 min (aprobado, D-042); máximo 10 min (propuesta) | — |
 | `T_transición` (el convertido no puede capturar) | 60 s | Tiempo para que los fugitivos se recoloquen |
 | Visión de compañeros cazadores durante la transición | Sí, desde el primer instante | Le permite orientarse. No tiene riesgo para los fugitivos |
 | Pistas en Infección | Las mismas que en Clásico | A valorar si con muchos cazadores sobran |

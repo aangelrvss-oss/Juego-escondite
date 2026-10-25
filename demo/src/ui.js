@@ -25,6 +25,7 @@ const state = {
   finishing: false,
   hostStartAt: null,
   roleCard: false, // tarjeta de rol abierta: el reloj de la partida no avanza hasta «Entendido»
+  roleRevealed: false, // D-042: el rol se revela (una vez) al terminar la cuenta atrás
 };
 
 // ------------------------------------------------------------------ utilidades
@@ -242,7 +243,8 @@ const SCREENS = {
       <li>Los fugitivos ganan si queda al menos uno libre al acabar el tiempo. Los cazadores, si capturan a todos antes.</li>
     </ul></section>
     <section class="card"><h3>Ventaja y pistas <span class="exp">Experimental</span></h3><ul>
-      <li>Al empezar, los fugitivos tienen una ventaja (${X.headStartS / 60} min en la demo). Los cazadores esperan en el punto de encuentro sin ver a nadie.</li>
+      <li>Al empezar hay una cuenta atrás de ${X.countdownS} s. Nadie conoce su rol hasta que termina.</li>
+      <li>Después, los fugitivos tienen un tiempo de huida (lo elige el anfitrión; mínimo ${X.headStartS / 60} min). Los cazadores esperan en el punto de encuentro sin ver a nadie.</li>
       <li>Cada ${X.pingEveryS / 60} min los cazadores reciben una pista: la última posición conocida de cada fugitivo libre, <b>con su antigüedad</b>.</li>
       <li>Cada equipo ve a sus compañeros. Los fugitivos nunca ven a los cazadores.</li>
       <li>Los cazadores tienen un escáner con ${X.scan.uses} usos: dice cuántos fugitivos hay cerca, nunca dónde.</li>
@@ -298,6 +300,11 @@ const SCREENS = {
       <div class="preview"><span class="chip hunter">${ICON.hunter} ${k} cazador${k === 1 ? '' : 'es'}</span><span class="chip runner">${ICON.runner} ${s.players - k} fugitivo${s.players - k === 1 ? '' : 's'}</span></div>
       <p class="hint">Fórmula provisional: al menos 1 cazador y como mucho la mitad.</p>
     </section>
+    <section class="card" data-region="headstart">
+      <h2>Tiempo de huida</h2>
+      ${seg('headStartMin', X.headStartOptionsMin.map((m) => [m, `${m} min`]))}
+      <p class="hint">Los fugitivos se alejan y los cazadores esperan en la salida. Mínimo y valor por defecto: ${X.headStartS / 60} min.</p>
+    </section>
     <details class="more" ${state.moreOpen ? 'open' : ''} data-region="more">
       <summary>Duración y zona <span class="exp">Experimental</span></summary>
       <div class="inner">
@@ -320,14 +327,18 @@ const SCREENS = {
     const s = room.settings;
     const ready = S.canStart(room);
     const prev = room.history.at(-1);
+    // D-042: en el sorteo automático nadie ve los equipos antes de que termine la cuenta atrás.
+    const secret = s.assignment === 'auto';
     const playerRow = (p) => {
-      const editable = isHost;
-      const team = editable
+      const editable = isHost && !secret;
+      const team = secret
+        ? '<span class="team-tag none">Rol secreto</span>'
+        : editable
         ? `<div class="team-toggle" role="group" aria-label="Equipo de ${esc(p.name)}">
             <button type="button" class="hunter" data-action="team" data-id="${p.id}" data-team="hunter" aria-pressed="${p.team === 'hunter'}">Caza</button>
             <button type="button" class="runner" data-action="team" data-id="${p.id}" data-team="runner" aria-pressed="${p.team === 'runner'}">Fuga</button></div>`
         : `<span class="team-tag ${p.team ?? 'none'}">${teamName(p.team)}</span>`;
-      return `<li class="player" data-region="player-${p.id}"><span class="avatar ${p.team ?? ''}">${initial(p.name)}</span>
+      return `<li class="player" data-region="player-${p.id}"><span class="avatar ${secret ? '' : p.team ?? ''}">${initial(p.name)}</span>
         <span class="who"><b>${esc(p.name)}</b><small>${p.isHost ? 'Anfitrión · ' : ''}<span class="ready ${p.ready ? 'on' : ''}">${p.ready ? '✓ Listo' : 'Sin confirmar'}</span></small></span>
         ${team}</li>`;
     };
@@ -337,19 +348,24 @@ const SCREENS = {
     <section class="card">
       <div class="code-box"><span class="code mono" aria-label="Código ${[...room.code].join(' ')}">${esc(room.code)}</span>
         <button class="btn" data-action="copy-code">${ICON.copy} Copiar</button></div>
-      <p class="meta-line">Ronda ${room.round} · Clásico · ${room.players.length} jugadores · ${s.durationMin} min · zona ${s.zoneRadiusM} m${s.dynamicZone ? ' dinámica' : ''}</p>
+      <p class="meta-line">Ronda ${room.round} · Clásico · ${room.players.length} jugadores · huida ${S.headStartOf(s) / 60} min · ${s.durationMin} min · zona ${s.zoneRadiusM} m${s.dynamicZone ? ' dinámica' : ''}</p>
       <p class="hint">Código ficticio: nadie más puede entrar en esta sala simulada.</p>
       ${prev ? `<p class="hint">Ronda ${prev.round}: ${esc(prev.outcome ?? '—')} · ${prev.captures} captura(s).${room.lastPolicy === 'first_captured' ? ' Los primeros capturados empiezan cazando.' : room.lastPolicy === 'redraw' ? ' Equipos sorteados de nuevo.' : room.lastPolicy === 'redraw_fallback' ? ' Nadie fue capturado: equipos sorteados de nuevo.' : ''}</p>` : ''}
     </section>
     <section class="card" data-region="quota">
       <h2>Equipos <span class="exp">Proporción experimental</span></h2>
-      <div class="quota">
+      ${secret ? `<div class="quota">
+        <div class="quota-item hunter"><span class="n num">${counts.target}</span><small>Cazadores</small></div>
+        <div class="quota-item runner"><span class="n num">${room.players.length - counts.target}</span><small>Fugitivos</small></div>
+      </div>
+      <p class="hint">Sorteo secreto: los equipos se sortean al empezar y cada jugador descubre su rol al terminar la cuenta atrás.${room.lastPolicy === 'first_captured' ? ' Esta ronda empiezan cazando los primeros capturados.' : ''}</p>`
+      : `<div class="quota">
         <div class="quota-item hunter"><span class="n num">${counts.hunters}</span><small>Cazadores · sugeridos ${counts.target}</small></div>
         <div class="quota-item runner"><span class="n num">${counts.runners}</span><small>Fugitivos${counts.unassigned ? ` · ${counts.unassigned} sin equipo` : ''}</small></div>
       </div>
       ${isHost ? `<button class="btn btn-outline btn-block" style="margin-top:12px" data-action="draw">${room.drawCount ? 'Volver a sortear' : 'Sortear equipos'}</button>
-        <p class="hint">${room.drawCount ? `Sorteo nº ${room.drawCount}: reproducible (misma sala y mismo número, mismo reparto).` : s.assignment === 'manual' ? 'Modo manual: asigna cada jugador o usa el sorteo.' : 'Sorteo automático: pulsa para repartir.'}</p>`
-        : '<p class="hint">El anfitrión (simulado) ya ha sorteado los equipos.</p>'}
+        <p class="hint">${room.drawCount ? `Sorteo nº ${room.drawCount}: reproducible (misma sala y mismo número, mismo reparto).` : 'Modo manual: asigna cada jugador o usa el sorteo.'} Los demás jugadores descubren su rol al terminar la cuenta atrás.</p>`
+        : '<p class="hint">Modo manual: el anfitrión (simulado) asigna los equipos.</p>'}`}
     </section>
     <section class="card">
       <h2>Jugadores</h2>
@@ -444,17 +460,24 @@ const SCREENS = {
 function phaseInfo(g) {
   switch (g.phase) {
     case 'countdown': return { label: 'Preparados', left: -g.t };
-    case 'headstart': return { label: 'Ventaja', left: g.headStartS - g.t };
+    case 'headstart': return { label: 'Huida', left: g.headStartS - g.t };
     case 'hunt': return { label: 'Caza', left: g.headStartS + g.durationS - g.t };
     case 'resolving': return { label: 'Resolviendo', left: g.resolutionEndsAt - g.t };
     default: return { label: 'Fin', left: 0 };
   }
 }
 
+/** D-042: durante la cuenta atrás nadie conoce su rol (ni el propio ni el de los demás). */
+export function roleHidden(game) {
+  return game.phase === 'countdown';
+}
+
 function hudTop(g, me) {
-  const role = me.status === 'captured'
-    ? `<div class="role spect">${ICON.spect} Espectador</div>`
-    : `<div class="role ${me.team}">${ICON[me.team]} ${teamName(me.team)}</div>`;
+  const role = roleHidden(g)
+    ? `<div class="role spect">Rol oculto</div>`
+    : me.status === 'captured'
+      ? `<div class="role spect">${ICON.spect} Espectador</div>`
+      : `<div class="role ${me.team}">${ICON[me.team]} ${teamName(me.team)}</div>`;
   return `<div class="hud-card glass phase-${g.phase}"><div class="timer"><span class="label">${phaseInfo(g).label}</span><span class="clock num" data-bind="clock"></span></div>${role}</div>
     <button class="icon-btn glass" data-action="pause" aria-label="${state.paused ? 'Reanudar' : 'Pausar'} la demo">${state.paused ? ICON.play : ICON.pause}</button>`;
 }
@@ -584,6 +607,7 @@ function sheetBody(g, self) {
     }).join('') + '<p class="empty">Una captura disputada no elimina a nadie: queda pendiente hasta resolverse.</p>';
   }
   if (state.tab === 'jugadores') {
+    if (roleHidden(g)) return '<p class="empty">Los equipos se revelan al terminar la cuenta atrás.</p>';
     const list = (team) => g.players.filter((p) => p.team === team).map((p) => `<div class="row"><span class="avatar ${team}">${initial(p.name)}</span><span class="grow"><b>${esc(p.name)}</b><small>${p.status === 'captured' ? 'Capturado' : 'En juego'}</small></span></div>`).join('');
     return `<p class="section-label hunter">${teamName('hunter', true)}</p>${list('hunter')}<p class="section-label runner">${teamName('runner', true)}</p>${list('runner')}`;
   }
@@ -844,7 +868,7 @@ export function mapScene(g, u, view = null) {
     if (self.team === 'hunter' && g.phase === 'hunt') mine.push(`<circle cx="${x}" cy="${y}" r="${X.captureRadiusM}" class="mk-reach" stroke-width="${1.2 * u}" stroke-dasharray="${3 * u} ${3 * u}"/>`);
     // Tú: el elemento más visible del mapa (halo, anillo del equipo y núcleo lima).
     mine.push(`<circle cx="${x}" cy="${y}" r="${ME_HALO_PX * u}" class="mk-me-halo"/>`);
-    mine.push(`<circle cx="${x}" cy="${y}" r="${13 * u}" class="mk-me-ring ${self.team}" stroke-width="${3 * u}"/>`);
+    mine.push(`<circle cx="${x}" cy="${y}" r="${13 * u}" class="mk-me-ring ${roleHidden(g) ? 'hidden-role' : self.team}" stroke-width="${3 * u}"/>`);
     mine.push(`<circle cx="${x}" cy="${y}" r="${8 * u}" class="mk-me-core"/>`);
     disc('me', x, y, 15);
     items.push({ owner: 'me', x, y, r: 13, text: 'Tú', tone: 'me', size: 14, prio: 0, prefer: 'below' });
@@ -884,7 +908,7 @@ function renderLayer() {
   let html = '';
   if (state.route === 'partida' && g && state.roleCard) return roleCard(g);
   if (state.route === 'partida' && g && g.phase === 'countdown') {
-    html += `<div class="countdown" aria-live="assertive"><div><b class="num">${Math.max(1, Math.ceil(-g.t))}</b><small>${esc(S.nextStep(g).text)}<br>Partida simulada</small></div></div>`;
+    html += `<div class="countdown" aria-live="assertive"><div><b class="num">${Math.max(1, Math.ceil(-g.t))}</b><small>Tu rol se revela al terminar la cuenta atrás.<br>Partida simulada</small></div></div>`;
   }
   if (state.route === 'partida' && g && state.finishing) {
     html += `<div class="countdown"><div><b style="font-size:64px">Fin</b><small>${esc(g.outcome?.title ?? '')}</small></div></div>`;
@@ -949,19 +973,20 @@ function renderLayer() {
 }
 
 /**
- * Tarjeta de rol: se queda abierta (con el reloj parado) hasta pulsar «Entendido». Tocar fuera no
- * la cierra. Sin temporizadores nuevos: solo deja de avanzar el tiempo simulado mientras se lee.
+ * Revelación del rol (D-042): aparece al terminar la cuenta atrás y se queda abierta hasta pulsar
+ * «Entendido». Tocar fuera no la cierra. En la demo el reloj se para mientras se lee; en la partida
+ * real manda la hora del servidor y el tiempo de huida sigue corriendo.
  */
 const ROLE_TEXT = {
   hunter: {
-    title: 'Eres cazador',
+    title: 'CAZADOR',
     goal: 'Captura a todos los fugitivos antes de que acabe el tiempo.',
-    now: (g) => `Espera en el punto de encuentro. Sales cuando acabe la ventaja (${S.formatClock(g.headStartS)}).`,
+    now: (g) => `Espera en la zona de salida (punto de encuentro). La persecución empieza en ${S.formatClock(Math.max(0, g.headStartS - g.t))}.`,
   },
   runner: {
-    title: 'Eres fugitivo',
+    title: 'FUGITIVO',
     goal: 'Que no te capturen hasta que acabe el tiempo.',
-    now: (g) => `Aléjate caminando y escóndete dentro de la zona. Los cazadores salen en ${S.formatClock(g.headStartS)}.`,
+    now: (g) => `Aléjate caminando ya y escóndete dentro de la zona. Los cazadores salen en ${S.formatClock(Math.max(0, g.headStartS - g.t))}.`,
   },
 };
 
@@ -970,7 +995,8 @@ function roleCard(g) {
   const t = ROLE_TEXT[team];
   return `<div class="overlay"><div class="modal role-card ${team}" role="dialog" aria-modal="true" aria-labelledby="role-title">
     <div class="role-head"><div class="role ${team}">${ICON[team]} ${teamName(team)}</div><span class="card-brand">${LOCKUP}</span></div>
-    <h2 id="role-title">${t.title}</h2>
+    <p class="role-kicker">Tu rol</p>
+    <h2 id="role-title" class="role-title ${team}">${t.title}</h2>
     <div class="role-step"><span class="section-label">Objetivo</span><p>${t.goal}</p></div>
     <div class="role-step"><span class="section-label">Ahora</span><p>${esc(t.now(g))}</p></div>
     <p class="safety">Juega caminando, mira al cruzar y no entres en propiedades privadas.</p>
@@ -1001,9 +1027,16 @@ function frame() {
   lastFrame = now;
   const g = state.game;
   if (!g || state.route !== 'partida') return;
-  // La tarjeta de rol solo tiene sentido antes de la cuenta atrás; si la partida acaba antes, se cierra.
-  if (state.roleCard && g.phase !== 'countdown') state.roleCard = false;
-  if (!state.paused && !state.roleCard && !document.hidden && g.phase !== 'finished') S.stepGame(g, dt * state.speed);
+  // D-042: la cuenta atrás de 5 s es visual y va en tiempo real (no se acelera con la velocidad de
+  // la demo). Al terminar se revela el rol; la tarjeta solo tiene sentido durante la huida.
+  if (!state.roleRevealed && g.phase === 'headstart') {
+    state.roleRevealed = true;
+    state.roleCard = true;
+    buzz([200]);
+  }
+  if (state.roleCard && g.phase !== 'headstart') state.roleCard = false;
+  const scale = g.phase === 'countdown' ? 1 : state.speed;
+  if (!state.paused && !state.roleCard && !document.hidden && g.phase !== 'finished') S.stepGame(g, dt * scale);
   handleEvents(g);
   if (g.phase === 'finished' && !state.finishing) {
     state.finishing = true;
@@ -1088,7 +1121,8 @@ function startGame() {
   state.paused = false;
   state.finishing = false;
   state.tapped = false;
-  state.roleCard = true;
+  state.roleCard = false;
+  state.roleRevealed = false;
   go('partida');
 }
 
@@ -1103,7 +1137,7 @@ const ACTIONS = {
     paint();
   },
   set: (d) => {
-    const numeric = ['durationMin', 'zoneRadiusM'].includes(d.key);
+    const numeric = ['durationMin', 'zoneRadiusM', 'headStartMin'].includes(d.key);
     state.settings[d.key] = numeric ? Number(d.value) : d.value;
     paint();
   },

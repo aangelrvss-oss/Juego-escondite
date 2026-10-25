@@ -361,11 +361,13 @@ test('formato de reloj', () => {
 const TONES = new Set(['act', 'wait', 'danger', 'zone', 'go', 'info', 'muted']);
 const toHunt = (game) => S.stepGame(game, S.EXPERIMENTAL.countdownS + S.EXPERIMENTAL.headStartS + 1);
 
-test('siguiente paso: objetivo del rol en la cuenta atrás y en la ventaja', () => {
+test('siguiente paso: sin rol en la cuenta atrás (D-042) y objetivo del rol en la huida', () => {
   const hunter = S.startGame(roomWithSelfAs('hunter'));
   const runner = S.startGame(roomWithSelfAs('runner'));
-  assert.match(S.nextStep(hunter).text, /Eres cazador/);
-  assert.match(S.nextStep(runner).text, /Eres fugitivo/);
+  for (const g of [hunter, runner]) {
+    assert.match(S.nextStep(g).text, /tu rol se revela al terminar la cuenta atrás/);
+    assert.doesNotMatch(S.nextStep(g).text, /cazador|fugitivo/i);
+  }
   S.stepGame(hunter, S.EXPERIMENTAL.countdownS + 10);
   S.stepGame(runner, S.EXPERIMENTAL.countdownS + 10);
   assert.deepEqual([S.nextStep(hunter).tone, S.nextStep(runner).tone], ['wait', 'go']);
@@ -962,4 +964,50 @@ test('etiquetas del mapa: evitan salirse de la parte visible del plano', () => {
   assert.ok(inside.box.x2 <= view.x2 && inside.box.x1 >= view.x1, 'se coloca dentro (a la izquierda del marcador)');
   const [free] = UI.placeLabels(items, [], u);
   assert.equal(free.y, items[0].y - 16, 'sin límites, la posición por defecto es encima');
+});
+
+// ── Secuencia de inicio de partida (D-042) ──
+test('inicio: cuenta atrás de 5 s y tiempo de huida configurable (mínimo y por defecto 2 min)', () => {
+  assert.equal(S.EXPERIMENTAL.countdownS, 5);
+  assert.equal(S.defaultSettings().headStartMin, 2);
+  assert.equal(S.headStartOf({ headStartMin: 1 }), 120, 'nunca por debajo de 2 min');
+  assert.equal(S.headStartOf({}), 120);
+  const game = S.startGame(readyRoom({ headStartMin: 3 }));
+  assert.equal(game.t, -5);
+  assert.equal(game.headStartS, 180);
+  S.stepGame(game, 5);
+  assert.equal(game.phase, 'headstart');
+  S.stepGame(game, 179);
+  assert.equal(game.phase, 'headstart');
+  S.stepGame(game, 1);
+  assert.equal(game.phase, 'hunt', 'la persecución empieza al acabar la huida elegida');
+  assert.equal(game.nextPingAt, 180 + S.EXPERIMENTAL.pingEveryS);
+});
+
+test('inicio: con sorteo automático los equipos no existen en la sala; se sortean en secreto al empezar', () => {
+  const room = S.createRoom({ players: 9, ratio: 'equilibrado' }, 21);
+  S.botsReady(room);
+  S.setReady(room, 'me', true);
+  assert.ok(room.players.every((p) => p.team === null), 'nadie tiene equipo en la sala');
+  assert.equal(S.canStart(room), true);
+  const game = S.startGame(room);
+  const hunters = game.players.filter((p) => p.team === 'hunter').length;
+  assert.equal(hunters, S.huntersTarget(9, 'equilibrado'));
+  assert.ok(game.players.every((p) => p.team === 'hunter' || p.team === 'runner'));
+  const joined = S.joinRoom('HK7M2Q').room;
+  assert.ok(joined.players.every((p) => p.team === null), 'al unirse tampoco se ven equipos');
+  const manual = S.createRoom({ players: 4, assignment: 'manual' }, 5);
+  assert.ok(S.validateLobby(manual).some((i) => i.code === 'unassigned'), 'en modo manual el anfitrión debe asignarlos');
+});
+
+test('inicio: durante la cuenta atrás la interfaz no revela el rol', () => {
+  const game = S.startGame(roomWithSelfAs('hunter'));
+  assert.equal(UI.roleHidden(game), true);
+  const { shapes } = UI.mapScene(game, 1);
+  assert.ok(shapes.some((sh) => sh.includes('mk-me-ring hidden-role')));
+  assert.ok(!shapes.some((sh) => /mk-me-ring (hunter|runner)/.test(sh)));
+  assert.doesNotMatch(UI.stepFor(game).text, /cazador|fugitivo/i);
+  S.stepGame(game, S.EXPERIMENTAL.countdownS);
+  assert.equal(UI.roleHidden(game), false);
+  assert.ok(UI.mapScene(game, 1).shapes.some((sh) => sh.includes('mk-me-ring hunter')));
 });

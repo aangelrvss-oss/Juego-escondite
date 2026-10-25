@@ -43,15 +43,27 @@ async function shot(page, vp, name) {
 
 const tap = (page, text) => page.getByRole('button', { name: text, exact: false }).first().click();
 
-// Tarjeta de rol: no se cierra sola, el reloj no avanza mientras está abierta y «Entendido» continúa.
+// D-042: cuenta atrás visual de 5 s sin rol; al terminar se revela el rol con una tarjeta que no se
+// cierra sola, el reloj (de la demo) no avanza mientras está abierta y «Entendido» continúa.
 async function confirmRole(page, vp, shotName) {
+  const countdown = page.locator('.countdown');
+  await countdown.waitFor();
+  const shownAt = Date.now();
+  assert.match(await countdown.innerText(), /Tu rol se revela al terminar la cuenta atrás/);
+  assert.equal((await page.locator('.hud .role').innerText()).trim(), 'Rol oculto');
+  assert.equal(await page.locator('.role-card').count(), 0, 'sin rol durante la cuenta atrás');
+  if (shotName) await shot(page, vp, `${shotName}-cuenta-atras`);
   const card = page.locator('.role-card');
-  await card.waitFor();
+  await card.waitFor({ timeout: 10000 });
+  const elapsed = Date.now() - shownAt;
+  assert.ok(elapsed >= 4000, `la cuenta atrás dura unos 5 s reales (${elapsed} ms)`);
+  assert.match(await card.locator('#role-title').innerText(), /^(CAZADOR|FUGITIVO)$/);
   const t0 = await page.evaluate(() => window.__rastro.state.game.t);
   await page.waitForTimeout(1500); // a ×10 serían 15 s de juego
   assert.ok(await card.isVisible(), 'la tarjeta de rol no desaparece sola');
   assert.equal(await page.evaluate(() => window.__rastro.state.game.t), t0, 'el reloj no avanza con la tarjeta abierta');
   assert.equal(await page.locator('.countdown').count(), 0, 'sin cuenta atrás debajo de la tarjeta');
+  assert.equal(await page.evaluate(() => window.__rastro.state.game.phase), 'headstart');
   await card.getByText(/Juega caminando, mira al cruzar/).waitFor();
   await checkLayout(page, 'tarjeta-rol');
   if (shotName) await shot(page, vp, shotName);
@@ -121,7 +133,7 @@ async function runViewport(browser, vp) {
   await page.fill('#code', 'hk7 m2q');
   await tap(page, 'Entrar en la sala');
   await page.getByText('HK7M2Q').waitFor();
-  await page.getByText('El anfitrión (simulado) ya ha sorteado').waitFor();
+  await page.getByText('Sorteo secreto').waitFor();
   assert.equal(await page.locator('[data-action="team"]').count(), 0, 'sin ser anfitrión no se cambian equipos');
   await tap(page, 'Estoy listo');
   // El anfitrión simulado empieza cuando todos están listos.
