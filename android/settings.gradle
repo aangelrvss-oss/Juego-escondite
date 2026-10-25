@@ -1,0 +1,33 @@
+// Prueba S1 (Android). Ver android/README.md.
+// El módulo :app solo se incluye si hay un SDK de Android configurado; :core (Java puro) se
+// compila y prueba en cualquier JDK 17+.
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+
+def localProps = new Properties()
+def localFile = file('local.properties')
+if (localFile.exists()) localFile.withInputStream { localProps.load(it) }
+def sdkDir = localProps.getProperty('sdk.dir') ?: System.getenv('ANDROID_HOME') ?: System.getenv('ANDROID_SDK_ROOT')
+def hasAndroidSdk = sdkDir != null && new File(sdkDir).isDirectory()
+
+dependencyResolutionManagement {
+    repositories {
+        // Maven Central primero: :core no necesita nada de Google.
+        mavenCentral()
+        if (hasAndroidSdk) google()
+    }
+}
+
+rootProject.name = 'escondite-s1'
+include ':core'
+
+if (hasAndroidSdk) {
+    include ':app'
+} else {
+    println 'S1: no hay SDK de Android configurado; solo se incluye :core.'
+}

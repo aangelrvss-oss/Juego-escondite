@@ -1,0 +1,27 @@
+// SIN VERIFICAR: este módulo no se ha podido compilar en el contenedor (dl.google.com está
+// bloqueado: ni el SDK ni el plugin de Android son descargables). Ver android/README.md.
+plugins {
+    id 'com.android.application' version '8.7.3'
+}
+
+android {
+    namespace 'es.escondite.s1'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'es.escondite.s1'
+        minSdk 31 // LocationManager.FUSED_PROVIDER y LocationRequest.Builder
+        targetSdk 34
+        versionCode 1
+        versionName '0.1-s1'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    implementation project(':core')
+}

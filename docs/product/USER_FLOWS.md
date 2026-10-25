@@ -127,31 +127,33 @@ Mantener pulsado sobre un jugador en la sala de espera o en los resultados → [
 4. **Manual:** en la sala de espera, el anfitrión arrastra a cada jugador a su equipo. [Empezar] se bloquea si algún equipo queda vacío. Salirse de la proporción: aviso o bloqueo (pendiente).
 5. **Automático:** el sorteo se hace al pulsar [Empezar] y cada jugador ve su rol en la pantalla de F6.
 
-## F16. Infección: convertirse en cazador
+## F16. Infección: convertirse en cazador [AMPLIACIÓN FUTURA, D-030]
 1. Se confirma la captura (F9) → el convertido recibe una pantalla completa con vibración: **"Te han infectado. Ahora eres CAZADOR. Podrás capturar en 60 s"** (valor de `T_transición` pendiente).
 2. Su mapa cambia al instante: deja de ver a los fugitivos y ve a los cazadores (según el parámetro de §3.3).
 3. Cuenta atrás visible hasta poder capturar. El botón [He pillado a…] está desactivado hasta entonces.
 4. Los demás reciben "Pablo ha sido infectado por Ana".
 5. Final: "¡Todos infectados! Ganan los cazadores" o "¡Tiempo! Ganan los supervivientes".
 
-## F17. Zona dinámica: aviso y cambio
+## F17. Zona dinámica: aviso y cambio [DISEÑO PREVISTO, parámetros en hipótesis, D-032]
 1. `T_aviso` antes del cambio: vibración y **"La zona cambia en 3 min"**. El mapa muestra la zona nueva superpuesta.
 2. Si el jugador está fuera de la zona nueva: "Muévete con calma hacia la zona marcada. Tienes 3 min." Nunca "corre".
 3. En el cambio: vibración, la zona nueva pasa a ser la vigente y empieza la gracia de `T_gracia_cambio`.
 4. Pasada la gracia, un fugitivo que siga fuera queda expuesto (como en F8). Un cazador fuera no puede capturar (D-033).
 
-## F18. Escáner (cazador)
+## F18. Escáner (cazador) [DISEÑO FUTURO: pistas aproximadas, D-034]
 1. Botón [Escanear (2)] con los usos restantes. Desactivado durante el enfriamiento (cuenta atrás visible).
 2. Resultado: **"2 fugitivos a menos de 100 m (según ubicaciones recientes)"**. Sin mapa, dirección ni nombres.
 3. Si se aprueba avisar al escaneado: los fugitivos dentro del radio sienten una vibración y leen "Un cazador ha escaneado tu zona".
 
 ## F19. Disputa de una captura
+> **Sesión 5 (D-035):** la disputa queda **pendiente** sin eliminar al fugitivo, y se resuelve antes del final: la aceptan o retiran los implicados, o, al cerrar la ventana de resolución, se aplica la regla predeterminada (propuesta: "no hay captura"). Ver `GAME_MODES_AND_RULES.md` §9.3. Los pasos siguientes son la versión de la sesión 4 y valen solo en lo que no contradigan esto.
 1. El fugitivo pulsa [No] ante "¿Te ha pillado Ana?".
 2. Ambos ven: **"Captura disputada. Seguid jugando."** El cazador ve la cuenta atrás del enfriamiento antes de poder volver a reclamar a ese fugitivo.
 3. En el resultado final: "Capturas disputadas: Pablo (2)".
 4. Recordatorio fijo en F9: la captura es un toque suave; no se discute en la calzada.
 
 ## F20. Siguiente ronda
+> **Sesión 5 (D-037):** solo se ofrecen **sorteo nuevo** y **primeros capturados como cazadores**. La rotación equilibrada queda pospuesta. Que exista selección manual entre rondas se deduce de D-031 (selección manual) y está pendiente de confirmar.
 1. En el resultado, el anfitrión pulsa [Otra ronda] → elige cómo formar los equipos (según lo que se apruebe):
    - **Sorteo nuevo**
    - **Los primeros capturados empiezan cazando**

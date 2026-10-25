@@ -12,7 +12,13 @@
 | **[PARÁMETRO]** | Valor por decidir. Si aparece un valor, es solo una propuesta inicial |
 | **[DISPOSITIVO]** | Solo se puede validar con dispositivos reales (S1–S3) |
 
-**Alcance:** qué parte de este documento entra en el MVP está **pendiente de aprobación** (D-030). Este documento especifica, pero no autoriza a implementar. El motor de S0 solo implementa el modo Clásico con zona fija.
+**Alcance:** ~~qué parte de este documento entra en el MVP está pendiente de aprobación (D-030)~~ → resuelto en la sesión 5 (ver la actualización siguiente). Este documento especifica, pero no autoriza a implementar. El motor de S0 solo implementa el modo Clásico con zona fija.
+
+> **Actualización de la sesión 5: decisiones D-030 a D-038 aprobadas por el propietario.**
+> - **Primera versión jugable: solo el modo Clásico.** La Infección es una **ampliación futura**, y su diseño (§3) se conserva.
+> - **S1 solo valida la ubicación en Android.** La zona dinámica, el escáner, las disputas y las rondas **no** son requisitos de S1.
+> - **Regla general (D-038):** todo valor numérico de este documento que no esté aprobado expresamente es una **hipótesis o parámetro experimental**, aunque aparezca como "propuesta inicial". Ningún número de este documento está aprobado.
+> - El motor de S0 **no** implementa el alcance nuevo: solo Clásico, zona fija y `swapRoles` (ver `GAME_STATE_MACHINE.md` §9.7).
 
 ---
 
@@ -45,6 +51,8 @@
 ---
 
 ## 3. Modo Infección
+
+> **Sesión 5 (D-030):** ampliación **futura**. No es requisito de la primera versión jugable ni de S1. Se conserva el diseño completo.
 
 ### 3.1 Reglas [PROPIETARIO]
 - La partida empieza con **uno o varios cazadores**, y el resto son fugitivos.
@@ -115,7 +123,10 @@ Ocurre en **un único paso atómico** del servidor, al confirmarse la captura:
 - Al crear la sala se elige **sorteo automático** o **selección manual**.
 - Hay una **proporción configurable de cazadores**, con **límites seguros** según el tamaño del grupo.
 
-### 4.2 Límites seguros [PROPUESTA]
+### 4.2 Límites seguros [PROPUESTA: hipótesis numéricas, no aprobadas (D-031)]
+
+> **Sesión 5 (D-031):** está aprobado que la proporción sea configurable dentro de límites válidos, y que haya sorteo y selección manual. **La distribución exacta está por definir y probar.** Las cifras siguientes son hipótesis.
+
 Siempre: **al menos 1 cazador y al menos 1 fugitivo**.
 
 | Modo | Cazadores (n = jugadores) |
@@ -142,6 +153,8 @@ S0 implementa preferencias por jugador más un sorteo con objetivo `ceil(n/4)`. 
 ## 5. Rondas sucesivas (revancha)
 
 ### 5.1 Reglas [PROPIETARIO]
+> **Sesión 5 (D-037):** opciones aprobadas: **A (sorteo nuevo)** y **B (primeros capturados como cazadores iniciales)**. **C (rotación equilibrada) queda pospuesta.** No hay que confundirlo con la Infección, en la que el cambio de equipo ocurre *dentro* de la partida.
+
 Se documentan tres opciones para formar los equipos de la ronda siguiente. **Cuál o cuáles se ofrecen está pendiente**, y no hay ningún algoritmo definitivo de rotación aprobado.
 
 **Definición [PROPUESTA]:** "sesión" es la secuencia de rondas en la misma sala, con el mismo código. Los recuentos de rondas se guardan **solo mientras vive la sala** (no hay estadísticas persistentes).
@@ -163,7 +176,7 @@ Se documentan tres opciones para formar los equipos de la ronda siguiente. **Cu�
 | En Infección | "Capturado" significa "convertido". El orden es el de conversión |
 | Los cazadores de la ronda anterior | Pasan a fugitivos salvo que se necesiten para el relleno [PREGUNTA] |
 
-### 5.4 Opción C: rotación equilibrada
+### 5.4 Opción C: rotación equilibrada [POSPUESTA en la sesión 5]
 - **Objetivo:** que, a lo largo de la sesión, cada jugador sea cazador un número de rondas lo más parecido posible.
 - **Comportamiento candidato [PROPUESTA, no definitiva]:** se eligen los `K` jugadores con **menos rondas como cazador inicial**. Los empates se resuelven por **más rondas desde su último turno de cazador**, y si persisten, por sorteo con semilla.
 - **Casos límite que la regla tiene que resolver antes de aprobarse:**
@@ -185,6 +198,8 @@ S0 y `USER_FLOWS.md` F13 ofrecen "intercambiar roles", que **no** está entre la
 ## 6. Zona dinámica
 
 ### 6.1 Reglas [PROPIETARIO]
+> **Sesión 5 (D-032):** reglas **conservadoras**. La zona dinámica forma parte del **diseño previsto**, con parámetros pendientes de validación. **Nunca se elimina** a nadie automáticamente por cruzar el límite. Los avisos deben dar un tiempo razonable. **Una zona circular no garantiza rutas transitables ni seguridad física.** No es requisito de S1, y su inclusión en la primera versión jugable no está decidida de forma expresa.
+
 - La zona debe poder **encogerse** y **cambiar de posición** durante la partida.
 - Los **avisos previos, límites, tiempos y condiciones de victoria** son parámetros por decidir.
 
@@ -192,7 +207,7 @@ S0 y `USER_FLOWS.md` F13 ofrecen "intercambiar roles", que **no** está entre la
 - Al empezar, el servidor genera un **calendario de versiones de zona** (inicio, centro y radio) a partir de los parámetros. La estructura ya existe en el motor (`zoneAt`), aunque el validador de S0 la limita a una versión.
 - Cada cambio se **anuncia `T_aviso` antes**, mostrando ya la zona siguiente. Las zonas posteriores **no se revelan** por adelantado [PREGUNTA: ¿ocultas o visibles?].
 
-### 6.3 Restricciones de seguridad [PROPUESTA, D-032]
+### 6.3 Restricciones de seguridad [RECOMENDACIÓN técnica: no son reglas aprobadas; las cifras son hipótesis (D-032, D-038)]
 1. **Contención:** cada zona nueva está **totalmente dentro** de la anterior. Nadie que esté dentro tiene que atravesar zonas que antes estaban fuera.
 2. **Nadie necesita correr:** la distancia máxima que alguien tiene que recorrer para entrar en la zona nueva es `|desplazamiento del centro| + R_anterior − R_nueva`, y debe cumplir:
    `|desplazamiento| + R_anterior − R_nueva ≤ v_paso × T_aviso`, con `v_paso` = 1,2 m/s [H: paso normal, a validar].
@@ -205,7 +220,7 @@ S0 y `USER_FLOWS.md` F13 ofrecen "intercambiar roles", que **no** está entre la
 - Se mantiene el beneficio de la duda por la precisión: está fuera solo si `distancia − precisión > radio`.
 - La consecuencia de estar fuera es la misma que con zona fija (visible para los cazadores). **No hay eliminación** [PROPUESTA: no se elimina a nadie por la zona, para no incentivar carreras].
 
-### 6.5 Cazadores fuera de la zona: resolver la incoherencia de D-023 [PROPUESTA, D-033]
+### 6.5 Cazadores fuera de la zona [APROBADA por el propietario en la sesión 5: D-033]
 Exponer a los cazadores ante los fugitivos rompería la regla "los fugitivos nunca ven a los cazadores". Propuesta: un cazador fuera de la zona recibe un aviso y **no puede declarar capturas** mientras siga fuera. No se le expone.
 
 ### 6.6 Condiciones de victoria [PARÁMETRO]
@@ -243,8 +258,9 @@ Exponer a los cazadores ante los fugitivos rompería la regla "los fugitivos nun
 
 ### 8.1 Reglas [PROPIETARIO]
 - El escáner es **limitado** y **no revela más información de la necesaria**.
+- **Sesión 5 (D-034):** el diseño futuro contempla **pistas aproximadas con usos limitados**, sin coordenadas exactas por defecto. **No es requisito de S1.** La forma concreta de la pista aproximada no está elegida.
 
-### 8.2 Propuesta (D-034)
+### 8.2 Propuesta (una de las formas posibles; parámetros en hipótesis)
 | Aspecto | Propuesta |
 |---|---|
 | Quién | Solo cazadores activos (en Infección, también los convertidos tras `T_transición` [PARÁMETRO]) |
@@ -268,7 +284,24 @@ Exponer a los cazadores ante los fugitivos rompería la regla "los fugitivos nun
 ### 9.2 Validación (implementada en S0)
 Autodeclaración del fugitivo, o declaración del cazador con posiciones actuales, precisión suficiente, cercanía plausible y confirmación del fugitivo (`GAME_STATE_MACHINE.md` §7). **Probado en S0.**
 
-### 9.3 Disputa [PROPUESTA, D-035]
+### 9.3 Disputa: procedimiento conforme a D-035 aprobada [PROPUESTA de procedimiento]
+
+**Requisitos aprobados en la sesión 5 (D-035):** una captura disputada **queda pendiente**, sin eliminar al fugitivo. Debe resolverse **antes de que termine la partida**. **No se presupone** un anfitrión árbitro. La **autoridad** de resolución tiene que ser explícita.
+
+**Procedimiento propuesto** (las cifras son hipótesis, D-038):
+1. **Apertura:** si el fugitivo responde "No" a una reclamación plausible, la reclamación queda en estado **`disputada`**. El fugitivo **sigue jugando** como activo. Mientras siga abierta, el cazador no puede volver a reclamar a ese fugitivo.
+2. **Autoridad 1, los dos implicados.** En cualquier momento antes del final:
+   - el fugitivo puede **aceptar** la captura (queda capturado), o
+   - el cazador puede **retirar** la reclamación (se cierra sin captura).
+   Ninguno de los dos puede decidir por el otro.
+3. **Autoridad 2, la regla predeterminada.** Es una regla acordada antes de empezar, no una persona. Si al acabar el tiempo sigue abierta, se abre una **ventana de resolución** de `T_resolución` [hipótesis: 2 min], durante la que solo se puede aceptar o retirar. Si sigue abierta al cerrar la ventana, se aplica la **regla predeterminada: no hay captura** (ante la duda, a favor del fugitivo). El resultado indica "Resuelta por regla predeterminada".
+4. **El resultado final espera** a que se cierren todas las disputas abiertas, o a que venza la ventana. Así ninguna disputa queda sin resolver al terminar.
+5. **Transparencia:** el resultado lista las disputas y cómo se resolvieron (aceptada, retirada o regla predeterminada). Sin coordenadas.
+6. **Futuro (enfoque C):** un árbitro designado que **no juega** podría ser una tercera autoridad. No forma parte del MVP.
+
+**[PREGUNTA]** ¿Se aprueba la regla predeterminada "no hay captura"? ¿O se prefiere otra, por ejemplo decidir por la cercanía GPS registrada en el momento de la reclamación? Esta última solo sería posible si se conservan esas posiciones hasta el final, lo que choca con la minimización de datos.
+
+**Procedimiento original de la sesión 4 (sustituido en lo que contradiga lo anterior):**
 1. Si el fugitivo responde "No", la reclamación pasa a **disputada**. Los dos lo ven, y el cazador recibe: "Captura disputada. Seguid jugando".
 2. Hay un **enfriamiento entre esa pareja** de `T_disputa` [PARÁMETRO, propuesta 60 s]. Después, el cazador puede volver a reclamar con posiciones nuevas.
 3. Las disputas de cada jugador se **cuentan** y aparecen en el resultado ("3 capturas disputadas"). Hacen de presión social, sin castigo automático.
@@ -284,12 +317,15 @@ Autodeclaración del fugitivo, o declaración del cazador con posiciones actuale
 |---|---|
 | Ubicación exacta (error real frente a precisión declarada) | Pendiente: S1 (T12) |
 | Comportamiento con el móvil bloqueado y en segundo plano | Pendiente: S1 a S3 (T05, T06) |
-| **Notificaciones sonoras** | **Contradicción:** M15 dice "solo vibración". [PROPUESTA, D-036] Vibración por defecto. Sonido opcional, desactivado por defecto y configurable por cada jugador. Validar en dispositivo cómo se comporta con el modo silencio |
+| **Notificaciones sonoras** | **Aprobado en la sesión 5 (D-036):** vibración y sonido opcional. **No se garantiza** el sonido con el móvil silenciado, en segundo plano ni con la app suspendida. S1 registra qué se puede demostrar con avisos *locales* desde el servicio en primer plano. Las notificaciones push remotas no entran en S1 |
 | Avisos de cambio de zona y de escaneo con el móvil bloqueado | Pendiente: S1 en adelante |
 
 ---
 
 ## 11. Preguntas abiertas para el propietario (resumen)
+
+> **Sesión 5:** las preguntas 1 (alcance) y 2 (opciones de ronda: A y B, C pospuesta) quedan **respondidas** (D-030, D-037). Sigue abierta la inclusión de la zona dinámica en la *primera* versión jugable. Pregunta nueva: la regla predeterminada de las disputas (§9.3).
+
 
 1. **Alcance (D-030):** ¿entran en el MVP la zona dinámica, el modo Infección y el escáner? La Infección contradice la decisión aprobada en la sesión 2 sobre modos alternativos.
 2. ¿Qué opciones de ronda se ofrecen: A, B, C o varias? ¿Se sustituye "intercambiar roles"?

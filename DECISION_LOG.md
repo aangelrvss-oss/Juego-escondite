@@ -138,28 +138,115 @@ Reglas completas en `docs/product/GAME_MODES_AND_RULES.md`. Las entradas "Aproba
 ### D-029 · **Aprobada** (propietario)
 **Decisión:** las pistas muestran la antigüedad real. El escáner es limitado y no revela más de lo necesario. Las capturas requieren validación y una vía de disputa. La ubicación exacta, los avisos sonoros y el segundo plano se validan en dispositivos reales.
 
-### D-030 · Propuesta (requiere aprobación: **cambia una decisión aprobada en la sesión 2**)
+### D-030 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- El **primer modo jugable será Clásico**.
+- **Infección** queda como **ampliación futura**: no es requisito para completar la primera versión jugable. Su diseño se conserva.
+- El objetivo inmediato de **S1** es validar la ubicación en Android, no implementar todos los elementos del MVP.
+**Nota:** esta aprobación **modifica** lo que yo propuse en la sesión 4 (Infección y escáner dentro del MVP). La inclusión de la zona dinámica en la *primera* versión jugable no se ha decidido expresamente: forma parte del diseño previsto (D-032), pero no es requisito de S1.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión propuesta:** incluir en el MVP la zona dinámica (opcional por sala), la asignación con proporción, las opciones de ronda A y B, las disputas, el modo **Infección** (segundo modo) y el escáner mínimo. El orden de implementación está en `MVP_SCOPE.md` §6. S1 no cambia.
 **Conflicto:** la sesión 2 aprobó dejar fuera "los modos alternativos que no sean necesarios para validar el núcleo". Incluir la Infección exige que el propietario cambie esa decisión. La exclusión de la zona dinámica, en cambio, solo era una propuesta.
 **Alternativa:** un MVP solo con Clásico y zona dinámica, dejando la Infección y el escáner para la primera ampliación.
 
-### D-031 · Propuesta
+### D-031 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- La proporción de cazadores es **configurable dentro de límites válidos** según el tamaño del grupo.
+- Se mantienen las dos opciones: **sorteo automático** y **selección manual**.
+- La distribución exacta para cada tamaño de grupo **está por definir y probar**.
+**Nota:** las fórmulas numéricas de la propuesta original (`floor(n/2)`, `max(1, floor(n/4))`, proporciones 1/5, 1/3 y 1/2) **no están aprobadas**: son hipótesis.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** límites seguros: siempre ≥ 1 cazador y ≥ 1 fugitivo. En Clásico, cazadores ≤ `floor(n/2)`. En Infección, cazadores iniciales ≤ `max(1, floor(n/4))`. Proporciones predefinidas: 1/5, 1/3 y 1/2 (esta última solo en Clásico).
 
-### D-032 · Propuesta
+### D-032 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- Se aplican **reglas conservadoras**.
+- La zona dinámica **forma parte del diseño previsto**, pero sus **parámetros numéricos siguen pendientes** de validación.
+- **No se elimina automáticamente** a un jugador por cruzar el límite de la zona.
+- Los avisos y las transiciones deben dar un **tiempo razonable** para reaccionar.
+- Una zona circular **no garantiza** rutas transitables ni seguridad física.
+**Nota:** la contención, la fórmula "nadie necesita correr" (1,2 m/s × `T_aviso`) y `R_min` quedan como **recomendación técnica**, no como regla aprobada.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** seguridad de la zona dinámica: cada zona nueva queda dentro de la anterior, nadie necesita recorrer más de `v_paso × T_aviso` (1,2 m/s), el radio mínimo es `R_min` y no se elimina a nadie por la zona.
 
-### D-033 · Propuesta (resuelve la incoherencia señalada en D-023)
+### D-033 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- Los cazadores que estén fuera de la zona válida **no pueden confirmar capturas** mientras sigan fuera.
+- **No se revela** automáticamente su posición a los fugitivos por ese motivo.
+- Se implementa solo cuando corresponda al alcance técnico aprobado. **Diferencia con S0:** el motor de S0 no aplica esta regla (los cazadores fuera de la zona no tienen restricciones).
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** un **cazador** fuera de la zona recibe un aviso y no puede capturar, pero **no se expone** a los fugitivos. Solo los fugitivos se exponen.
 
-### D-034 · Propuesta
+### D-034 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- El diseño futuro contempla **pistas aproximadas**, con **usos limitados**.
+- El escáner **no revela coordenadas exactas** por defecto.
+- **No es requisito de S1** y no debe retrasar la prueba de Android.
+**Nota:** el "recuento dentro de un radio" de la propuesta original es **una** forma posible de pista aproximada, todavía no elegida.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** el escáner devuelve **solo un recuento** de fugitivos con ubicación `CURRENT` a menos de `R_escaneo`, con cupo y enfriamiento. Queda abierto si se avisa al escaneado.
 
-### D-035 · Propuesta
+### D-035 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- Una captura disputada **queda pendiente de resolución**: no elimina automáticamente al fugitivo.
+- Debe haber una **vía para resolver la disputa antes de que termine la partida**.
+- **No se presupone** un anfitrión con funciones de árbitro: el procedimiento y la **autoridad de resolución** deben quedar explícitos.
+- No es necesaria para validar el GPS en S1.
+**Nota:** esto **modifica** la propuesta original, en la que el rechazo cerraba la reclamación con un enfriamiento. El procedimiento propuesto para cumplir el texto aprobado está en `GAME_MODES_AND_RULES.md` §9.3 y es una **propuesta**.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** vía de disputa: el rechazo deja la reclamación como "disputada", con enfriamiento por pareja, un recuento visible en el resultado y sin arbitraje del anfitrión (el árbitro queda para el enfoque C). Sin respuesta en 30 s, sigue sin haber captura (pendiente de confirmar).
 
-### D-036 · Propuesta (contradicción con M15)
+### D-036 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- Se desea **vibración** y **sonido opcional**.
+- **No se garantiza** que el sonido funcione con el móvil silenciado, en segundo plano o con la app suspendida.
+- Hay que investigar las restricciones reales de Android y registrar qué puede demostrarse en S1.
+- **No se añaden permisos innecesarios** ni se pide acceso que no se vaya a usar.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** avisos con vibración por defecto y sonido opcional, desactivado por defecto y configurable por jugador. Hay que validarlo en dispositivo.
 
-### D-037 · Propuesta (contradicción con S0 y con F13)
+### D-037 · **Aprobada por el propietario (sesión 5)**
+**Texto aprobado (propietario, sesión 5):**
+- Opciones previstas entre rondas: **sorteo nuevo** o **los primeros fugitivos capturados como cazadores iniciales** de la ronda siguiente.
+- La **rotación equilibrada avanzada queda pospuesta**.
+- No debe confundirse con el modo **Infección**, donde el capturado cambia de equipo *durante* la misma partida.
+- No se implementa en S1.
+**Diferencia con S0:** el "intercambiar roles" (`swapRoles`) de S0 **no** está entre las opciones aprobadas. Se conserva en el código de S0 hasta que se implementen las rondas.
+
+**Propuesta original (sesión 4; vale solo en lo que no contradiga el texto aprobado):**
 **Decisión:** sustituir "intercambiar roles" por las políticas de ronda (A, B, C y manual), o conservarlo solo como atajo manual.
+
+---
+
+## Sesión 5 · 24/10/2026 (cierre documental y S1)
+
+### D-038 · **Aprobada** (propietario, sesión 5: "Regla general sobre parámetros")
+**Decisión:** cualquier valor numérico no aprobado de forma expresa (intervalo de pistas, radios, duración de avisos, tiempo de transición, número de escaneos, límites de jugadores, umbrales de batería, tolerancias de ubicación…) se etiqueta como **hipótesis**, **parámetro experimental** o **decisión pendiente**. Nunca se convierte en regla sin aprobación.
+
+### D-039 · Propuesta (recomendación técnica para S1)
+**Decisión:** S1 se hace con una **app Android nativa mínima en Java**, sin dependencias de terceros en tiempo de ejecución. Usa `LocationManager` de la plataforma (`FUSED_PROVIDER`, Android 12+) dentro de un **servicio en primer plano de tipo `location`**, con el permiso "mientras se usa la app" (variante V2 del plan). **Sin transporte de red**: la app no declara el permiso `INTERNET`. Los datos se exportan a un CSV **sin coordenadas** mediante el selector de archivos del sistema.
+**Alternativas:** React Native con Expo (requiere cuenta de Expo para compilar en la nube, o el SDK de Android en local, y añade cientos de dependencias de npm) y Kotlin (añade el compilador de Kotlin y su biblioteca estándar).
+**Motivo:** la pregunta de S1 es sobre el comportamiento del sistema Android, no sobre la pila final. Cualquier pila (RN o nativa) acabará dependiendo de este mismo mecanismo. D-005 (cliente final) **sigue pendiente**.
+
+### D-040 · Bloqueo (no es una decisión)
+**Hecho:** la política de red del entorno **deniega `dl.google.com`**, de donde se descargan el SDK de Android y las herramientas de compilación. Sin el SDK no se puede compilar el APK en este contenedor.
+**Opciones (requieren acción del propietario):**
+1. Añadir `dl.google.com` a los dominios permitidos del entorno (sin coste).
+2. Compilar en el ordenador del propietario con Android Studio (gratuito).
+
+---
+
+## Sesión 6 · 24/10/2026 (demo visual)
+
+### D-041 · Decisión técnica reversible (tomada en la sesión 6, dentro de la autorización del propietario)
+**Decisión:** la demo visual es una **web en un solo archivo HTML**, sin dependencias ni red, con un mapa esquemático propio en SVG y una lógica simulada propia (`demo/src/sim.js`), separada del motor de S0.
+**Alternativas:** PWA (instalable, pero necesita servirse por HTTPS: sería un despliegue público, no autorizado) y APK con WebView (bloqueado por D-040).
+**Motivo:** es la única vía que se abre en el móvil sin coste, sin cuentas y sin desplegar nada. La demo no reutiliza `engine/` porque sus reglas aún no incluyen D-031, D-033, D-034 ni D-035, y el motor no se toca en esta sesión.
+**No decide:** el cliente final (D-005), los parámetros (D-038) ni la regla por defecto de las disputas. La demo aplica como **propuesta** "sin resolver = no hay captura" y "sin respuesta en 30 s = no hay captura", y lo dice en pantalla.

@@ -57,6 +57,7 @@ Jugar al escondite o a la persecución entre adultos en una ciudad **no escala s
 **Un solo modo, "Clásico".** Los modos alternativos quedan fuera hasta validar el núcleo. [APROBADA: los modos no necesarios quedan fuera]
 
 > ⚠ **En revisión (sesión 4):** el propietario ha definido el modo **Infección** y la **zona dinámica** (§5 bis). Si la Infección entra en el MVP, cambia la decisión aprobada en la sesión 2. Está pendiente de aprobación en D-030.
+> ✅ **Resuelto en la sesión 5 (D-030 aprobada):** la primera versión jugable solo tiene el modo **Clásico**. La Infección es una **ampliación futura**: se mantiene la decisión de la sesión 2 de no incluir modos alternativos en la primera versión.
 
 - Dos equipos: **cazadores** y **fugitivos**.
 - Los fugitivos tienen una **ventaja inicial**. Durante ese tiempo los cazadores esperan y no reciben ninguna ubicación de los fugitivos.
@@ -127,3 +128,5 @@ Los umbrales numéricos son **hipótesis** que se recalibrarán tras la prueba t
 | % de partidas empezadas que terminan sin fallo técnico | ≥ 90 % | Por debajo de esto el juego no es fiable |
 | % de sesiones con revancha | ≥ 40 % | Indica diversión. A calibrar |
 | Incidentes de seguridad conocidos | 0 graves | Requisito, no objetivo |
+
+> **Sesión 5 (D-030 a D-038 aprobadas):** la primera versión jugable tiene **solo el modo Clásico**. La Infección es una ampliación futura. S1 valida la ubicación en Android. Ningún valor numérico está aprobado salvo que se diga de forma expresa (D-038). Detalle en `DECISION_LOG.md`.

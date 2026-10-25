@@ -215,3 +215,17 @@ Cada resultado se registrará en `QUALITY_STATE.md` con: ID de la prueba, fecha,
 2. Página oficial de `expo-location` (versión del SDK que se vaya a usar): requisitos exactos de permisos y opciones del servicio en primer plano.
 3. Formulario de declaración del servicio en primer plano de tipo `location` en Play Console (requisitos para cuando se publique).
 4. Condiciones actuales del aprovisionamiento gratuito de Apple (solo si hay Mac disponible).
+
+---
+
+## 8. S1 redefinida en la sesión 5
+
+Por decisión del propietario (D-030), S1 **solo** valida la ubicación en Android, **sin transporte de red**. Esto cambia lo siguiente respecto a §3:
+
+| Plan original (§3) | S1 de la sesión 5 |
+|---|---|
+| App en React Native con Expo, con V1 y V2 | **App nativa mínima en Java, solo V2** (D-039, propuesta). V1 queda como alternativa si V2 falla, y necesitaría aprobar `ACCESS_BACKGROUND_LOCATION` |
+| Android real + bot contra un servidor publicado | **Solo el dispositivo**, sin servidor. T01, T02, T07 y T13 de red quedan para cuando se resuelva D-014 |
+| Compilar con EAS (cuenta de Expo) | Compilar con el SDK de Android en local. **Bloqueado** en el contenedor (D-040) |
+
+Correspondencia con §4: T04, T05, T05b, T08, T11 y T12 → S1-T05, S1-T02, S1-T03, S1-T10, S1-T12 y S1-T11. Protocolo completo en [`S1_ANDROID_PROTOCOL.md`](./S1_ANDROID_PROTOCOL.md).

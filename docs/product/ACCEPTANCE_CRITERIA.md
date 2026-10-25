@@ -9,6 +9,8 @@ Formato: **Dado** (contexto) / **Cuando** (acción) / **Entonces** (resultado co
 
 Los umbrales marcados con [H] se recalibrarán tras la prueba técnica. **Ningún criterio está cumplido todavía.**
 
+> **Estado en la sesión 5:** varios criterios se han **superado solo en simulación** en S0 (103 pruebas automatizadas; ver la trazabilidad en `QUALITY_STATE.md`). Superar un criterio en simulación **no** equivale a cumplirlo en el producto. Ningún criterio que dependa de un dispositivo (D8, D9, H1–H4, etc.) está cumplido. Todos los umbrales numéricos son **hipótesis** (D-038).
+
 ---
 
 ## A. Acceso y salas
@@ -102,7 +104,7 @@ Los umbrales marcados con [H] se recalibrarán tras la prueba técnica. **Ningú
 
 Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. Los valores van en forma simbólica (`T_transición`, `K`…) hasta que se aprueben. **Ninguno está implementado ni probado.**
 
-## I. Modo Infección
+## I. Modo Infección [AMPLIACIÓN FUTURA: no aplica a la primera versión jugable (D-030)]
 
 | ID | Criterio | Verif. |
 |---|---|---|
@@ -124,7 +126,7 @@ Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. L
 | AC-J4 | Opción B: los `K` primeros capturados por orden del servidor son los cazadores iniciales. Se aplican los casos límite aprobados (menos de `K` capturas, ausentes, sin capturas) | U |
 | AC-J5 | Opción C (cuando se apruebe la regla): a lo largo de `m` rondas con `n` constante, la diferencia entre el jugador con más y el de menos rondas de cazador es ≤ 1 | U |
 
-## K. Zona dinámica
+## K. Zona dinámica [DISEÑO PREVISTO: no es requisito de S1 (D-032)]
 
 | ID | Criterio | Verif. |
 |---|---|---|
@@ -135,7 +137,7 @@ Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. L
 | AC-K5 | El radio nunca baja de `R_min` | U |
 | AC-K6 | El aviso de cambio de zona llega con el móvil bloqueado | **D** |
 
-## L. Pistas y escáner
+## L. Pistas y escáner [el escáner es diseño futuro (D-034); L1 ya está cubierto en simulación]
 
 | ID | Criterio | Verif. |
 |---|---|---|
@@ -145,7 +147,7 @@ Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. L
 | AC-L4 | El escáner solo cuenta muestras `CURRENT` de fugitivos activos | U |
 | AC-L5 | La exactitud real de la ubicación de las pistas, comparada con un punto de referencia, se mide y documenta | **D** (T12) |
 
-## M. Disputas
+## M. Disputas [ajustar a D-035: la disputa queda pendiente y se resuelve antes del final; AC-M1 y AC-M2 describen la versión de la sesión 4]
 
 | ID | Criterio | Verif. |
 |---|---|---|
@@ -159,3 +161,14 @@ Dependen de D-030 (alcance) y de los parámetros de `GAME_MODES_AND_RULES.md`. L
 |---|---|---|
 | AC-N1 | Por defecto, todos los avisos solo vibran. El sonido solo suena si el jugador lo activa | **D** |
 | AC-N2 | El comportamiento con el modo silencio y no molestar en Android e iOS queda documentado | **D** |
+
+### M bis. Disputas según D-035 [BORRADOR, sesión 5]
+
+| ID | Criterio | Verif. |
+|---|---|---|
+| AC-M4 | Una reclamación disputada deja al fugitivo **activo**. Ninguna captura se registra hasta que se resuelve | U |
+| AC-M5 | Solo el fugitivo (aceptar) o el cazador (retirar) pueden resolver una disputa antes del final. Ningún otro jugador, tampoco el anfitrión, puede hacerlo | U |
+| AC-M6 | Si quedan disputas abiertas al acabar el tiempo, el resultado final no se publica hasta resolverlas o hasta que venza la ventana de resolución. Al vencer se aplica la regla predeterminada aprobada y el resultado indica cómo se resolvió cada una | U |
+
+### S1. Criterios de salida de S1 (Android)
+Se definen en `docs/technical/S1_ANDROID_PROTOCOL.md` (pruebas S1-Txx). Todos sus umbrales son **experimentales** (D-038).

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Permisos mínimos para S1 (D-036: no pedir lo que no se usa):
+  - Ubicación precisa y aproximada: Android 12+ exige pedir ambas.
+  - Servicio en primer plano de tipo ubicación: mantener las lecturas con la pantalla bloqueada.
+  - Notificaciones: aviso obligatorio del servicio y avisos de prueba (D-036).
+  Sin INTERNET: la app no puede enviar datos a ningún sitio.
+  Sin ACCESS_BACKGROUND_LOCATION: S1 prueba la variante "mientras se usa la app" (V2).
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <application
+        android:allowBackup="false"
+        android:fullBackupContent="false"
+        android:icon="@android:drawable/ic_menu_mylocation"
+        android:label="Escondite S1"
+        android:theme="@android:style/Theme.Material.Light">
+
+        <activity
+            android:name=".MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".LocationTestService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+    </application>
+</manifest>

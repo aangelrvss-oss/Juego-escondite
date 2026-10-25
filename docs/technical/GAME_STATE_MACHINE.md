@@ -247,3 +247,9 @@ Las reglas están en `docs/product/GAME_MODES_AND_RULES.md`. Esta sección descr
 | Rechazo de captura | Termina la reclamación | Disputa con enfriamiento |
 | Modos | Solo Clásico | Clásico e Infección |
 | Comentarios del código | `engine/src/constants.ts` y `engine/test/zone.test.ts` dicen "fuera del MVP" | Habrá que actualizarlos cuando se apruebe D-030 (sin tocarlos en esta sesión) |
+
+### 9.8 Actualización de la sesión 5
+- **Infección (§9.2):** ampliación futura (D-030). La propuesta técnica se conserva.
+- **D-033 aprobada:** los cazadores fuera de la zona no pueden confirmar capturas y no se exponen. **S0 no lo implementa.**
+- **Disputas (§9.6):** D-035 exige que la disputa quede pendiente y se resuelva antes del final con una autoridad explícita. Cambio técnico propuesto: `TagClaim` con estado `disputed` que **no** caduca a "sin captura" durante la partida. Se resuelve con `accept_tag` (fugitivo) o `withdraw_tag` (cazador). Un nuevo estado de cierre, `RESOLVING`, entre `ACTIVE` y `FINISHED`, solo si hay disputas abiertas al acabar el tiempo, con el plazo `T_resolución` y la regla predeterminada. **Si se aprueba, este estado amplía la máquina de §2.**
+- **Rondas (§9.3):** solo las políticas `redraw` y `first_captured` (D-037). `balanced` pospuesta. `swapRoles` de S0 no está aprobado.

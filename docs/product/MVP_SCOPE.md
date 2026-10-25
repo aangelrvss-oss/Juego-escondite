@@ -55,6 +55,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 - Cualquier función dirigida a menores.
 - Modos alternativos (infección, asesino, sardinas…), zona que se reduce [P: candidata a la primera ampliación], capturados que se pasan a cazadores y objetos o poderes.
   > ⚠ **En revisión (sesión 4):** el propietario ha definido el modo **Infección** (los capturados se convierten en cazadores), la **zona dinámica** (encoge y se mueve) y un **escáner** limitado. La exclusión de la zona dinámica era solo una propuesta [P], no una decisión aprobada. La de los modos alternativos sí estaba aprobada. Ver §6 y D-030.
+  > ✅ **Sesión 5 (D-030 aprobada):** la Infección queda **fuera** de la primera versión jugable, como ampliación futura. El escáner es diseño futuro (D-034). La zona dinámica es diseño previsto (D-032), pero su inclusión en la primera versión no se ha decidido de forma expresa. Ver §6.1.
 - Kit de organizador, eventos, árbitro con vista global y torneos (enfoque C).
 - Cuentas con correo o contraseña. Sincronizar el historial entre dispositivos.
 - Detección automática de zonas peligrosas con datos de mapa.
@@ -66,7 +67,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 |---|---|
 | Eventos y organizadores (C) | `Room` separada de `Game` (una sala, varias partidas). Rol `host` con permisos en una tabla de capacidades, ampliable a `referee` |
 | Más modos | Motor con reglas encapsuladas por `mode`. El protocolo incluye `mode` desde la versión 1 |
-| Zona que se reduce | `Zone` versionada con un calendario de cambios (en el MVP, una sola versión). ⚠ Sesión 4: la zona dinámica se propone **dentro** del MVP (§6) |
+| Zona que se reduce | `Zone` versionada con un calendario de cambios (en el MVP, una sola versión). ⚠ Sesión 4: la zona dinámica se propuso **dentro** del MVP (§6). Sesión 5: diseño previsto, con la inclusión en la primera versión sin decidir (§6.1) |
 | Cuentas | Identidad de invitado que más adelante se puede vincular a Apple o Google |
 | Moderación | Registro de eventos y bloqueos por jugador |
 
@@ -77,7 +78,7 @@ Que un grupo de 2 a 20 adultos pueda **instalar, crear una sala privada gratis, 
 - Datos preferentemente en la UE, comprobando las condiciones reales de cada proveedor. [APROBADA]
 - Arquitectura **no aprobada**: depende de la prueba técnica.
 
-## 6. Cambios de alcance propuestos (sesión 4) [PENDIENTES de aprobación: D-030]
+## 6. Cambios de alcance propuestos (sesión 4) [HISTÓRICO: sustituido por §6.1 tras aprobarse D-030 a D-037 en la sesión 5]
 
 Las reglas de cada elemento están en [`GAME_MODES_AND_RULES.md`](./GAME_MODES_AND_RULES.md).
 
@@ -93,3 +94,19 @@ Las reglas de cada elemento están en [`GAME_MODES_AND_RULES.md`](./GAME_MODES_A
 | Sonido opcional en avisos | Solo vibración (M15) | Vibración por defecto y sonido opcional (D-036) | Con los avisos, tras S1 |
 
 **S1 no cambia:** valida la ubicación con el móvil bloqueado usando Clásico con zona fija. Ninguno de estos elementos altera esa pregunta. El escáner y la zona dinámica solo añaden eventos, no más envíos de ubicación.
+
+### 6.1 Estado tras las decisiones de la sesión 5
+
+| Elemento | Estado aprobado | Requisito de S1 |
+|---|---|---|
+| Modo Clásico | **Único modo obligatorio** de la primera versión jugable (D-030) | No (S1 solo valida la ubicación) |
+| Modo Infección | **Ampliación futura** (D-030). Diseño conservado | No |
+| Zona dinámica | Parte del **diseño previsto**, con reglas conservadoras y parámetros pendientes (D-032). Su inclusión en la *primera* versión jugable **no está decidida de forma expresa** | No |
+| Asignación automática o manual con proporción configurable | Aprobada (D-031). Distribución exacta por definir y probar | No |
+| Rondas | Opciones A y B aprobadas. C pospuesta (D-037) | No |
+| Disputas | Quedan pendientes y se resuelven antes del final, con una autoridad explícita (D-035). El procedimiento sigue siendo una propuesta | No |
+| Escáner | Diseño futuro: pistas aproximadas con usos limitados (D-034) | No |
+| Avisos | Vibración y sonido opcional, sin garantías con el móvil en silencio o la app suspendida (D-036) | **Parcial:** S1 registra el comportamiento de los avisos locales |
+| Cazadores fuera de la zona sin poder capturar | Aprobado (D-033). No implementado en S0 | No |
+
+Los valores numéricos de §2 ("Valores propuestos") siguen siendo **hipótesis** (D-038).

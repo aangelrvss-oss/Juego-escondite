@@ -1,6 +1,6 @@
 # Estado de calidad
 
-**Última actualización:** 24/10/2026 (sesión 3, etapa S0)
+**Última actualización:** 24/10/2026 (sesión 6: demo visual simulada)
 
 ## Resumen
 
@@ -105,3 +105,51 @@ La subida coincide con el modelo (720 posiciones por hora más comandos). La baj
 | ID | Fecha | Dispositivo / SO | Variante | Red | REAL / SIMULADO | Medido | Resultado | Observaciones |
 |---|---|---|---|---|---|---|---|---|
 | — | — | — | — | — | — | — | — | — |
+
+## S1: prueba de ubicación en Android (sesión 5)
+
+**Qué hay:** el núcleo Java (`android/core`), que se ha probado, y la app (`android/app`), que se ha **escrito pero no compilado como APK** por el bloqueo D-040.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `gradle -p android :core:test` (JUnit 5) | **13 de 13 superadas** | Automatizada, con datos **SIMULADOS** |
+| Código Java de `app/` compilado con `javac` contra `android-all` 14 (framework de Android 14 de Robolectric, SHA-1 verificado) | Compila, con **0 avisos** de nuestro código | Comprobación estática. **No es una compilación Android ni un APK** |
+| Manifiesto, recursos y configuración de AGP | **Sin verificar** | Requieren el SDK de Android |
+| Pruebas en el dispositivo (S1-T01 a S1-T14) | **PENDIENTES**: ninguna ejecutada | Dispositivo real (Xiaomi 14T) |
+| **Sesión 9:** `gradle -p android :app:assembleDebug` con el SDK instalado | **Compila** sin cambios de configuración (AGP 8.7.3, compileSdk 34). APK firmado con la clave de depuración (esquema v2) | Compilación real. **No es una prueba en el dispositivo** |
+| **Sesión 10:** `gradle -p android :core:test` | **20 de 20 superadas** (13 anteriores + 7 de `LiveReadingTest`: límites de frescura y precisión, formato de antigüedad coherente con la frescura, estados del permiso, CSV y registros sin coordenadas) | Automatizada, **SIMULADA** |
+| **Sesión 10:** APK con el panel "Lectura actual" | Compila; permisos del manifiesto final: solo ubicación precisa y aproximada, servicio en primer plano (de ubicación) y notificaciones. **Sin `INTERNET` ni `ACCESS_BACKGROUND_LOCATION`** | Compilación y revisión del manifiesto con `aapt2` |
+| Panel "Lectura actual" en el Xiaomi 14T | **PENDIENTE**: no se ha instalado ni probado en ningún móvil | Dispositivo real |
+
+**Ningún resultado de S1 procede de un dispositivo real.** Las pruebas del núcleo usan sesiones generadas en código para comprobar los cálculos (cobertura, huecos, antigüedad, batería y redacción de coordenadas), no el comportamiento de Android.
+
+**S0 no cambia:** sus 103 pruebas siguen siendo validaciones **simuladas** del motor, no validaciones de GPS real.
+
+## Demo visual (sesión 6)
+
+**Qué es:** una demo **simulada** en un solo HTML (`demo/dist/rastro-demo.html`). No usa GPS, red ni servidor. Su lógica (`demo/src/sim.js`) es **independiente del motor de S0** y no lo valida ni lo sustituye.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `npm run test:demo` (lógica simulada de la demo) | **21 de 21 superadas** | Automatizada, **SIMULADA** |
+| Verificación por mutación de 7 reglas (D-033 en jugador y bots, disputa sin eliminación, bot que no captura al jugador en disputa, fugitivo sin ver cazadores, escáner sin coordenadas, regla por defecto) | Las 7 mutaciones las detecta al menos una prueba | Automatizada |
+| `node demo/e2e/flow.e2e.cjs` en Chromium (Playwright del entorno, `file://`) a 412×915 (DPR 3) y 360×740 (DPR 2) | Recorrido completo superado en ambos tamaños en las 5 últimas ejecuciones (la última, con el código final): inicio, reglas, unirse (error y válido), configuración, sala (copiar, sortear, equipos, listos), partida como cazador (velocidad, mapa, escáner, pistas, captura) y como fugitivo (reclamación entrante, disputa, final real), final y nuevas rondas | Navegador de escritorio con **emulación** móvil |
+| En el recorrido: errores de consola, desbordamiento horizontal, botones < 44 px, llamadas a la geolocalización | **0** en todas las pantallas comprobadas | Automatizada |
+| Revisión visual de 36 capturas (2 tamaños) | Corregidos: avisos que tapaban el HUD y los modales, botones desactivados transparentes sobre el mapa, cambios de zona contados desde la ventaja, textos con género | Manual |
+| Recorrido adicional (fuera del repositorio): botón atrás durante la partida, aceptar una disputa propia, terminar desde "Demo", política "cazan los primeros capturados", autodeclaración y atrás desde el final | Superado | Navegador con emulación móvil |
+| S0 tras la sesión 6 | **103 de 103** y `typecheck` sin errores; `engine/` y `sim/` sin cambios | Automatizada |
+| Núcleo de S1 tras la sesión 6 | **13 de 13** (`gradle --offline`; `android/` sin cambios) | Automatizada, SIMULADA |
+| **Xiaomi 14T real** | **NO PROBADO.** Nadie ha abierto la demo en el dispositivo | — |
+
+**Limitaciones:** el tamaño 412×915 es una aproximación del Xiaomi 14T, no una medida en el dispositivo. La emulación de Chromium no reproduce HyperOS, su gestor de archivos, la barra de gestos ni el brillo al sol. La vibración no se ha comprobado (Chromium de escritorio no vibra).
+
+## Demo visual: pasada de diseño (sesión 7)
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `npm run build:demo` | Genera `demo/dist/rastro-demo.html` (113 KB) | — |
+| `npm run test:demo` | **21 de 21** (la lógica simulada no cambia) | Automatizada, SIMULADA |
+| `npm test` y `typecheck` de S0 | **103 de 103** y sin errores; `engine/` y `sim/` sin cambios | Automatizada |
+| `node demo/e2e/flow.e2e.cjs` a 412×915 y 360×740 | Recorrido completo superado. Comprueba 0 errores de consola, 0 desbordamientos horizontales, 0 botones < 44 px, 0 llamadas a la geolocalización y, desde esta sesión, **0 peticiones de red** | Chromium con emulación móvil |
+| Revisión visual selectiva (inicio, configuración, sala, partida, captura, disputa, final) | Corregidos dos solapes detectados: avisos sobre el panel abierto y sobre el pie de la sala | Manual |
+| **Xiaomi 14T real** | **NO PROBADO** | — |

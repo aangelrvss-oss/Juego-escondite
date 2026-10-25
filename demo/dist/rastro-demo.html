@@ -1,0 +1,2415 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b0d17">
+<meta name="color-scheme" content="dark">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="description" content="Demo visual SIMULADA de una partida del modo Clásico. Sin GPS real, sin red y sin cuentas.">
+<title>Rastro · demo simulada</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b0d17'/%3E%3Ccircle cx='32' cy='32' r='22' fill='none' stroke='%23c6f432' stroke-width='5'/%3E%3Ccircle cx='40' cy='26' r='7' fill='%23c6f432'/%3E%3C/svg%3E">
+<style>
+/* DEMO VISUAL · identidad provisional propia de Rastro (sin recursos de terceros).
+   Dirección «noche urbana, señal única» (sesión 12):
+   - Base neutra carbón, sin tinte.
+   - Un solo color de marca, el lima: «tú» y «lo que debes hacer ahora» (acción principal, confirmado).
+   - Equipos: naranja (cazadores) y cian (fugitivos), solo en formas, iconos, rol y avatares.
+   - Rojo: peligro, disputa e irreversible.
+   - «Simulado», «experimental» y «pendiente» son neutros con borde discontinuo o icono, nunca otro color.
+   Contraste comprobado (WCAG AA): texto ≥ 4,5:1 sobre bg, surface y surface-2. */
+:root {
+  --bg: #0a0b0d;
+  --surface: #15171b;
+  --surface-2: #1e2126;
+  --surface-3: #2a2e35;
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #f2f3f5;
+  --muted: #a3a8b2;
+  --faint: #8a909b;
+  --lime: #c6f432;
+  --lime-ink: #182000;
+  --lime-soft: rgba(198, 244, 50, 0.13);
+  --hunter: #ff6a3d;
+  --hunter-soft: rgba(255, 106, 61, 0.16);
+  --runner: #33c3e6;
+  --runner-soft: rgba(51, 195, 230, 0.16);
+  --danger: #ff5c72;
+  --danger-soft: rgba(255, 92, 114, 0.14);
+  --r-lg: 22px;
+  --r-md: 14px;
+  --r-sm: 8px;
+  --tap: 52px;
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); }
+body {
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  font-size: 16px;
+  line-height: 1.45;
+  overflow-x: hidden;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+button, input { font: inherit; color: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; }
+:focus-visible { outline: 3px solid var(--lime); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.mono { font-family: ui-monospace, "Roboto Mono", "SFMono-Regular", Menlo, monospace; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+#app { min-height: 100%; }
+
+/* ---------- estructura de pantalla ---------- */
+.screen {
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: calc(12px + var(--safe-top)) 16px calc(16px + var(--safe-bottom));
+  max-width: 560px;
+  margin: 0 auto;
+}
+.topbar { display: flex; align-items: center; gap: 10px; min-height: var(--tap); }
+.topbar h1 { font-size: 20px; font-weight: 700; margin: 0; flex: 1; letter-spacing: -0.015em; }
+.icon-btn {
+  width: 48px; height: 48px; border-radius: 50%; border: 0;
+  background: var(--surface-2); display: grid; place-items: center; flex: none;
+}
+.icon-btn:active { background: var(--surface-3); }
+.icon-btn svg { width: 22px; height: 22px; }
+.spacer { flex: 1; }
+
+/* Aviso de simulación: siempre el mismo componente. */
+/* Borde discontinuo = «no es real / provisional», igual que las pistas del mapa. */
+.demo-pill {
+  display: inline-flex; align-items: center; gap: 6px; flex: none;
+  font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase;
+  color: var(--text); border: 1px dashed var(--line-strong);
+  padding: 4px 10px; border-radius: var(--r-sm); white-space: nowrap;
+}
+.exp { font-size: 12px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); border: 1px dashed var(--line-strong); border-radius: 6px; padding: 1px 6px; }
+
+/* ---------- botones ---------- */
+.btn {
+  min-height: var(--tap); padding: 12px 18px; border-radius: var(--r-md); border: 1px solid transparent;
+  background: var(--surface-2); font-weight: 600; font-size: 16px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-align: center;
+  transition: transform 0.08s ease, background-color 0.12s ease;
+}
+.btn:active:not(:disabled) { transform: scale(0.98); background: var(--surface-3); }
+.btn-primary { background: var(--lime); color: var(--lime-ink); font-weight: 700; }
+.btn-primary:active:not(:disabled) { background: var(--lime); filter: brightness(0.9); }
+.btn-outline { background: transparent; border-color: var(--line-strong); }
+.btn-ghost { background: transparent; color: var(--muted); }
+.btn-danger { background: var(--surface-2); color: var(--danger); }
+.btn .dot { width: 14px; height: 14px; }
+.btn-line { display: inline-flex; align-items: center; gap: 8px; }
+.btn:disabled { background: var(--surface); color: var(--faint); border-color: var(--line); }
+.btn-block { width: 100%; }
+.btn-row { display: flex; gap: 10px; }
+.btn-row > * { flex: 1; }
+.btn small { font-weight: 500; opacity: 0.85; }
+.link-btn { background: none; border: 0; color: var(--lime); padding: 12px 0; min-height: 44px; font-size: 15px; font-weight: 600; }
+
+/* ---------- inicio ---------- */
+.home { justify-content: space-between; }
+.home-hero { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 14px; padding: 8px 0 16px; }
+.hero-art { width: min(74vw, 300px); height: auto; align-self: center; margin-bottom: 8px; }
+.brand { display: flex; align-items: baseline; gap: 10px; }
+.brand-name { font-size: 52px; font-weight: 800; letter-spacing: -0.045em; line-height: 1; }
+.brand-sub { color: var(--faint); font-size: 12px; }
+.home-tagline { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; margin: 0; }
+.home-tagline em { font-style: normal; color: var(--muted); }
+.home-text { color: var(--muted); margin: 0; max-width: 36ch; font-size: 15px; }
+.home-actions { display: grid; gap: 10px; }
+.home-foot { color: var(--faint); font-size: 12px; text-align: center; margin: 4px 0 0; }
+
+/* ---------- tarjetas y formularios ---------- */
+.card { background: var(--surface); border-radius: var(--r-lg); padding: 16px; }
+.card h2 { font-size: 15px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.card p { margin: 0 0 8px; color: var(--muted); font-size: 14px; }
+.card p:last-child { margin-bottom: 0; }
+.hint { color: var(--muted); font-size: 13px; margin: 10px 0 0; }
+.seg { display: flex; gap: 4px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-md); padding: 4px; }
+.seg button { flex: 1; min-height: 46px; border: 0; border-radius: var(--r-sm); background: transparent; font-weight: 600; font-size: 15px; color: var(--muted); padding: 6px 8px; }
+.seg button:active { background: var(--surface-2); }
+.seg button[aria-pressed="true"] { background: var(--lime-soft); color: var(--lime); }
+.mode-grid { display: grid; gap: 8px; }
+.mode-card { text-align: left; border-radius: var(--r-md); border: 2px solid var(--lime); background: var(--lime-soft); padding: 12px 14px; min-height: var(--tap); }
+.mode-card b { display: block; font-size: 16px; }
+.mode-card span { color: var(--muted); font-size: 13px; }
+.mode-card.future { border: 0; background: none; padding: 4px 2px; min-height: 44px; width: 100%; color: var(--faint); }
+.mode-card.future b { font-size: 13px; font-weight: 600; display: inline; }
+.mode-card.future span { display: none; }
+.stepper { display: flex; align-items: center; gap: 12px; }
+.stepper button { width: var(--tap); height: var(--tap); border-radius: var(--r-md); border: 0; background: var(--surface-2); font-size: 26px; line-height: 1; }
+.stepper button:active:not(:disabled) { background: var(--surface-3); }
+.stepper button:disabled { color: var(--faint); background: var(--bg); }
+.stepper output { flex: 1; text-align: center; font-size: 36px; font-weight: 800; line-height: 1.1; }
+.stepper output small { display: block; font-size: 12px; font-weight: 500; color: var(--muted); }
+.preview { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 999px; background: var(--surface-2); }
+.chip .dot { width: 11px; height: 11px; }
+.chip.hunter { color: var(--hunter); background: var(--hunter-soft); }
+.chip.runner { color: var(--runner); background: var(--runner-soft); }
+details.more { background: var(--surface); border-radius: var(--r-lg); }
+details.more summary { min-height: var(--tap); padding: 14px 16px; font-weight: 700; font-size: 15px; list-style: none; display: flex; align-items: center; gap: 8px; }
+details.more summary::-webkit-details-marker { display: none; }
+details.more summary::after { content: "▾"; margin-left: auto; color: var(--muted); }
+details.more[open] summary::after { content: "▴"; }
+details.more .inner { padding: 0 16px 16px; display: grid; gap: 16px; }
+.field-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--muted); }
+.switch { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: var(--tap); }
+.switch button { width: 56px; height: 34px; border-radius: 999px; border: 0; background: var(--surface-3); position: relative; flex: none; }
+.switch button::after { content: ""; position: absolute; top: 4px; left: 4px; width: 26px; height: 26px; border-radius: 50%; background: var(--faint); transition: transform 0.15s ease; }
+.switch button[aria-checked="true"] { background: var(--lime-soft); }
+.switch button[aria-checked="true"]::after { transform: translateX(22px); background: var(--lime); }
+.switch button:disabled { opacity: 0.5; }
+.sticky-foot { position: sticky; bottom: 0; padding: 14px 0 calc(4px + var(--safe-bottom)); background: linear-gradient(transparent, var(--bg) 26%); margin-top: auto; }
+
+.code-input {
+  width: 100%; min-height: 72px; font-size: 32px; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;
+  border-radius: var(--r-md); border: 2px solid var(--surface-3); background: var(--bg); padding: 8px 4px 8px 0.3em;
+}
+.code-input:focus { border-color: var(--lime); outline: none; }
+.code-input[aria-invalid="true"] { border-color: var(--danger); background: var(--danger-soft); }
+.error-text { color: var(--danger); font-size: 14px; margin-top: 8px; min-height: 1.4em; }
+.error-text:empty { min-height: 0; margin: 0; }
+
+.rules h3 { font-size: 16px; margin: 0 0 8px; display: flex; gap: 8px; align-items: center; justify-content: space-between; }
+.rules ul { margin: 0; padding-left: 18px; color: var(--muted); font-size: 14px; }
+.rules li { margin-bottom: 6px; }
+.rules li:last-child { margin-bottom: 0; }
+.future-note { background: none; border: 1px dashed var(--line-strong); }
+.future-note h3, .future-note li { color: var(--muted); }
+
+/* ---------- sala de espera ---------- */
+.code-box { display: flex; align-items: center; gap: 12px; padding: 10px 10px 10px 16px; border: 1px dashed var(--line-strong); border-radius: var(--r-md); }
+.code-box .code { font-size: 32px; font-weight: 800; letter-spacing: 0.12em; flex: 1; color: var(--text); }
+.code-box .btn { min-height: 48px; padding: 8px 14px; font-size: 15px; }
+.meta-line { color: var(--muted); font-size: 14px; margin: 10px 0 0; }
+.quota { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.quota-item { border-radius: var(--r-md); padding: 10px 12px; background: var(--surface-2); }
+.quota-item .n { font-size: 28px; font-weight: 800; line-height: 1.1; }
+.quota-item.hunter .n { color: var(--hunter); }
+.quota-item.runner .n { color: var(--runner); }
+.quota-item small { color: var(--muted); display: block; font-size: 12px; }
+.players { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.player { display: flex; align-items: center; gap: 12px; padding: 8px 0; min-height: 60px; border-bottom: 1px solid var(--line); }
+.player:last-child { border-bottom: 0; }
+.avatar { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; font-weight: 800; flex: none; background: var(--surface-3); color: var(--muted); }
+.avatar.hunter { background: var(--hunter-soft); color: var(--hunter); }
+.avatar.runner { background: var(--runner-soft); color: var(--runner); }
+.player .who { flex: 1; min-width: 0; }
+.player .who b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.player .who small { color: var(--muted); font-size: 12px; }
+.ready { font-weight: 700; color: var(--faint); }
+.ready.on { color: var(--lime); }
+.team-toggle { display: flex; background: var(--bg); border-radius: 12px; padding: 3px; gap: 2px; flex: none; }
+.team-toggle button { min-width: 52px; min-height: 44px; border: 0; border-radius: 9px; background: transparent; font-weight: 700; font-size: 13px; color: var(--faint); padding: 0 8px; }
+.team-toggle button[aria-pressed="true"].hunter { background: var(--surface-3); color: var(--hunter); }
+.team-toggle button[aria-pressed="true"].runner { background: var(--surface-3); color: var(--runner); }
+.team-tag { font-size: 12px; font-weight: 700; padding: 5px 10px; border-radius: 999px; flex: none; }
+.team-tag.hunter { color: var(--hunter); background: var(--hunter-soft); }
+.team-tag.runner { color: var(--runner); background: var(--runner-soft); }
+.team-tag.none { color: var(--faint); background: var(--surface-2); }
+.issues { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.issue { font-size: 14px; padding: 9px 12px; border-radius: var(--r-sm); display: flex; gap: 8px; border-left: 3px solid; }
+.issue.error { background: var(--danger-soft); color: var(--text); border-color: var(--danger); }
+.issue.warning { background: var(--surface-2); color: var(--text); border-color: var(--faint); border-left-style: dashed; }
+.issue.ok { background: var(--lime-soft); color: var(--text); border-color: var(--lime); }
+.foot-status { font-size: 13px; font-weight: 600; margin: 0 0 10px; display: flex; gap: 8px; align-items: center; }
+.foot-status::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: currentColor; flex: none; }
+.foot-status.error { color: var(--danger); }
+.foot-status.ok { color: var(--lime); }
+.foot-status.wait { color: var(--muted); }
+
+/* ---------- partida ---------- */
+.game { position: fixed; inset: 0; display: flex; flex-direction: column; background: var(--bg); overflow: hidden; }
+.map-wrap { position: absolute; inset: 0; }
+.map { width: 100%; height: 100%; display: block; touch-action: manipulation; user-select: none; }
+.hud { position: absolute; top: 0; left: 0; right: 0; padding: calc(10px + var(--safe-top)) 12px 0; display: grid; gap: 8px; pointer-events: none; }
+.hud > * { pointer-events: auto; }
+.hud-row { display: flex; align-items: stretch; gap: 8px; }
+.glass { background: rgba(10, 11, 13, 0.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border: 1px solid var(--line); border-radius: 16px; }
+/* Fase en el reloj: espera (neutra), caza (lima = acción), resolución (rojo). Además lleva su nombre. */
+.hud-card { flex: 1; display: flex; align-items: center; gap: 12px; padding: 8px 14px; border-left: 4px solid var(--faint); }
+.hud-card.phase-hunt { border-left-color: var(--lime); }
+.hud-card.phase-resolving { border-left-color: var(--danger); }
+.hud-card.phase-finished { border-left-color: var(--faint); }
+.timer { display: flex; flex-direction: column; }
+.timer .label { font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.phase-hunt .timer .label { color: var(--lime); }
+.phase-resolving .timer .label { color: var(--danger); }
+.timer .clock { font-size: 36px; font-weight: 800; line-height: 1.05; }
+.role { margin-left: auto; display: flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; padding: 6px 10px; border-radius: 999px; }
+.role .dot { width: 13px; height: 13px; flex: none; }
+.role.hunter { color: var(--hunter); background: var(--hunter-soft); }
+.role.runner { color: var(--runner); background: var(--runner-soft); }
+.role.spect { color: var(--muted); background: var(--surface-2); }
+.hud .icon-btn { width: 52px; height: auto; min-height: 52px; border-radius: 16px; }
+.status-strip { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 6px 12px; font-size: 12px; color: var(--muted); border-radius: 12px; }
+.status-strip .sep { width: 3px; height: 3px; border-radius: 50%; background: var(--faint); }
+.status-strip .sim { color: var(--text); font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; font-size: 12px; border: 1px dashed var(--line-strong); border-radius: 6px; padding: 1px 6px; }
+.status-strip .paused { color: var(--text); font-weight: 700; }
+.banner { padding: 10px 14px; font-size: 14px; font-weight: 600; margin-bottom: 8px; border-left: 4px solid var(--line-strong); }
+.banner:last-child { margin-bottom: 0; }
+/* Indicación del siguiente paso: neutra salvo «actúa» (lima), «cambio de zona» (blanco) y peligro o disputa (rojo, con fondo). */
+.banner { font-size: 15px; }
+.banner.zone { border-left-color: var(--text); }
+.banner.go { border-left-color: var(--lime); }
+.banner.danger { background: rgba(64, 12, 20, 0.94); border-left-color: var(--danger); }
+.banner.spect { border-left-color: var(--faint); color: var(--muted); }
+.banner.hint { font-weight: 500; color: var(--muted); padding: 6px 12px; font-size: 13px; display: inline-block; border-left-color: var(--faint); }
+.bar { flex: 1; height: 6px; border-radius: 6px; background: rgba(255, 255, 255, 0.12); overflow: hidden; min-width: 60px; }
+.bar > i { display: block; height: 100%; background: var(--text); }
+
+.dock { position: absolute; left: 0; right: 0; bottom: 0; padding: 0 12px calc(12px + var(--safe-bottom)); display: grid; gap: 8px; pointer-events: none; }
+.dock > * { pointer-events: auto; }
+.dock-actions { display: flex; gap: 8px; align-items: stretch; }
+.dock-actions .btn { min-height: 62px; border-radius: 18px; font-size: 17px; flex-direction: column; gap: 1px; line-height: 1.15; padding: 8px 10px; }
+.dock-actions .main { flex: 1.7; }
+.dock-actions .side { flex: 1; }
+.dock-actions small { font-size: 12px; }
+.dock .btn.glass:not(:disabled) { background: rgba(30, 33, 38, 0.96); }
+.dock .btn:disabled { background: rgba(10, 11, 13, 0.94); color: var(--muted); }
+.dock .btn:disabled small { opacity: 1; color: var(--faint); }
+.sheet { padding: 4px 12px 12px; max-height: 46dvh; display: flex; flex-direction: column; }
+.sheet-handle { position: relative; display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; min-height: 50px; padding: 8px 2px 4px; text-align: left; }
+.sheet-handle .grab { width: 36px; height: 4px; border-radius: 4px; background: var(--faint); position: absolute; left: 50%; top: 4px; transform: translateX(-50%); }
+.sheet-handle b { font-size: 15px; }
+.sheet-handle span { color: var(--muted); font-size: 13px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sheet .tabs { display: flex; gap: 4px; margin: 4px 0 10px; background: var(--bg); border-radius: 12px; padding: 3px; }
+.sheet .tabs button { flex: 1; min-height: 44px; border-radius: 10px; border: 0; background: transparent; font-weight: 600; font-size: 14px; color: var(--muted); }
+.sheet .tabs button[aria-selected="true"] { background: var(--surface-3); color: var(--text); }
+.sheet-body { overflow-y: auto; overscroll-behavior: contain; display: grid; gap: 6px; padding-bottom: 4px; }
+.row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 12px; background: var(--surface-2); font-size: 14px; min-height: 52px; }
+.row .grow { flex: 1; min-width: 0; }
+.row .grow small { display: block; color: var(--muted); font-size: 12px; }
+.row .btn { min-height: 44px; padding: 6px 14px; font-size: 14px; border-radius: 12px; }
+.section-label { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); margin: 6px 2px 0; }
+.section-label.hunter { color: var(--hunter); }
+.section-label.runner { color: var(--runner); }
+.state { font-size: 12px; font-weight: 700; padding: 4px 9px; border-radius: 999px; white-space: nowrap; }
+.state.pending { background: var(--surface-3); color: var(--text); }
+.state.confirmed, .state.accepted { background: var(--lime-soft); color: var(--lime); }
+.state.disputed { background: var(--danger-soft); color: var(--danger); }
+.state.closed { background: var(--surface-3); color: var(--muted); }
+.empty { color: var(--muted); font-size: 14px; padding: 4px 2px; margin: 0; }
+.demo-ctrl { padding: 4px 2px; display: grid; gap: 10px; }
+.demo-ctrl .seg button { min-height: 44px; }
+
+/* ---------- capas: modal, cuenta atrás, avisos ---------- */
+.overlay { position: fixed; inset: 0; background: rgba(4, 5, 12, 0.7); display: flex; align-items: flex-end; justify-content: center; z-index: 30; padding: 12px 12px calc(12px + var(--safe-bottom)); }
+.modal { width: 100%; max-width: 520px; background: var(--surface); border: 1px solid var(--line); border-radius: 24px; padding: 20px; display: grid; gap: 14px; max-height: 90dvh; overflow-y: auto; }
+.modal h2 { margin: 0; font-size: 22px; letter-spacing: -0.015em; line-height: 1.2; }
+.modal p { margin: 0; color: var(--muted); }
+.big-state { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md); background: var(--surface-2); font-weight: 700; border-left: 4px solid var(--line-strong); }
+.big-state.pending { border-left-color: var(--faint); }
+.big-state.ok { border-left-color: var(--lime); color: var(--lime); }
+.big-state.dispute { border-left-color: var(--danger); color: var(--danger); }
+.big-state.closed { border-left-color: var(--faint); color: var(--muted); }
+.disclaimer { font-size: 13px; color: var(--faint); border-top: 1px solid var(--line); padding-top: 10px; }
+.spinner { width: 22px; height: 22px; border-radius: 50%; border: 3px solid rgba(255, 255, 255, 0.15); border-top-color: var(--text); animation: spin 0.9s linear infinite; flex: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.countdown { position: fixed; inset: 0; z-index: 25; display: grid; place-items: center; background: rgba(10, 11, 13, 0.95); pointer-events: none; padding: 24px; }
+.countdown b { display: block; text-align: center; font-size: 140px; font-weight: 800; color: var(--lime); line-height: 1; }
+.countdown small { display: block; text-align: center; font-size: 18px; font-weight: 600; color: var(--text); margin-top: 12px; max-width: 30ch; }
+.toasts { position: fixed; left: 12px; right: 12px; bottom: calc(150px + var(--safe-bottom)); z-index: 20; display: grid; gap: 8px; pointer-events: none; justify-items: center; }
+body.in-game .toasts { bottom: calc(180px + var(--safe-bottom)); }
+/* Con el panel abierto, los avisos suben para no tapar lo que se está leyendo. */
+body.in-game.sheet-open .toasts { bottom: auto; top: calc(150px + var(--safe-top)); }
+.toast { max-width: 480px; width: 100%; padding: 11px 14px; border-radius: var(--r-md); background: rgba(42, 46, 53, 0.97); border-left: 4px solid var(--faint); font-size: 14px; font-weight: 600; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); animation: toast-in 0.16s ease-out; }
+.toast.info { border-left-color: var(--lime); }
+.toast.zone { border-left-color: var(--text); }
+.toast.dispute { border-left-color: var(--danger); }
+.toast .ico { display: none; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(6px); } }
+
+/* ---------- final ---------- */
+.result-hero { border-radius: 24px; padding: 20px 18px; background: var(--surface); border-top: 4px solid var(--faint); }
+.result-hero.runner { border-top-color: var(--runner); background: linear-gradient(180deg, var(--runner-soft), var(--surface) 60%); }
+.result-hero.hunter { border-top-color: var(--hunter); background: linear-gradient(180deg, var(--hunter-soft), var(--surface) 60%); }
+.result-hero h1 { margin: 10px 0 4px; font-size: 28px; line-height: 1.15; letter-spacing: -0.02em; }
+.result-hero p { margin: 0; color: var(--muted); }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.stat { background: rgba(10, 11, 13, 0.5); border-radius: var(--r-md); padding: 10px; }
+.stat b { display: block; font-size: 22px; }
+.stat small { color: var(--muted); font-size: 12px; }
+.list { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+
+/* ---------- mapa ---------- */
+.mz-bg { fill: #101114; }
+.st { stroke: #1b1d22; stroke-width: 7; }
+.av { stroke: #24272d; stroke-width: 14; }
+.mz-river { fill: none; stroke: #151a21; stroke-width: 46; }
+.mz-park { fill: #18201b; }
+.mz-out { fill: rgba(0, 0, 0, 0.6); }
+.mz-zone { fill: rgba(242, 243, 245, 0.035); stroke: var(--text); stroke-opacity: 0.8; stroke-width: 3; }
+.mz-next { fill: none; stroke: var(--lime); stroke-width: 2.5; stroke-dasharray: 8 6; }
+.mz-note { fill: var(--faint); }
+.mk-h { fill: var(--hunter); stroke: var(--bg); }
+.mk-r { fill: var(--runner); stroke: var(--bg); }
+.mk-ping { fill: var(--runner-soft); stroke: var(--runner); }
+.mk-ring { fill: none; stroke: var(--runner); }
+.mk-meet { fill: var(--muted); }
+.mk-reach, .mk-scan { fill: rgba(255, 106, 61, 0.09); stroke: var(--hunter); }
+.mk-route { fill: none; stroke: var(--lime); }
+.mk-me-halo { fill: var(--lime-soft); }
+.mk-me-ring { fill: var(--bg); }
+.mk-me-ring.hunter { stroke: var(--hunter); }
+.mk-me-ring.runner { stroke: var(--runner); }
+.mk-me-core { fill: var(--lime); }
+.m-label { font-weight: 700; paint-order: stroke; stroke: #101114; stroke-linejoin: round; fill: var(--text); }
+.m-label.me { fill: var(--lime); }
+.m-label.dim { fill: var(--muted); }
+.m-label.hunter { fill: var(--hunter); }
+.pulse { animation: pulse 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes pulse { from { opacity: 0.9; transform: scale(0.6); } to { opacity: 0; transform: scale(1.8); } }
+.scan-ring { animation: scan 1.2s ease-out forwards; transform-box: fill-box; transform-origin: center; }
+@keyframes scan { from { opacity: 1; transform: scale(0.2); } to { opacity: 0.3; transform: scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+}
+@media (max-height: 760px) {
+  .hero-art { width: min(48vw, 180px); }
+  .brand-name { font-size: 38px; }
+  .home-tagline { font-size: 22px; }
+  .timer .clock { font-size: 26px; }
+}
+
+</style>
+</head>
+<body>
+<div id="app"></div>
+<div id="layer"></div>
+<div id="toasts" class="toasts" aria-live="polite"></div>
+<noscript><p style="padding:16px">Esta demo necesita JavaScript.</p></noscript>
+<script>
+(() => {
+'use strict';
+const __BUILD__ = 'build 4288b773';
+const S = (() => {
+// DEMO VISUAL: lógica de una partida SIMULADA del modo Clásico.
+// NO es el motor validado de S0 (engine/) ni lo sustituye. No usa GPS ni red.
+// Todos los valores numéricos son EXPERIMENTALES (D-038). Coordenadas en metros
+// respecto al centro del mapa: el mapa no depende de ningún proveedor.
+
+const APP_NAME = 'Rastro'; // nombre provisional, sustituible
+
+const EXPERIMENTAL = Object.freeze({
+  minPlayers: 2,
+  maxPlayers: 20,
+  ratios: { pocos: 1 / 5, equilibrado: 1 / 3, muchos: 1 / 2 },
+  durationsMin: [10, 20, 30],
+  zoneRadiiM: [250, 400, 600],
+  countdownS: 3,
+  headStartS: 120,
+  pingEveryS: 180,
+  botUpdateEveryS: 5,
+  demoSpeeds: [5, 10, 30],
+  defaultSpeed: 10,
+  walkMps: 1.4,
+  botRunnerMps: 1.2,
+  botHunterMps: 1.8,
+  captureRadiusM: 15,
+  botTagRadiusM: 8,
+  claimResponseS: 4,
+  incomingTimeoutS: 30,
+  botConfirmProbability: 0.75,
+  disputeResolveAfterS: 60,
+  reclaimCooldownS: 60,
+  resolutionWindowS: 120,
+  outsideGraceS: 30,
+  spectatorDelayS: 60,
+  scan: { uses: 2, radiusM: 100, cooldownS: 120 },
+  dynamicZone: { firstChangeAt: 0.4, secondChangeAt: 0.7, shrink: 0.7, warnS: 60 },
+});
+
+/**
+ * Comportamiento de los BOTS de la demo. No son reglas del juego ni parámetros de partida (D-038):
+ * solo sirven para que la simulación se parezca más a una partida. No afectan al jugador.
+ */
+const BOT_BEHAVIOR = Object.freeze({
+  relocateAfterPingProbability: 0.5, // tras una pista que le incluye, cambia de escondite (a veces)
+  relocateMinM: 60, // cambio corto y controlado, siempre caminando
+  relocateMaxM: 160,
+});
+
+const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+
+const BOT_NAMES = [
+  'Lucía', 'Mateo', 'Sofía', 'Hugo', 'Martina', 'Leo', 'Valeria', 'Daniel', 'Paula', 'Álvaro',
+  'Carmen', 'Pablo', 'Irene', 'Diego', 'Noa', 'Marcos', 'Elena', 'Adrián', 'Julia', 'Bruno',
+];
+
+// ------------------------------------------------------------------ utilidades
+
+function mulberry32(seed) {
+  let a = seed >>> 0;
+  return () => {
+    a = (a + 0x6d2b79f5) >>> 0;
+    let t = a;
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function shuffle(items, random) {
+  const out = [...items];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function hashCode(text) {
+  let h = 2166136261;
+  for (const ch of text) h = Math.imul(h ^ ch.charCodeAt(0), 16777619);
+  return h >>> 0;
+}
+
+const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+function stepToward(from, to, meters) {
+  const d = dist(from, to);
+  if (d <= meters || d === 0) return { x: to.x, y: to.y };
+  return { x: from.x + ((to.x - from.x) * meters) / d, y: from.y + ((to.y - from.y) * meters) / d };
+}
+
+function formatClock(seconds) {
+  const s = Math.max(0, Math.ceil(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`;
+}
+
+// ------------------------------------------------------------------ sala
+
+function isValidCode(code) {
+  return typeof code === 'string' && code.length === 6 && [...code].every((c) => CODE_ALPHABET.includes(c));
+}
+
+function normalizeCode(raw) {
+  return String(raw ?? '').toUpperCase().replace(/\s+/g, '');
+}
+
+function codeFromSeed(seed) {
+  const random = mulberry32(seed);
+  let code = '';
+  for (let i = 0; i < 6; i++) code += CODE_ALPHABET[Math.floor(random() * CODE_ALPHABET.length)];
+  return code;
+}
+
+/** Cazadores objetivo para n jugadores (HIPÓTESIS D-031: aún por definir y probar). */
+function huntersTarget(n, ratioKey) {
+  const ratio = EXPERIMENTAL.ratios[ratioKey] ?? EXPERIMENTAL.ratios.equilibrado;
+  return clamp(Math.round(n * ratio), 1, Math.max(1, Math.floor(n / 2)));
+}
+
+function defaultSettings() {
+  return {
+    players: 8,
+    assignment: 'auto',
+    ratio: 'equilibrado',
+    durationMin: 20,
+    zoneRadiusM: 400,
+    dynamicZone: true,
+  };
+}
+
+function buildPlayers(n, random, selfIsHost) {
+  const names = shuffle(BOT_NAMES, random).slice(0, n - 1);
+  const players = [{ id: 'me', name: 'Tú', isSelf: true, isHost: selfIsHost, team: null, ready: false }];
+  names.forEach((name, i) => {
+    players.push({ id: `b${i + 1}`, name, isSelf: false, isHost: !selfIsHost && i === 0, team: null, ready: false });
+  });
+  return players;
+}
+
+function createRoom(settings, seed = Date.now()) {
+  const s = { ...defaultSettings(), ...settings };
+  s.players = clamp(Math.round(s.players), EXPERIMENTAL.minPlayers, EXPERIMENTAL.maxPlayers);
+  const random = mulberry32(seed);
+  return {
+    code: codeFromSeed(seed),
+    seed,
+    drawSeed: seed,
+    drawCount: 0,
+    round: 1,
+    settings: s,
+    players: buildPlayers(s.players, random, true),
+    joined: false,
+    history: [],
+  };
+}
+
+function joinRoom(rawCode) {
+  const code = normalizeCode(rawCode);
+  if (!isValidCode(code)) {
+    return { ok: false, error: 'Código no válido: deben ser 6 caracteres sin O, 0, I, 1 ni L.' };
+  }
+  const seed = hashCode(code);
+  const random = mulberry32(seed);
+  const settings = { ...defaultSettings(), players: 4 + Math.floor(random() * 7) };
+  const room = createRoom(settings, seed);
+  room.code = code;
+  room.players = buildPlayers(settings.players, mulberry32(seed + 1), false);
+  room.joined = true;
+  // En una sala ajena el anfitrión simulado ya ha sorteado los equipos.
+  drawTeams(room);
+  return { ok: true, room };
+}
+
+function teamCounts(room) {
+  const hunters = room.players.filter((p) => p.team === 'hunter').length;
+  const runners = room.players.filter((p) => p.team === 'runner').length;
+  return { hunters, runners, unassigned: room.players.length - hunters - runners, target: huntersTarget(room.players.length, room.settings.ratio) };
+}
+
+/** Sorteo reproducible: misma sala y mismo número de sorteo, mismo reparto. */
+function drawTeams(room) {
+  room.drawCount++;
+  const random = mulberry32(room.drawSeed + room.drawCount * 7919);
+  const order = shuffle(room.players.map((p) => p.id), random);
+  const k = huntersTarget(room.players.length, room.settings.ratio);
+  for (const p of room.players) p.team = order.indexOf(p.id) < k ? 'hunter' : 'runner';
+  return room;
+}
+
+function setTeam(room, playerId, team) {
+  const p = room.players.find((x) => x.id === playerId);
+  if (!p || !['hunter', 'runner'].includes(team)) return false;
+  p.team = team;
+  return true;
+}
+
+function setReady(room, playerId, ready) {
+  const p = room.players.find((x) => x.id === playerId);
+  if (p) p.ready = ready;
+}
+
+function botsReady(room) {
+  for (const p of room.players) if (!p.isSelf) p.ready = true;
+}
+
+/** Errores (bloquean el inicio) y avisos (no bloquean). */
+function validateLobby(room) {
+  const issues = [];
+  const { hunters, runners, unassigned, target } = teamCounts(room);
+  if (unassigned > 0) {
+    issues.push({ level: 'error', code: 'unassigned', message: room.settings.assignment === 'auto' ? 'Falta sortear los equipos.' : `Hay ${unassigned} jugador(es) sin equipo.` });
+  }
+  if (unassigned === 0 && hunters < 1) issues.push({ level: 'error', code: 'no_hunters', message: 'Hace falta al menos 1 cazador.' });
+  if (unassigned === 0 && runners < 1) issues.push({ level: 'error', code: 'no_runners', message: 'Hace falta al menos 1 fugitivo.' });
+  const notReady = room.players.filter((p) => !p.ready).length;
+  if (notReady > 0) issues.push({ level: 'error', code: 'not_ready', message: `${notReady} jugador(es) sin confirmar «listo».` });
+  if (unassigned === 0 && hunters >= 1 && runners >= 1 && hunters !== target) {
+    issues.push({ level: 'warning', code: 'ratio', message: `La proporción elegida sugiere ${target} cazador(es); hay ${hunters}. (Proporción experimental)` });
+  }
+  return issues;
+}
+
+const canStart = (room) => validateLobby(room).every((i) => i.level !== 'error');
+
+// ------------------------------------------------------------------ partida
+
+function zoneSchedule(settings, random) {
+  const r0 = settings.zoneRadiusM;
+  const zones = [{ at: 0, center: { x: 0, y: 0 }, r: r0 }];
+  if (!settings.dynamicZone) return zones;
+  const total = settings.durationMin * 60;
+  let prev = zones[0];
+  for (const frac of [EXPERIMENTAL.dynamicZone.firstChangeAt, EXPERIMENTAL.dynamicZone.secondChangeAt]) {
+    const r = Math.round(prev.r * EXPERIMENTAL.dynamicZone.shrink);
+    // Contención: la zona nueva queda dentro de la anterior (recomendación D-032, no regla aprobada).
+    const maxShift = prev.r - r;
+    const angle = random() * Math.PI * 2;
+    const shift = maxShift * (0.3 + random() * 0.6);
+    const center = { x: prev.center.x + Math.cos(angle) * shift, y: prev.center.y + Math.sin(angle) * shift };
+    // Los cambios se cuentan desde el inicio de la caza (t = ventaja).
+    prev = { at: EXPERIMENTAL.headStartS + Math.round(total * frac), center, r };
+    zones.push(prev);
+  }
+  return zones;
+}
+
+function zoneAt(game, t) {
+  let current = game.zones[0];
+  for (const z of game.zones) if (z.at <= t) current = z;
+  return current;
+}
+
+function nextZoneChange(game, t) {
+  // La zona inicial no es un "cambio": durante la cuenta atrás no hay nada que anunciar.
+  return game.zones.slice(1).find((z) => z.at > t) ?? null;
+}
+
+function randomPointIn(center, radius, random) {
+  const a = random() * Math.PI * 2;
+  const d = Math.sqrt(random()) * radius;
+  return { x: center.x + Math.cos(a) * d, y: center.y + Math.sin(a) * d };
+}
+
+function startGame(room) {
+  if (!canStart(room)) throw new Error('La sala no está lista');
+  const seed = room.seed + room.round * 104729;
+  const random = mulberry32(seed);
+  const settings = room.settings;
+  const zones = zoneSchedule(settings, random);
+  const players = room.players.map((p) => {
+    // Los cazadores empiezan en el punto de encuentro; los fugitivos, repartidos.
+    const pos = p.team === 'hunter' ? randomPointIn({ x: 0, y: 0 }, 25, random) : randomPointIn({ x: 0, y: 0 }, 60, random);
+    return {
+      id: p.id, name: p.name, isSelf: p.isSelf, team: p.team, status: 'active',
+      pos, target: null, lastUpdate: 0, history: [{ t: 0, pos: { ...pos } }],
+      outsideSince: null, exposed: false, wanderTarget: null,
+    };
+  });
+  return {
+    seed,
+    random,
+    round: room.round,
+    settings,
+    zones,
+    phase: 'countdown',
+    t: -EXPERIMENTAL.countdownS, // segundos de juego; 0 = empieza la ventaja
+    headStartS: EXPERIMENTAL.headStartS,
+    durationS: settings.durationMin * 60,
+    players,
+    pings: [],
+    nextPingAt: null,
+    claims: [],
+    captures: [],
+    incoming: null,
+    scan: { left: EXPERIMENTAL.scan.uses, readyAt: 0, last: null },
+    events: [],
+    resolutionEndsAt: null,
+    outcome: null,
+    endedReason: null,
+  };
+}
+
+const self = (game) => game.players.find((p) => p.isSelf);
+const active = (game, team) => game.players.filter((p) => p.team === team && p.status === 'active');
+const huntStart = (game) => game.headStartS;
+const huntEnd = (game) => game.headStartS + game.durationS;
+
+function emit(game, type, text, extra = {}) {
+  game.events.push({ t: game.t, type, text, ...extra });
+}
+
+/** Avanza la simulación dtS segundos de juego, en pasos de 1 s (determinista). */
+function stepGame(game, dtS) {
+  let remaining = dtS;
+  while (remaining > 0 && game.phase !== 'finished') {
+    const step = Math.min(1, remaining);
+    remaining -= step;
+    tick(game, step);
+  }
+  return game;
+}
+
+function tick(game, dt) {
+  game.t += dt;
+  const t = game.t;
+  if (game.phase === 'countdown' && t >= 0) {
+    game.phase = 'headstart';
+    emit(game, 'phase', 'Empieza la ventaja: los fugitivos se esconden.');
+  }
+  if (game.phase === 'headstart' && t >= huntStart(game)) {
+    game.phase = 'hunt';
+    game.nextPingAt = huntStart(game) + EXPERIMENTAL.pingEveryS;
+    emit(game, 'phase', '¡Empieza la caza!');
+  }
+  if (game.phase === 'countdown') return;
+
+  moveAll(game, dt);
+  if (game.phase === 'hunt' || game.phase === 'resolving') updateZoneState(game);
+
+  if (game.phase === 'hunt') {
+    zoneWarnings(game);
+    if (game.nextPingAt !== null && t >= game.nextPingAt) doPing(game);
+    botCaptures(game);
+    processClaims(game);
+    processIncoming(game);
+    if (active(game, 'runner').length === 0) return finish(game, 'all_captured');
+    if (t >= huntEnd(game)) {
+      if (game.claims.some(isOpen)) {
+        game.phase = 'resolving';
+        game.resolutionEndsAt = t + EXPERIMENTAL.resolutionWindowS;
+        emit(game, 'resolving', 'Tiempo. Hay disputas abiertas: ventana de resolución.');
+      } else {
+        return finish(game, 'time_up');
+      }
+    }
+  } else if (game.phase === 'resolving') {
+    processClaims(game);
+    if (!game.claims.some(isOpen) || t >= game.resolutionEndsAt) {
+      for (const c of game.claims) {
+        if (isOpen(c)) {
+          close(game, c, 'default_no_capture');
+          emit(game, 'dispute', `Disputa ${c.hunterName} → ${c.runnerName}: regla predeterminada, no hay captura (propuesta D-035).`);
+        }
+      }
+      return finish(game, active(game, 'runner').length === 0 ? 'all_captured' : 'time_up');
+    }
+  }
+}
+
+function moveAll(game, dt) {
+  const t = game.t;
+  const zone = zoneAt(game, t);
+  const upcoming = nextZoneChange(game, t);
+  const assignment = game.phase === 'hunt' ? huntAssignment(game) : null;
+  for (const p of game.players) {
+    if (p.status !== 'active') continue;
+    if (p.isSelf) {
+      // Los cazadores esperan en el punto de encuentro durante la ventaja.
+      if (p.team === 'hunter' && game.phase === 'headstart') p.target = null;
+      if (p.target) p.pos = stepToward(p.pos, p.target, EXPERIMENTAL.walkMps * dt);
+      if (p.target && dist(p.pos, p.target) < 0.5) p.target = null;
+    } else if (p.team === 'runner') {
+      p.pos = stepToward(p.pos, runnerHideSpot(game, p, zone, upcoming), EXPERIMENTAL.botRunnerMps * dt);
+    } else if (game.phase === 'hunt') {
+      const target = hunterTarget(game, p, zone, assignment);
+      p.pos = stepToward(p.pos, target, EXPERIMENTAL.botHunterMps * dt);
+    }
+    // Muestra "enviada" cada botUpdateEveryS: es lo que ven los demás (también para el jugador).
+    if (t - p.lastUpdate >= EXPERIMENTAL.botUpdateEveryS) {
+      p.lastUpdate = t;
+      p.history.push({ t, pos: { ...p.pos } });
+      if (p.history.length > 40) p.history.shift();
+    }
+  }
+}
+
+/**
+ * Fugitivo bot: camina hasta un escondite dentro de la zona y se queda quieto. Solo cambia de sitio
+ * (caminando y a poca distancia) cuando la zona anunciada deja fuera su escondite o, a veces, cuando
+ * una pista acaba de incluir su posición (los fugitivos reciben ese aviso en la app).
+ * Solo usa información que un fugitivo conoce: su posición, la zona y los avisos de pista.
+ * Nunca la posición de los cazadores. Cada bot tiene su propio generador con semilla, así que su
+ * conducta no depende de lo que hagan los demás.
+ */
+function runnerHideSpot(game, p, zone, upcoming) {
+  p.rng ??= mulberry32((game.seed ^ hashCode(p.id)) >>> 0);
+  const safe = upcoming && upcoming.at - game.t <= EXPERIMENTAL.dynamicZone.warnS ? upcoming : zone;
+  const fits = (spot) => dist(spot, safe.center) <= safe.r * 0.85;
+  if (!p.hideSpot || !fits(p.hideSpot)) {
+    p.hideSpot = randomPointIn(safe.center, safe.r * 0.8, p.rng);
+  }
+  const ping = game.pings.at(-1);
+  if (ping && ping.n !== p.lastPingSeen) {
+    p.lastPingSeen = ping.n;
+    if (ping.entries.some((e) => e.id === p.id) && p.rng() < BOT_BEHAVIOR.relocateAfterPingProbability) {
+      for (let i = 0; i < 8; i++) {
+        const a = p.rng() * Math.PI * 2;
+        const d = BOT_BEHAVIOR.relocateMinM + p.rng() * (BOT_BEHAVIOR.relocateMaxM - BOT_BEHAVIOR.relocateMinM);
+        const spot = { x: p.pos.x + Math.cos(a) * d, y: p.pos.y + Math.sin(a) * d };
+        if (fits(spot)) {
+          p.hideSpot = spot;
+          break;
+        }
+      }
+    }
+  }
+  return p.hideSpot;
+}
+
+/**
+ * Reparto de la búsqueda entre cazadores bot por una convención sencilla: «va quien esté más cerca».
+ * Cada bot puede calcular este mismo reparto por su cuenta con lo que su equipo ve en la app:
+ * la última pista (posiciones con su antigüedad), los fugitivos expuestos fuera de zona y la posición
+ * de sus compañeros cazadores (cada equipo ve a los suyos). No usa la posición real de fugitivos
+ * ocultos ni intercambia mensajes. El jugador no entra en el reparto: los bots no presuponen qué hará.
+ * Cada fugitivo cuenta una sola vez (si está expuesto, con su posición en directo). Si hay más bots
+ * que objetivos, los que sobran van al objetivo más cercano. Desempates fijos: reproducible.
+ */
+function huntAssignment(game) {
+  const ping = game.pings.at(-1);
+  const byRunner = new Map();
+  const isActive = (id) => game.players.find((p) => p.id === id)?.status === 'active';
+  if (ping) for (const e of ping.entries) if (isActive(e.id)) byRunner.set(e.id, e.pos);
+  for (const r of active(game, 'runner')) if (r.exposed) byRunner.set(r.id, r.pos);
+  const targets = [...byRunner].map(([id, pos]) => ({ id, pos }));
+  const bots = active(game, 'hunter').filter((h) => !h.isSelf);
+  const assignment = new Map();
+  if (targets.length === 0) return assignment;
+  const byId = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
+  const pairs = [];
+  for (const h of bots) for (const tg of targets) pairs.push({ h, tg, d: dist(h.pos, tg.pos) });
+  pairs.sort((a, b) => a.d - b.d || byId(a.h.id, b.h.id) || byId(a.tg.id, b.tg.id));
+  const taken = new Set();
+  for (const { h, tg } of pairs) {
+    if (assignment.has(h.id) || taken.has(tg.id)) continue;
+    assignment.set(h.id, tg);
+    taken.add(tg.id);
+  }
+  for (const { h, tg } of pairs) if (!assignment.has(h.id)) assignment.set(h.id, tg);
+  return assignment;
+}
+
+function hunterTarget(game, hunter, zone, assignment) {
+  const target = assignment?.get(hunter.id);
+  if (!target) {
+    // Sin pistas: patrullan dentro de la zona.
+    hunter.chaseId = null;
+    if (!hunter.wanderTarget || dist(hunter.pos, hunter.wanderTarget) < 3) hunter.wanderTarget = randomPointIn(zone.center, zone.r * 0.6, game.random);
+    return hunter.wanderTarget;
+  }
+  if (hunter.chaseId !== target.id) {
+    hunter.chaseId = target.id;
+    hunter.wanderTarget = null;
+  }
+  // Al llegar a la pista, buscan alrededor con pasos deterministas.
+  if (dist(hunter.pos, target.pos) < 10) {
+    if (!hunter.wanderTarget || dist(hunter.pos, hunter.wanderTarget) < 3) hunter.wanderTarget = randomPointIn(target.pos, 80, game.random);
+    return hunter.wanderTarget;
+  }
+  return target.pos;
+}
+
+function updateZoneState(game) {
+  const zone = zoneAt(game, game.t);
+  for (const p of game.players) {
+    if (p.status !== 'active') continue;
+    const outside = dist(p.pos, zone.center) > zone.r;
+    if (outside && p.outsideSince === null) {
+      p.outsideSince = game.t;
+      if (p.isSelf) emit(game, 'zone', 'Estás fuera de la zona. Vuelve con calma: no hace falta correr.');
+    } else if (!outside && p.outsideSince !== null) {
+      p.outsideSince = null;
+      if (p.exposed) emit(game, 'zone', `${p.isSelf ? 'Has vuelto' : `${p.name} ha vuelto`} a la zona.`);
+      p.exposed = false;
+    }
+    if (p.team === 'runner' && p.outsideSince !== null && !p.exposed && game.t - p.outsideSince >= EXPERIMENTAL.outsideGraceS) {
+      p.exposed = true;
+      emit(game, 'zone', p.isSelf ? `Llevas ${EXPERIMENTAL.outsideGraceS} s fuera: los cazadores te ven.` : `${p.name} lleva ${EXPERIMENTAL.outsideGraceS} s fuera de la zona.`);
+    }
+  }
+}
+
+function zoneWarnings(game) {
+  const upcoming = nextZoneChange(game, game.t);
+  if (!upcoming) return;
+  const warnAt = upcoming.at - EXPERIMENTAL.dynamicZone.warnS;
+  if (game.t >= warnAt && !upcoming.warned) {
+    upcoming.warned = true;
+    emit(game, 'zone', `La zona cambiará en ${formatClock(EXPERIMENTAL.dynamicZone.warnS)}. Muévete con calma hacia la zona marcada.`);
+  }
+  const previous = game.zones.filter((z) => z.at <= game.t).at(-1);
+  if (previous && previous.at > 0 && !previous.announced && game.t >= previous.at) {
+    previous.announced = true;
+    emit(game, 'zone', 'La zona ha cambiado.');
+  }
+}
+
+function doPing(game) {
+  const entries = active(game, 'runner').map((r) => {
+    const last = r.history.at(-1);
+    return { id: r.id, name: r.name, pos: { ...last.pos }, measuredAt: last.t };
+  });
+  game.pings.push({ n: game.pings.length + 1, t: game.t, entries });
+  game.nextPingAt = game.t + EXPERIMENTAL.pingEveryS;
+  emit(game, 'ping', `Pista #${game.pings.length}: ${entries.length} fugitivo(s) marcados.`);
+}
+
+// ------------------------------------------------------------------ capturas (simuladas)
+
+function capture(game, runner, hunter, via) {
+  runner.status = 'captured';
+  game.captures.push({ runnerId: runner.id, runnerName: runner.name, hunterId: hunter?.id ?? null, hunterName: hunter?.name ?? '—', t: game.t - huntStart(game), via });
+  let text;
+  if (via === 'autodeclarada') text = runner.isSelf ? 'Has declarado tu captura.' : `${runner.name} declara su captura.`;
+  else if (runner.isSelf) text = `${hunter.name} te ha capturado.`;
+  else text = `${hunter.isSelf ? 'Has capturado' : `${hunter.name} ha capturado`} a ${runner.name}.`;
+  emit(game, 'capture', text);
+}
+
+const isOpen = (c) => c.state === 'pending' || c.state === 'disputed';
+
+function close(game, c, state) {
+  c.state = state;
+  c.closedAt = game.t;
+}
+
+/** Tras cerrar una reclamación sin captura, la misma pareja espera antes de reclamar otra vez. */
+function inCooldown(game, hunterId, runnerId) {
+  return game.claims.some((c) => c.hunterId === hunterId && c.runnerId === runnerId && c.closedAt !== undefined && game.t - c.closedAt < EXPERIMENTAL.reclaimCooldownS);
+}
+
+/** D-033: un cazador fuera de la zona no puede capturar. */
+const canHunterClaim = (p) => p.team === 'hunter' && p.status === 'active' && p.outsideSince === null;
+
+function botCaptures(game) {
+  for (const h of active(game, 'hunter')) {
+    if (h.isSelf || !canHunterClaim(h) || game.claims.some((c) => c.hunterId === h.id && isOpen(c))) continue;
+    for (const r of active(game, 'runner')) {
+      if (dist(h.pos, r.pos) > EXPERIMENTAL.botTagRadiusM) continue;
+      if (game.claims.some((c) => c.runnerId === r.id && isOpen(c)) || inCooldown(game, h.id, r.id)) continue;
+      if (r.isSelf) {
+        if (!game.incoming && !inCooldown(game, h.id, 'me')) {
+          game.incoming = { hunterId: h.id, hunterName: h.name, since: game.t };
+          emit(game, 'incoming', `${h.name} dice que te ha pillado.`);
+        }
+      } else {
+        game.claims.push({ id: `c${game.claims.length + 1}`, hunterId: h.id, hunterName: h.name, runnerId: r.id, runnerName: r.name, state: 'pending', since: game.t, answerAt: game.t + EXPERIMENTAL.claimResponseS });
+      }
+      break;
+    }
+  }
+}
+
+function processClaims(game) {
+  for (const c of game.claims) {
+    const runner = game.players.find((p) => p.id === c.runnerId);
+    const hunter = game.players.find((p) => p.id === c.hunterId);
+    if (c.state === 'pending' && game.t >= c.answerAt) {
+      // Responde un fugitivo simulado (bot).
+      if (game.random() < EXPERIMENTAL.botConfirmProbability) {
+        close(game, c, 'confirmed');
+        capture(game, runner, hunter, 'confirmada');
+      } else {
+        c.state = 'disputed';
+        c.disputedAt = game.t;
+        emit(game, 'dispute', `${c.runnerName} disputa ${c.hunterIsSelf ? 'tu reclamación' : `la captura de ${c.hunterName}`}. Queda pendiente.`);
+      }
+    } else if (c.state === 'disputed' && !c.botDecided && game.t - c.disputedAt >= EXPERIMENTAL.disputeResolveAfterS) {
+      // Autoridad = los implicados (propuesta D-035). Un bot solo decide por sí mismo:
+      c.botDecided = true;
+      const coin = game.random() < 0.5;
+      if (c.hunterIsSelf) {
+        // El fugitivo bot puede aceptar; si no, decides tú (retirar) o se aplica la regla al final.
+        if (coin) {
+          close(game, c, 'accepted');
+          capture(game, runner, hunter, 'aceptada tras disputa');
+        }
+      } else if (c.runnerId === 'me') {
+        // El cazador bot puede retirar; aceptar la captura solo puedes hacerlo tú.
+        if (coin) {
+          close(game, c, 'withdrawn');
+          emit(game, 'dispute', `${c.hunterName} retira su reclamación sobre ti.`);
+        }
+      } else if (coin) {
+        close(game, c, 'accepted');
+        capture(game, runner, hunter, 'aceptada tras disputa');
+      } else {
+        close(game, c, 'withdrawn');
+        emit(game, 'dispute', `${c.hunterName} retira la reclamación sobre ${c.runnerName}.`);
+      }
+    }
+  }
+}
+
+function processIncoming(game) {
+  if (game.incoming && game.t - game.incoming.since >= EXPERIMENTAL.incomingTimeoutS) {
+    const { hunterId, hunterName, since } = game.incoming;
+    game.claims.push({ id: `c${game.claims.length + 1}`, hunterId, hunterName, runnerId: 'me', runnerName: 'Tú', state: 'timeout', since, closedAt: game.t });
+    emit(game, 'dispute', 'No respondiste a tiempo: no hay captura (regla propuesta).');
+    game.incoming = null;
+  }
+}
+
+/** Fugitivos a los que el jugador (cazador) puede reclamar: proximidad SIMULADA, no validada. */
+function claimableRunners(game) {
+  const me = self(game);
+  if (game.phase !== 'hunt' || !canHunterClaim(me)) return [];
+  return active(game, 'runner')
+    .filter((r) => dist(me.pos, r.pos) <= EXPERIMENTAL.captureRadiusM)
+    .filter((r) => !game.claims.some((c) => c.runnerId === r.id && isOpen(c)) && !inCooldown(game, me.id, r.id));
+}
+
+function claimCapture(game, runnerId) {
+  const me = self(game);
+  if (me.team === 'hunter' && me.outsideSince !== null) return { ok: false, error: 'Estás fuera de la zona: no puedes capturar hasta volver.' };
+  const target = claimableRunners(game).find((r) => r.id === runnerId);
+  if (!target) return { ok: false, error: 'Ese fugitivo no está lo bastante cerca (proximidad simulada).' };
+  if (game.claims.some((c) => c.hunterIsSelf && isOpen(c))) {
+    return { ok: false, error: 'Ya tienes una reclamación abierta.' };
+  }
+  const claim = { id: `c${game.claims.length + 1}`, hunterId: me.id, hunterName: 'Tú', hunterIsSelf: true, runnerId: target.id, runnerName: target.name, state: 'pending', since: game.t, answerAt: game.t + EXPERIMENTAL.claimResponseS };
+  game.claims.push(claim);
+  emit(game, 'claim', `Reclamación enviada a ${target.name}. Esperando su confirmación.`);
+  return { ok: true, claim };
+}
+
+function withdrawClaim(game, claimId) {
+  const c = game.claims.find((x) => x.id === claimId && x.hunterIsSelf && x.state === 'disputed');
+  if (!c) return false;
+  close(game, c, 'withdrawn');
+  emit(game, 'dispute', `Has retirado la reclamación sobre ${c.runnerName}.`);
+  return true;
+}
+
+function respondIncoming(game, accept) {
+  if (!game.incoming) return false;
+  const hunter = game.players.find((p) => p.id === game.incoming.hunterId);
+  const me = self(game);
+  if (accept) {
+    game.claims.push({ id: `c${game.claims.length + 1}`, hunterId: hunter.id, hunterName: hunter.name, runnerId: me.id, runnerName: 'Tú', state: 'confirmed', since: game.t, closedAt: game.t });
+    capture(game, me, hunter, 'confirmada');
+  } else {
+    game.claims.push({ id: `c${game.claims.length + 1}`, hunterId: hunter.id, hunterName: hunter.name, runnerId: me.id, runnerName: 'Tú', state: 'disputed', since: game.t, disputedAt: game.t });
+    emit(game, 'dispute', `Has disputado la captura de ${hunter.name}. Sigues en juego; queda pendiente.`);
+  }
+  game.incoming = null;
+  return true;
+}
+
+/** El fugitivo acepta una captura que había disputado (autoridad: el propio fugitivo). */
+function acceptOwnDispute(game, claimId) {
+  const c = game.claims.find((x) => x.id === claimId && x.runnerId === 'me' && x.state === 'disputed');
+  if (!c) return false;
+  close(game, c, 'accepted');
+  capture(game, self(game), game.players.find((p) => p.id === c.hunterId), 'aceptada tras disputa');
+  return true;
+}
+
+function selfTag(game) {
+  const me = self(game);
+  if (game.phase !== 'hunt' || me.team !== 'runner' || me.status !== 'active') return false;
+  const nearest = active(game, 'hunter').sort((a, b) => dist(me.pos, a.pos) - dist(me.pos, b.pos))[0];
+  capture(game, me, nearest ?? null, 'autodeclarada');
+  return true;
+}
+
+// ------------------------------------------------------------------ guía del siguiente paso
+
+/**
+ * Una sola indicación para el jugador, por orden de prioridad: lo que pide respuesta, lo que
+ * le impide jugar y, por último, el objetivo normal de su rol. Solo describe el estado: no cambia
+ * reglas ni revela nada que el jugador no pueda ver (un fugitivo nunca recibe datos de cazadores).
+ * Los textos invitan a moverse con calma (seguridad).
+ * tone: 'act' (requiere respuesta) · 'wait' · 'danger' · 'zone' · 'go' · 'info' · 'muted'
+ */
+function nextStep(game) {
+  const me = self(game);
+  const t = game.t;
+  const isOpen = (c) => c.state === 'pending' || c.state === 'disputed';
+  if (game.phase === 'finished') return { tone: 'muted', text: 'Ronda terminada.' };
+  if (game.phase === 'countdown') {
+    return me.team === 'hunter'
+      ? { tone: 'info', text: 'Eres cazador: captura a todos los fugitivos antes de que acabe el tiempo.' }
+      : { tone: 'info', text: 'Eres fugitivo: que no te capturen hasta que acabe el tiempo.' };
+  }
+  if (me.status === 'captured') {
+    return { tone: 'muted', text: `Te han capturado. Sigues la partida como espectador (posiciones con ${EXPERIMENTAL.spectatorDelayS} s de retraso).` };
+  }
+  if (game.incoming) {
+    const left = formatClock(EXPERIMENTAL.incomingTimeoutS - (t - game.incoming.since));
+    return { tone: 'act', text: `${game.incoming.hunterName} dice que te ha pillado: responde (${left}).` };
+  }
+  // Fuera de zona es un peligro inmediato: va antes que las reclamaciones que solo esperan.
+  if (me.outsideSince !== null) {
+    if (me.team === 'hunter') return { tone: 'danger', text: 'Estás fuera de la zona: vuelve con calma para poder capturar.' };
+    if (me.exposed) return { tone: 'danger', text: 'Estás fuera de la zona y los cazadores te ven. Vuelve con calma.' };
+    const left = formatClock(EXPERIMENTAL.outsideGraceS - (t - me.outsideSince));
+    return { tone: 'danger', text: `Estás fuera de la zona: vuelve con calma. Serás visible en ${left}.` };
+  }
+  const mine = game.claims.find((c) => c.hunterIsSelf && isOpen(c));
+  if (mine) {
+    return mine.state === 'pending'
+      ? { tone: 'wait', text: `Esperando a que ${mine.runnerName} confirme tu captura. Sigue en juego hasta entonces.` }
+      : { tone: 'act', text: `${mine.runnerName} disputa tu captura: sigue en juego. Puedes retirarla o esperar a que se resuelva.` };
+  }
+  const against = game.claims.find((c) => c.runnerId === 'me' && c.state === 'disputed');
+  if (against) {
+    return { tone: 'act', text: `Disputa abierta con ${against.hunterName}: sigues en juego mientras no se resuelva.` };
+  }
+  if (game.phase === 'resolving') {
+    return { tone: 'danger', text: `Tiempo agotado. Quedan ${formatClock(game.resolutionEndsAt - t)} para resolver las disputas abiertas.` };
+  }
+  if (game.phase === 'headstart') {
+    const left = formatClock(game.headStartS - t);
+    return me.team === 'hunter'
+      ? { tone: 'wait', text: `Espera en el punto de encuentro. Sales en ${left}.` }
+      : { tone: 'go', text: `Aléjate caminando y escóndete dentro de la zona. Los cazadores salen en ${left}.` };
+  }
+  const upcoming = nextZoneChange(game, t);
+  if (upcoming && upcoming.at - t <= EXPERIMENTAL.dynamicZone.warnS) {
+    return { tone: 'zone', text: `La zona cambia en ${formatClock(upcoming.at - t)}: ve caminando hacia la zona marcada.` };
+  }
+  const nextPing = game.nextPingAt !== null ? formatClock(game.nextPingAt - t) : null;
+  if (me.team === 'hunter') {
+    const reach = claimableRunners(game);
+    if (reach.length === 1) return { tone: 'go', text: `${reach[0].name} está a tu alcance: puedes reclamar la captura.` };
+    if (reach.length > 1) return { tone: 'go', text: `${reach.length} fugitivos a tu alcance: puedes reclamar una captura.` };
+    const ping = game.pings.at(-1);
+    if (ping) return { tone: 'info', text: `Busca a partir de la última pista (de hace ${formatClock(t - ping.t)}). Próxima en ${nextPing}.` };
+    return { tone: 'info', text: `Patrulla la zona. Primera pista en ${nextPing}.` };
+  }
+  return { tone: 'info', text: `Sigue escondido dentro de la zona. Próxima pista a los cazadores en ${nextPing}.` };
+}
+
+// ------------------------------------------------------------------ escáner (pista aproximada, D-034)
+
+function scan(game) {
+  const me = self(game);
+  if (game.phase !== 'hunt') return { ok: false, error: 'El escáner solo funciona durante la caza.' };
+  if (me.team !== 'hunter' || me.status !== 'active') return { ok: false, error: 'Solo los cazadores pueden usar el escáner.' };
+  if (game.scan.left <= 0) return { ok: false, error: 'No te quedan usos del escáner.' };
+  if (game.t < game.scan.readyAt) return { ok: false, error: `Escáner recargando: ${formatClock(game.scan.readyAt - game.t)}.` };
+  const count = active(game, 'runner').filter((r) => dist(me.pos, r.pos) <= EXPERIMENTAL.scan.radiusM).length;
+  game.scan.left--;
+  game.scan.readyAt = game.t + EXPERIMENTAL.scan.cooldownS;
+  game.scan.last = { t: game.t, count, at: { ...me.pos } };
+  emit(game, 'scan', `Escáner: ${count} fugitivo(s) a menos de ${EXPERIMENTAL.scan.radiusM} m (aproximado).`);
+  return { ok: true, count };
+}
+
+// ------------------------------------------------------------------ vista del jugador
+
+/** Lo que ve el jugador según las reglas (S0 §6.4): nunca más de lo que le corresponde. */
+function visibleFor(game) {
+  const me = self(game);
+  const out = [];
+  if (game.phase === 'countdown') return out;
+  if (me.status === 'captured') {
+    const asOf = game.t - EXPERIMENTAL.spectatorDelayS;
+    for (const p of game.players) {
+      if (p.isSelf || p.status !== 'active') continue;
+      const h = [...p.history].reverse().find((x) => x.t <= asOf) ?? p.history[0];
+      out.push({ id: p.id, name: p.name, team: p.team, pos: h.pos, age: game.t - h.t, kind: 'spectator' });
+    }
+    return out;
+  }
+  for (const p of game.players) {
+    if (p.isSelf || p.status !== 'active') continue;
+    if (p.team === me.team) {
+      const last = p.history.at(-1);
+      out.push({ id: p.id, name: p.name, team: p.team, pos: last.pos, age: game.t - last.t, kind: 'teammate' });
+    } else if (me.team === 'hunter' && game.phase !== 'headstart' && p.exposed) {
+      out.push({ id: p.id, name: p.name, team: p.team, pos: p.pos, age: 0, kind: 'exposed' });
+    }
+  }
+  if (me.team === 'hunter') {
+    const ping = game.pings.at(-1);
+    if (ping) {
+      for (const e of ping.entries) {
+        if (out.some((o) => o.id === e.id)) continue;
+        out.push({ id: e.id, name: e.name, team: 'runner', pos: e.pos, age: game.t - e.measuredAt, kind: 'ping' });
+      }
+    }
+  }
+  return out;
+}
+
+// ------------------------------------------------------------------ final y rondas
+
+function endGame(game) {
+  if (game.phase === 'finished') return;
+  finish(game, 'ended_by_host');
+}
+
+function finish(game, reason) {
+  game.phase = 'finished';
+  game.endedReason = reason;
+  game.incoming = null;
+  const survivors = active(game, 'runner');
+  game.outcome = reason === 'ended_by_host'
+    ? { winner: null, title: 'Partida terminada por el anfitrión', subtitle: 'Sin ganador.' }
+    : survivors.length > 0
+      ? { winner: 'runner', title: '¡Ganan los fugitivos!', subtitle: `${survivors.length} superviviente(s) al acabar el tiempo.` }
+      : { winner: 'hunter', title: '¡Ganan los cazadores!', subtitle: 'Todos los fugitivos han sido capturados.' };
+  emit(game, 'finish', game.outcome.title);
+}
+
+function summary(game) {
+  return {
+    outcome: game.outcome,
+    survivors: active(game, 'runner').map((p) => p.name),
+    captures: game.captures.map((c) => ({ ...c, clock: formatClock(c.t) })),
+    disputes: game.claims.filter((c) => c.disputedAt !== undefined || c.state === 'timeout'),
+    hunters: game.players.filter((p) => p.team === 'hunter').map((p) => p.name),
+    huntSeconds: Math.max(0, Math.min(game.t, huntEnd(game)) - huntStart(game)),
+  };
+}
+
+/**
+ * Siguiente ronda (D-037): 'redraw' (sorteo nuevo) o 'first_captured' (los primeros capturados
+ * empiezan cazando). 'keep' solo vuelve a la sala con los mismos equipos (no es una política de D-037).
+ */
+function nextRound(room, game, policy) {
+  room.round++;
+  room.history.push({ round: room.round - 1, outcome: game.outcome?.title, captures: game.captures.length });
+  for (const p of room.players) p.ready = p.isSelf ? false : true;
+  room.lastPolicy = policy;
+  if (policy === 'keep' || room.settings.assignment === 'manual') return room;
+  const k = huntersTarget(room.players.length, room.settings.ratio);
+  if (policy === 'first_captured' && game.captures.length > 0) {
+    const first = game.captures.map((c) => c.runnerId).filter((id, i, all) => all.indexOf(id) === i).slice(0, k);
+    const rest = shuffle(room.players.filter((p) => !first.includes(p.id)).map((p) => p.id), mulberry32(room.seed + room.round));
+    const hunters = new Set([...first, ...rest.slice(0, k - first.length)]);
+    for (const p of room.players) p.team = hunters.has(p.id) ? 'hunter' : 'runner';
+    room.lastPolicy = 'first_captured';
+  } else {
+    drawTeams(room);
+    room.lastPolicy = policy === 'first_captured' ? 'redraw_fallback' : 'redraw';
+  }
+  return room;
+}
+
+return { APP_NAME, EXPERIMENTAL, BOT_BEHAVIOR, CODE_ALPHABET, mulberry32, hashCode, dist, formatClock, isValidCode, normalizeCode, huntersTarget, defaultSettings, createRoom, joinRoom, teamCounts, drawTeams, setTeam, setReady, botsReady, validateLobby, canStart, zoneAt, nextZoneChange, startGame, self, stepGame, claimableRunners, claimCapture, withdrawClaim, respondIncoming, acceptOwnDispute, selfTag, nextStep, scan, visibleFor, endGame, summary, nextRound };
+})();
+// DEMO VISUAL · interfaz. Todo lo que se ve es SIMULADO: no hay GPS, red ni servidor.
+// No pide permisos de ubicación. La lógica de juego está en sim.js (no es el motor de S0).
+
+const BUILD = typeof __BUILD__ === 'string' ? __BUILD__ : 'dev';
+const X = S.EXPERIMENTAL;
+
+const state = {
+  route: 'inicio',
+  settings: S.defaultSettings(),
+  moreOpen: false,
+  joinValue: '',
+  joinError: '',
+  room: null,
+  game: null,
+  speed: X.defaultSpeed,
+  paused: false,
+  vibrate: true,
+  sheetOpen: false,
+  tab: 'pistas',
+  modal: null,
+  lastEvent: 0,
+  tapped: false,
+  nextPolicy: 'redraw',
+  finishing: false,
+  hostStartAt: null,
+};
+
+// ------------------------------------------------------------------ utilidades
+
+const esc = (v) => String(v).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+const ago = (s) => (s < 60 ? `${Math.max(0, Math.floor(s))} s` : S.formatClock(s));
+const teamName = (t, plural = false) => (t === 'hunter' ? (plural ? 'Cazadores' : 'Cazador') : t === 'runner' ? (plural ? 'Fugitivos' : 'Fugitivo') : 'Sin equipo');
+const initial = (name) => esc([...name][0]);
+
+function buzz(pattern) {
+  if (!state.vibrate || typeof navigator.vibrate !== 'function') return;
+  try { navigator.vibrate(pattern); } catch { /* sin vibración */ }
+}
+
+const ICON = {
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>',
+  pause: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>',
+  play: '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7z"/></svg>',
+  copy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 011-1h10"/></svg>',
+  hunter: '<svg class="dot" viewBox="0 0 14 14" aria-hidden="true"><path d="M7 1l6 12H1z" fill="currentColor"/></svg>',
+  runner: '<svg class="dot" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="6" fill="currentColor"/></svg>',
+  spect: '<svg class="dot" viewBox="0 0 14 14" aria-hidden="true"><circle cx="7" cy="7" r="5.5" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+};
+
+const HERO_ART = `<svg class="hero-art" viewBox="0 0 260 200" aria-hidden="true">
+  <g stroke="#1e2126" stroke-width="7" stroke-linecap="round"><path d="M10 52H250M10 118H250M10 176H250M58 8V196M132 8V196M206 8V196"/></g>
+  <circle cx="132" cy="102" r="86" fill="rgba(242,243,245,0.035)" stroke="#f2f3f5" stroke-opacity=".8" stroke-width="3"/>
+  <circle cx="150" cy="92" r="52" fill="none" stroke="#c6f432" stroke-width="2" stroke-dasharray="6 6" opacity=".6"/>
+  <circle cx="92" cy="140" r="3" fill="#c6f432" opacity=".35"/><circle cx="104" cy="128" r="3.5" fill="#c6f432" opacity=".55"/><circle cx="118" cy="118" r="4" fill="#c6f432" opacity=".8"/>
+  <circle cx="134" cy="108" r="10" fill="#c6f432" stroke="#0a0b0d" stroke-width="3"/>
+  <circle cx="178" cy="70" r="7" fill="#33c3e6" stroke="#0a0b0d" stroke-width="2.5"/><circle cx="96" cy="64" r="7" fill="#33c3e6" stroke="#0a0b0d" stroke-width="2.5"/>
+  <circle cx="190" cy="132" r="10" fill="rgba(51,195,230,0.15)" stroke="#33c3e6" stroke-width="2" stroke-dasharray="4 3"/>
+  <path d="M64 168l9-16 9 16z" fill="#ff6a3d" stroke="#0a0b0d" stroke-width="2"/>
+</svg>`;
+
+// ------------------------------------------------------------------ navegación
+
+const ROUTES = ['inicio', 'unirse', 'reglas', 'crear', 'sala', 'partida', 'final'];
+
+function go(route, replace = false) {
+  const hash = `#/${route}`;
+  if (location.hash === hash) return onRoute();
+  if (replace) location.replace(hash);
+  else location.hash = hash;
+}
+
+function onRoute() {
+  const raw = location.hash.replace(/^#\/?/, '');
+  let route = ROUTES.includes(raw) ? raw : 'inicio';
+  const g = state.game;
+  // Salir de una partida en curso exige confirmación.
+  if (state.route === 'partida' && route !== 'partida' && g && g.phase !== 'finished' && !state.leaving) {
+    history.pushState(null, '', '#/partida');
+    state.modal = { type: 'leave' };
+    return paint();
+  }
+  state.leaving = false;
+  if (route !== state.route) state.modal = null;
+  if (route === 'partida' && !g) return go(state.room ? 'sala' : 'inicio', true);
+  if (route === 'partida' && g.phase === 'finished') return go('final', true);
+  if (route === 'final' && (!g || g.phase !== 'finished')) return go(state.room ? 'sala' : 'inicio', true);
+  if (route === 'sala' && !state.room) return go('inicio', true);
+  if (route === 'sala' && g && g.phase === 'finished') {
+    // Volver atrás desde el final = volver a la sala con los mismos equipos.
+    S.nextRound(state.room, g, 'keep');
+    state.game = null;
+  }
+  if (route === 'inicio') {
+    // Al volver al inicio se descarta la sala simulada.
+    state.room = null;
+    state.game = null;
+  }
+  if (route !== state.route) {
+    const box = document.getElementById('toasts');
+    if (box) box.innerHTML = '';
+  }
+  state.route = route;
+  document.body.classList.toggle('in-game', route === 'partida');
+  paint();
+  syncTimers();
+}
+
+// ------------------------------------------------------------------ pintado con regiones
+
+const painted = { route: null, regions: new Map(), layer: '' };
+const $app = () => document.getElementById('app');
+const $layer = () => document.getElementById('layer');
+
+function paint() {
+  const html = SCREENS[state.route]();
+  const app = $app();
+  if (painted.route !== state.route) {
+    app.innerHTML = html;
+    painted.route = state.route;
+    painted.regions.clear();
+    for (const el of app.querySelectorAll('[data-region]')) painted.regions.set(el.dataset.region, el.outerHTML);
+    window.scrollTo(0, 0);
+    const focus = app.querySelector('[data-autofocus]');
+    if (focus) focus.focus();
+  } else {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = html;
+    for (const el of tpl.content.querySelectorAll('[data-region]')) {
+      const name = el.dataset.region;
+      const s = el.outerHTML;
+      if (painted.regions.get(name) === s) continue;
+      const current = app.querySelector(`[data-region="${name}"]`);
+      if (current) current.replaceWith(el);
+      painted.regions.set(name, s);
+    }
+  }
+  const layer = renderLayer();
+  if (layer !== painted.layer) {
+    $layer().innerHTML = layer;
+    painted.layer = layer;
+    const focus = $layer().querySelector('[data-autofocus]');
+    if (focus) focus.focus();
+  }
+  if (state.route === 'partida') paintMarkers();
+  document.body.classList.toggle('sheet-open', state.route === 'partida' && state.sheetOpen);
+  applyBinds();
+}
+
+/** Textos que cambian cada segundo: se actualizan sin sustituir botones (evita toques perdidos). */
+function applyBinds() {
+  const values = state.route === 'partida' && state.game ? gameBinds(state.game) : {};
+  for (const el of document.querySelectorAll('[data-bind]')) {
+    const v = values[el.dataset.bind];
+    if (v !== undefined && el.textContent !== v) el.textContent = v;
+  }
+  for (const el of document.querySelectorAll('[data-bindw]')) {
+    const v = values[el.dataset.bindw];
+    if (v !== undefined) el.style.width = v;
+  }
+  for (const el of document.querySelectorAll('[data-age]')) {
+    const v = state.game ? ago(state.game.t - Number(el.dataset.age)) : '';
+    if (el.textContent !== v) el.textContent = v;
+  }
+}
+
+// ------------------------------------------------------------------ avisos breves
+
+function toast(text, kind = 'info') {
+  const box = document.getElementById('toasts');
+  if (!box) return;
+  const el = document.createElement('div');
+  el.className = `toast ${kind}`;
+  el.innerHTML = `<span class="ico" aria-hidden="true"></span><span>${esc(text)}</span>`;
+  box.appendChild(el);
+  while (box.children.length > 2) box.firstElementChild.remove();
+  setTimeout(() => el.remove(), 3400);
+}
+
+// ------------------------------------------------------------------ pantallas
+
+const topbar = (title, back = 'inicio') => `
+  <div class="topbar">
+    <button class="icon-btn" data-action="go" data-to="${back}" aria-label="Volver">${ICON.back}</button>
+    <h1>${title}</h1>
+    <span class="demo-pill">Simulada</span>
+  </div>`;
+
+const SCREENS = {
+  inicio: () => `
+  <main class="screen home">
+    <div class="topbar"><span class="demo-pill">Demo simulada · sin GPS real</span></div>
+    <section class="home-hero">
+      ${HERO_ART}
+      <div class="brand"><span class="brand-name">${S.APP_NAME}</span><span class="brand-sub">nombre provisional</span></div>
+      <p class="home-tagline">El escondite de siempre, <em>con la calle como tablero.</em></p>
+      <p class="home-text">Prueba cómo sería una partida del modo Clásico. Todo es ficticio: no usa tu ubicación ni se conecta a ningún servidor.</p>
+    </section>
+    <div class="home-actions">
+      <button class="btn btn-primary btn-block" data-action="go" data-to="crear">Crear sala</button>
+      <button class="btn btn-outline btn-block" data-action="go" data-to="unirse">Unirse con código</button>
+      <button class="btn btn-ghost btn-block" data-action="go" data-to="reglas">Cómo se juega</button>
+    </div>
+    <p class="home-foot">Versión de demostración · ${esc(BUILD)}</p>
+  </main>`,
+
+  unirse: () => `
+  <main class="screen">
+    ${topbar('Unirse a una sala')}
+    <form class="card" data-form="join" novalidate>
+      <h2><label for="code">Código de la sala</label></h2>
+      <input id="code" class="code-input mono" name="code" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false"
+        inputmode="text" enterkeyhint="go" placeholder="······" value="${esc(state.joinValue)}" aria-describedby="code-err code-help"
+        aria-invalid="${state.joinError ? 'true' : 'false'}" data-autofocus>
+      <div id="code-err" class="error-text" role="alert" data-region="join-err">${esc(state.joinError)}</div>
+      <p id="code-help" class="hint">6 caracteres. No se usan O, 0, I, 1 ni L para evitar confusiones.</p>
+      <button class="btn btn-primary btn-block" type="submit" style="margin-top:14px">Entrar en la sala</button>
+      <button class="link-btn" type="button" data-action="example-code">Usar un código de ejemplo</button>
+      <p class="hint">En la demo, cualquier código válido abre una sala simulada con jugadores ficticios.</p>
+    </form>
+  </main>`,
+
+  reglas: () => `
+  <main class="screen rules">
+    ${topbar('Cómo se juega')}
+    <section class="card"><h3>Modo Clásico</h3><ul>
+      <li>Dos equipos fijos: <b style="color:var(--hunter)">cazadores</b> y <b style="color:var(--runner)">fugitivos</b>.</li>
+      <li>Los fugitivos ganan si queda al menos uno libre al acabar el tiempo. Los cazadores, si capturan a todos antes.</li>
+    </ul></section>
+    <section class="card"><h3>Ventaja y pistas <span class="exp">Experimental</span></h3><ul>
+      <li>Al empezar, los fugitivos tienen una ventaja (${X.headStartS / 60} min en la demo). Los cazadores esperan en el punto de encuentro sin ver a nadie.</li>
+      <li>Cada ${X.pingEveryS / 60} min los cazadores reciben una pista: la última posición conocida de cada fugitivo libre, <b>con su antigüedad</b>.</li>
+      <li>Cada equipo ve a sus compañeros. Los fugitivos nunca ven a los cazadores.</li>
+      <li>Los cazadores tienen un escáner con ${X.scan.uses} usos: dice cuántos fugitivos hay cerca, nunca dónde.</li>
+    </ul></section>
+    <section class="card"><h3>Zona <span class="exp">Experimental</span></h3><ul>
+      <li>Se juega dentro de un círculo. Si un fugitivo pasa más de ${X.outsideGraceS} s fuera, los cazadores lo ven mientras siga fuera.</li>
+      <li>Un cazador fuera de la zona no se expone, pero no puede capturar.</li>
+      <li>La zona puede encogerse y moverse, con aviso previo. Nadie queda eliminado por estar fuera.</li>
+      <li>El círculo es solo una referencia de juego: <b>no garantiza que la zona sea segura</b>.</li>
+    </ul></section>
+    <section class="card"><h3>Capturas sin contacto</h3><ul>
+      <li>El cazador reclama la captura y el fugitivo la confirma. También puedes declarar que te han pillado.</li>
+      <li>Si el fugitivo la disputa, queda pendiente: sigue en juego hasta que se resuelva, siempre antes del final.</li>
+      <li>En la demo la cercanía es simulada. En la app real la validaría el servidor con la ubicación.</li>
+    </ul></section>
+    <section class="card"><h3>Seguridad</h3><ul>
+      <li>Solo adultos. Sin forcejeos: una captura es tocar el botón, no al otro jugador.</li>
+      <li>Respeta el tráfico y los espacios privados. No hace falta correr.</li>
+    </ul></section>
+    <section class="card future-note"><h3>Más adelante</h3><ul><li>Modo Infección: ampliación futura, no disponible en esta versión.</li></ul></section>
+  </main>`,
+
+  crear: () => {
+    const s = state.settings;
+    const k = S.huntersTarget(s.players, s.ratio);
+    const seg = (key, options) => `<div class="seg" role="group">${options.map(([v, label]) => `<button type="button" data-action="set" data-key="${key}" data-value="${v}" aria-pressed="${String(s[key]) === String(v)}">${label}</button>`).join('')}</div>`;
+    return `
+  <main class="screen">
+    ${topbar('Configurar sala')}
+    <section class="card" data-region="mode">
+      <h2>Modo de juego</h2>
+      <div class="mode-grid">
+        <div class="mode-card" aria-current="true"><b>Clásico</b><span>Equipos fijos. Ganan los fugitivos si alguno sigue libre al final.</span></div>
+        <button class="mode-card future" type="button" disabled aria-disabled="true"><b>Infección · ampliación futura, no disponible</b></button>
+      </div>
+    </section>
+    <section class="card" data-region="players">
+      <h2>Jugadores simulados</h2>
+      <div class="stepper">
+        <button type="button" data-action="players" data-delta="-1" aria-label="Quitar jugador" ${s.players <= X.minPlayers ? 'disabled' : ''}>−</button>
+        <output aria-live="polite">${s.players}<small>incluido tú · ${X.minPlayers}–${X.maxPlayers}</small></output>
+        <button type="button" data-action="players" data-delta="1" aria-label="Añadir jugador" ${s.players >= X.maxPlayers ? 'disabled' : ''}>+</button>
+      </div>
+    </section>
+    <section class="card" data-region="assign">
+      <h2>Reparto de equipos</h2>
+      ${seg('assignment', [['auto', 'Sorteo automático'], ['manual', 'Manual']])}
+      <p class="hint">${s.assignment === 'auto' ? 'Se sortean en la sala de espera. Podrás ajustarlos antes de empezar.' : 'Eliges el equipo de cada jugador en la sala de espera.'}</p>
+    </section>
+    <section class="card" data-region="ratio">
+      <h2>Proporción de cazadores <span class="exp">Experimental</span></h2>
+      ${seg('ratio', [['pocos', 'Pocos'], ['equilibrado', 'Equilibrada'], ['muchos', 'Muchos']])}
+      <div class="preview"><span class="chip hunter">${ICON.hunter} ${k} cazador${k === 1 ? '' : 'es'}</span><span class="chip runner">${ICON.runner} ${s.players - k} fugitivo${s.players - k === 1 ? '' : 's'}</span></div>
+      <p class="hint">Fórmula provisional: al menos 1 cazador y como mucho la mitad.</p>
+    </section>
+    <details class="more" ${state.moreOpen ? 'open' : ''} data-region="more">
+      <summary>Duración y zona <span class="exp">Experimental</span></summary>
+      <div class="inner">
+        <div><div class="field-label">Duración de la caza</div>${seg('durationMin', X.durationsMin.map((m) => [m, `${m} min`]))}</div>
+        <div><div class="field-label">Radio de la zona</div>${seg('zoneRadiusM', X.zoneRadiiM.map((r) => [r, `${r} m`]))}</div>
+        <div class="switch"><span><b>Zona dinámica</b><br><small class="hint">Encoge y se mueve con aviso previo. Parámetros por definir.</small></span>
+          <button type="button" role="switch" aria-checked="${s.dynamicZone}" aria-label="Zona dinámica" data-action="toggle-dynamic"></button></div>
+      </div>
+    </details>
+    <div class="sticky-foot"><button class="btn btn-primary btn-block" data-action="create-room">Crear sala</button></div>
+  </main>`;
+  },
+
+  sala: () => {
+    const room = state.room;
+    const isHost = room.players.find((p) => p.isSelf).isHost;
+    const counts = S.teamCounts(room);
+    const issues = S.validateLobby(room);
+    const me = room.players.find((p) => p.isSelf);
+    const s = room.settings;
+    const ready = S.canStart(room);
+    const prev = room.history.at(-1);
+    const playerRow = (p) => {
+      const editable = isHost;
+      const team = editable
+        ? `<div class="team-toggle" role="group" aria-label="Equipo de ${esc(p.name)}">
+            <button type="button" class="hunter" data-action="team" data-id="${p.id}" data-team="hunter" aria-pressed="${p.team === 'hunter'}">Caza</button>
+            <button type="button" class="runner" data-action="team" data-id="${p.id}" data-team="runner" aria-pressed="${p.team === 'runner'}">Fuga</button></div>`
+        : `<span class="team-tag ${p.team ?? 'none'}">${teamName(p.team)}</span>`;
+      return `<li class="player" data-region="player-${p.id}"><span class="avatar ${p.team ?? ''}">${initial(p.name)}</span>
+        <span class="who"><b>${esc(p.name)}</b><small>${p.isHost ? 'Anfitrión · ' : ''}<span class="ready ${p.ready ? 'on' : ''}">${p.ready ? '✓ Listo' : 'Sin confirmar'}</span></small></span>
+        ${team}</li>`;
+    };
+    return `
+  <main class="screen">
+    ${topbar('Sala de espera', 'inicio')}
+    <section class="card">
+      <div class="code-box"><span class="code mono" aria-label="Código ${[...room.code].join(' ')}">${esc(room.code)}</span>
+        <button class="btn" data-action="copy-code">${ICON.copy} Copiar</button></div>
+      <p class="meta-line">Ronda ${room.round} · Clásico · ${room.players.length} jugadores · ${s.durationMin} min · zona ${s.zoneRadiusM} m${s.dynamicZone ? ' dinámica' : ''}</p>
+      <p class="hint">Código ficticio: nadie más puede entrar en esta sala simulada.</p>
+      ${prev ? `<p class="hint">Ronda ${prev.round}: ${esc(prev.outcome ?? '—')} · ${prev.captures} captura(s).${room.lastPolicy === 'first_captured' ? ' Los primeros capturados empiezan cazando.' : room.lastPolicy === 'redraw' ? ' Equipos sorteados de nuevo.' : room.lastPolicy === 'redraw_fallback' ? ' Nadie fue capturado: equipos sorteados de nuevo.' : ''}</p>` : ''}
+    </section>
+    <section class="card" data-region="quota">
+      <h2>Equipos <span class="exp">Proporción experimental</span></h2>
+      <div class="quota">
+        <div class="quota-item hunter"><span class="n num">${counts.hunters}</span><small>Cazadores · sugeridos ${counts.target}</small></div>
+        <div class="quota-item runner"><span class="n num">${counts.runners}</span><small>Fugitivos${counts.unassigned ? ` · ${counts.unassigned} sin equipo` : ''}</small></div>
+      </div>
+      ${isHost ? `<button class="btn btn-outline btn-block" style="margin-top:12px" data-action="draw">${room.drawCount ? 'Volver a sortear' : 'Sortear equipos'}</button>
+        <p class="hint">${room.drawCount ? `Sorteo nº ${room.drawCount}: reproducible (misma sala y mismo número, mismo reparto).` : s.assignment === 'manual' ? 'Modo manual: asigna cada jugador o usa el sorteo.' : 'Sorteo automático: pulsa para repartir.'}</p>`
+        : '<p class="hint">El anfitrión (simulado) ya ha sorteado los equipos.</p>'}
+    </section>
+    <section class="card">
+      <h2>Jugadores</h2>
+      <ul class="players">${room.players.map(playerRow).join('')}</ul>
+    </section>
+    <section class="card" data-region="issues">
+      <h2>Antes de empezar</h2>
+      <ul class="issues">${issues.length ? issues.map((i) => `<li class="issue ${i.level}">${i.level === 'error' ? '✕' : '!'} ${esc(i.message)}</li>`).join('') : '<li class="issue ok">✓ Todo listo.</li>'}</ul>
+    </section>
+    <div class="sticky-foot" data-region="foot">
+      ${(() => {
+        const first = issues.find((i) => i.level === 'error');
+        if (first) return `<p class="foot-status error">${esc(first.message)}</p>`;
+        return `<p class="foot-status ${isHost ? 'ok' : 'wait'}">${isHost ? 'Todo listo para empezar.' : 'Esperando a que el anfitrión empiece.'}</p>`;
+      })()}
+      <div class="btn-row">
+        <button class="btn ${me.ready ? 'btn-outline' : 'btn-primary'}" data-action="ready" aria-pressed="${me.ready}">${me.ready ? '✓ Estoy listo' : 'Estoy listo'}</button>
+        ${isHost
+          ? `<button class="btn ${me.ready ? 'btn-primary' : ''}" data-action="start" ${ready ? '' : 'disabled'}>Empezar</button>`
+          : `<button class="btn" disabled>${ready ? 'Empezando…' : 'Espera al anfitrión'}</button>`}
+      </div>
+    </div>
+  </main>`;
+  },
+
+  partida: () => {
+    const g = state.game;
+    const me = S.self(g);
+    return `
+  <main class="game">
+    <div class="map-wrap" data-region="map">${mapStatic(g)}</div>
+    <div class="hud">
+      <div class="hud-row" data-region="hud-top">${hudTop(g, me)}</div>
+      <div class="status-strip glass" data-region="hud-meta">${hudMeta(g, me)}</div>
+      <div data-region="banners">${banners(g, me)}</div>
+    </div>
+    <div class="dock">
+      <div class="dock-actions" data-region="actions">${dockActions(g, me)}</div>
+      <section class="sheet glass" data-region="sheet">${sheet(g, me)}</section>
+    </div>
+  </main>`;
+  },
+
+  final: () => {
+    const g = state.game;
+    const sum = S.summary(g);
+    const room = state.room;
+    const win = sum.outcome.winner;
+    const disputes = sum.disputes;
+    return `
+  <main class="screen">
+    <div class="topbar"><h1>Fin de la ronda ${g.round}</h1><span class="demo-pill">Simulada</span></div>
+    <section class="result-hero ${win ?? ''}">
+      <span class="chip">${win ? teamName(win, true) : 'Sin ganador'}</span>
+      <h1>${esc(sum.outcome.title)}</h1>
+      <p>${esc(sum.outcome.subtitle)}</p>
+      <div class="stats">
+        <div class="stat"><b class="num">${sum.captures.length}</b><small>Capturas</small></div>
+        <div class="stat"><b class="num">${sum.survivors.length}</b><small>Supervivientes</small></div>
+        <div class="stat"><b class="num">${S.formatClock(sum.huntSeconds)}</b><small>De caza</small></div>
+      </div>
+    </section>
+    <section class="card"><h2>Supervivientes</h2>
+      ${sum.survivors.length ? `<div class="preview">${sum.survivors.map((n) => `<span class="chip runner">${ICON.runner} ${esc(n)}</span>`).join('')}</div>` : '<p>Ninguno.</p>'}
+    </section>
+    <section class="card"><h2>Capturas</h2>
+      ${sum.captures.length ? `<ul class="list">${sum.captures.map((c) => `<li class="row"><span class="num mono">${c.clock}</span><span class="grow"><b>${esc(c.runnerName)}</b><small>por ${esc(c.hunterName)} · ${esc(c.via)}</small></span></li>`).join('')}</ul>` : '<p>No hubo capturas.</p>'}
+    </section>
+    ${disputes.length ? `<section class="card"><h2>Disputas</h2><ul class="list">${disputes.map((c) => `<li class="row"><span class="grow"><b>${esc(c.hunterName)} → ${esc(c.runnerName)}</b></span>${claimChip(c)}</li>`).join('')}</ul>
+      <p class="hint">Ninguna disputa queda abierta al terminar. Regla predeterminada provisional: si no se resuelve, no hay captura.</p></section>` : ''}
+    <section class="card" data-region="policy"><h2>Siguiente ronda</h2>
+      ${room.settings.assignment === 'manual'
+        ? '<p>Modo manual: los equipos se mantienen y puedes cambiarlos en la sala.</p>'
+        : `<div class="seg" role="group">
+            <button type="button" data-action="policy" data-value="redraw" aria-pressed="${state.nextPolicy === 'redraw'}">Sorteo nuevo</button>
+            <button type="button" data-action="policy" data-value="first_captured" aria-pressed="${state.nextPolicy === 'first_captured'}">Cazan los primeros capturados</button></div>
+          <p class="hint">${state.nextPolicy === 'first_captured' ? 'Los primeros capturados empiezan cazando; el resto se sortea.' : 'Equipos nuevos con la misma proporción.'} La rotación equilibrada está pospuesta.</p>`}
+    </section>
+    <div class="sticky-foot">
+      <button class="btn btn-primary btn-block" data-action="next-round">Nueva ronda</button>
+      <div class="btn-row" style="margin-top:10px">
+        <button class="btn btn-outline" data-action="back-lobby">Volver a la sala</button>
+        <button class="btn btn-ghost" data-action="exit">Salir</button>
+      </div>
+    </div>
+  </main>`;
+  },
+};
+
+// ------------------------------------------------------------------ partida: HUD y paneles
+
+function phaseInfo(g) {
+  switch (g.phase) {
+    case 'countdown': return { label: 'Preparados', left: -g.t };
+    case 'headstart': return { label: 'Ventaja', left: g.headStartS - g.t };
+    case 'hunt': return { label: 'Caza', left: g.headStartS + g.durationS - g.t };
+    case 'resolving': return { label: 'Resolviendo', left: g.resolutionEndsAt - g.t };
+    default: return { label: 'Fin', left: 0 };
+  }
+}
+
+function hudTop(g, me) {
+  const role = me.status === 'captured'
+    ? `<div class="role spect">${ICON.spect} Espectador</div>`
+    : `<div class="role ${me.team}">${ICON[me.team]} ${teamName(me.team)}</div>`;
+  return `<div class="hud-card glass phase-${g.phase}"><div class="timer"><span class="label">${phaseInfo(g).label}</span><span class="clock num" data-bind="clock"></span></div>${role}</div>
+    <button class="icon-btn glass" data-action="pause" aria-label="${state.paused ? 'Reanudar' : 'Pausar'} la demo">${state.paused ? ICON.play : ICON.pause}</button>`;
+}
+
+function hudMeta(g, self) {
+  const zone = S.zoneAt(g, g.t);
+  const sep = '<i class="sep" aria-hidden="true"></i>';
+  return `<span class="sim">Simulado · sin GPS real</span>${sep}
+    <span class="num">Act. hace <span data-bind="lastUpdate"></span></span>${sep}
+    <span class="num">Zona ${Math.round(zone.r)} m${S.nextZoneChange(g, g.t) ? ' · cambia en <span data-bind="zoneIn"></span>' : ''}</span>${sep}
+    ${state.paused ? '<span class="paused">En pausa</span>' : `<span>×${state.speed}</span>`}`;
+}
+
+// Una sola indicación del siguiente paso (prioridades en S.nextStep) y, al principio, cómo moverse.
+const STEP_CLASS = { act: 'danger', wait: '', danger: 'danger', zone: 'zone', go: 'go', info: '', muted: 'spect' };
+
+function banners(g, self) {
+  const step = S.nextStep(g);
+  const out = [`<div class="banner glass ${STEP_CLASS[step.tone] ?? ''}" role="status">${esc(step.text)}</div>`];
+  const canWalk = self.status === 'active' && g.phase !== 'countdown' && !(self.team === 'hunter' && g.phase === 'headstart');
+  if (!state.tapped && canWalk) out.push('<div class="banner glass hint">Toca el mapa para caminar (posición simulada)</div>');
+  return out.join('');
+}
+
+function openClaimBy(g, who) {
+  return g.claims.find((c) => (who === 'hunter' ? c.hunterIsSelf : c.runnerId === 'me') && (c.state === 'pending' || c.state === 'disputed'));
+}
+
+function dockActions(g, self) {
+  if (self.status === 'captured') {
+    return `<button class="btn glass main" disabled>Modo espectador<small>Retraso de ${X.spectatorDelayS} s</small></button>`;
+  }
+  if (self.team === 'hunter') {
+    const open = openClaimBy(g, 'hunter');
+    const claimable = S.claimableRunners(g);
+    let main;
+    if (open) main = `<button class="btn glass main" data-action="show-claim" data-id="${open.id}">Reclamación ${open.state === 'pending' ? 'pendiente' : 'disputada'}<small>${esc(open.runnerName)} · ver estado</small></button>`;
+    else if (g.phase !== 'hunt') main = `<button class="btn glass main" disabled>Capturar<small>${g.phase === 'resolving' ? 'El tiempo ha terminado' : 'Disponible al empezar la caza'}</small></button>`;
+    else if (self.outsideSince !== null) main = '<button class="btn glass main" disabled>Capturar<small>Vuelve a la zona</small></button>';
+    else if (claimable.length) main = `<button class="btn btn-primary main" data-action="claim"><span class="btn-line">${ICON.hunter}Capturar${claimable.length === 1 ? ` a ${esc(claimable[0].name)}` : ` (${claimable.length})`}</span><small>Cercanía simulada</small></button>`;
+    else main = `<button class="btn glass main" disabled>Capturar<small>Acércate a ≤ ${X.captureRadiusM} m (simulado)</small></button>`;
+    const sc = g.scan;
+    const scanReady = g.phase === 'hunt' && sc.left > 0 && g.t >= sc.readyAt && self.outsideSince === null;
+    const scanSub = sc.left <= 0 ? 'Sin usos' : g.phase !== 'hunt' ? `${sc.left} usos` : g.t < sc.readyAt ? 'Recarga <span data-bind="scanCd"></span>' : `${sc.left} uso${sc.left === 1 ? '' : 's'}`;
+    return `${main}<button class="btn glass side" data-action="scan" ${scanReady ? '' : 'disabled'}>Escáner<small>${scanSub}</small></button>`;
+  }
+  const open = openClaimBy(g, 'runner');
+  const main = open
+    ? `<button class="btn btn-danger main" data-action="show-dispute" data-id="${open.id}">Disputa abierta<small>con ${esc(open.hunterName)} · ver</small></button>`
+    : `<button class="btn glass main" data-action="self-tag" ${g.phase === 'hunt' ? '' : 'disabled'}>Me han pillado<small>${g.phase === 'hunt' ? 'Declarar captura' : 'Disponible en la caza'}</small></button>`;
+  return main;
+}
+
+function claimChip(c) {
+  const labels = {
+    pending: ['pending', 'Pendiente'], confirmed: ['confirmed', 'Confirmada'], disputed: ['disputed', 'Disputada'],
+    accepted: ['accepted', 'Aceptada tras disputa'], withdrawn: ['closed', 'Retirada'], default_no_capture: ['closed', 'Sin captura (regla)'],
+    timeout: ['closed', 'Sin respuesta · sin captura'],
+  };
+  const [cls, label] = labels[c.state] ?? ['closed', c.state];
+  return `<span class="state ${cls}">${label}</span>`;
+}
+
+function sheet(g, self) {
+  const ping = g.pings.at(-1);
+  let summaryLine;
+  if (g.phase === 'countdown' || g.phase === 'headstart') summaryLine = 'Las pistas empiezan con la caza';
+  else if (self.team === 'hunter' && ping) summaryLine = `Pista #${ping.n} · hace <span data-age="${ping.t}"></span>`;
+  else summaryLine = g.phase === 'hunt' ? 'Próxima pista en <span data-bind="nextPing"></span>' : 'Sin más pistas';
+  const head = `<button class="sheet-handle" data-action="sheet" aria-expanded="${state.sheetOpen}"><span class="grab"></span><b>Panel</b><span>${summaryLine}</span><b aria-hidden="true">${state.sheetOpen ? '▾' : '▴'}</b></button>`;
+  if (!state.sheetOpen) return head;
+  const tabs = [['pistas', 'Pistas'], ['capturas', 'Capturas'], ['jugadores', 'Equipos'], ['demo', 'Demo']];
+  const tabBar = `<div class="tabs" role="tablist">${tabs.map(([k, l]) => `<button role="tab" aria-selected="${state.tab === k}" data-action="tab" data-tab="${k}">${l}${k === 'capturas' && g.claims.some((c) => c.state === 'disputed') ? ' •' : ''}</button>`).join('')}</div>`;
+  return `${head}${tabBar}<div class="sheet-body">${sheetBody(g, self)}</div>`;
+}
+
+function sheetBody(g, self) {
+  if (state.tab === 'pistas') {
+    const rows = [];
+    if (g.phase === 'hunt') rows.push(`<div class="row"><span class="grow">Próxima pista en <b class="num" data-bind="nextPing"></b><small>Cada ${X.pingEveryS / 60} min (experimental)</small></span></div>`);
+    if (self.team === 'hunter') {
+      const ping = g.pings.at(-1);
+      if (!ping) rows.push('<p class="empty">Aún no hay pistas.</p>');
+      else {
+        rows.push(`<p class="empty">Pista #${ping.n}: posiciones de hace un rato, no en directo.</p>`);
+        for (const e of ping.entries) {
+          const alive = g.players.find((p) => p.id === e.id)?.status === 'active';
+          rows.push(`<div class="row"><span class="grow"><b>${esc(e.name)}</b><small>${alive ? 'Posición de hace ' : 'Capturado · dato de hace '}<span data-age="${e.measuredAt}"></span></small></span>
+            ${alive && self.status === 'active' ? `<button class="btn" data-action="walk-to" data-x="${e.pos.x.toFixed(1)}" data-y="${e.pos.y.toFixed(1)}">Ir allí</button>` : ''}</div>`);
+        }
+      }
+      if (g.scan.last) rows.push(`<div class="row"><span class="grow">Escáner: <b>${g.scan.last.count}</b> fugitivo(s) a menos de ${X.scan.radiusM} m<small>Aproximado · hace <span data-age="${g.scan.last.t}"></span> · quedan ${g.scan.left} usos</small></span></div>`);
+    } else {
+      rows.push(`<p class="empty">Los cazadores reciben tu última posición conocida en cada pista. Nunca ves a los cazadores.</p>`);
+      for (const p of [...g.pings].reverse().slice(0, 4)) rows.push(`<div class="row"><span class="grow">Pista #${p.n} enviada a los cazadores<small>hace <span data-age="${p.t}"></span></small></span></div>`);
+    }
+    return rows.join('');
+  }
+  if (state.tab === 'capturas') {
+    if (!g.claims.length) return '<p class="empty">Todavía no hay reclamaciones.</p>';
+    return [...g.claims].reverse().map((c) => {
+      let action = '';
+      if (c.state === 'disputed' && c.hunterIsSelf) action = `<button class="btn" data-action="withdraw" data-id="${c.id}">Retirar</button>`;
+      if (c.state === 'disputed' && c.runnerId === 'me') action = `<button class="btn" data-action="accept-dispute" data-id="${c.id}">Aceptar</button>`;
+      return `<div class="row"><span class="grow"><b>${esc(c.hunterName)} → ${esc(c.runnerName)}</b><small>hace <span data-age="${c.since}"></span></small></span>${claimChip(c)}${action}</div>`;
+    }).join('') + '<p class="empty">Una captura disputada no elimina a nadie: queda pendiente hasta resolverse.</p>';
+  }
+  if (state.tab === 'jugadores') {
+    const list = (team) => g.players.filter((p) => p.team === team).map((p) => `<div class="row"><span class="avatar ${team}">${initial(p.name)}</span><span class="grow"><b>${esc(p.name)}</b><small>${p.status === 'captured' ? 'Capturado' : 'En juego'}</small></span></div>`).join('');
+    return `<p class="section-label hunter">${teamName('hunter', true)}</p>${list('hunter')}<p class="section-label runner">${teamName('runner', true)}</p>${list('runner')}`;
+  }
+  return `<div class="demo-ctrl">
+    <div class="field-label">Velocidad de la demo</div>
+    <div class="seg" role="group">${X.demoSpeeds.map((v) => `<button type="button" data-action="speed" data-value="${v}" aria-pressed="${state.speed === v}">×${v}</button>`).join('')}</div>
+    <div class="switch"><span>Vibración en los avisos</span><button type="button" role="switch" aria-checked="${state.vibrate}" aria-label="Vibración" data-action="toggle-vibrate"></button></div>
+    <div class="switch"><span>Sonido<br><small class="hint">No disponible en la demo</small></span><button type="button" role="switch" aria-checked="false" aria-label="Sonido (no disponible)" disabled></button></div>
+    <button class="btn btn-danger" data-action="ask-end">Terminar partida (anfitrión)</button>
+    <p class="hint">Controles exclusivos de la demo: en una partida real el tiempo no se acelera ni se pausa.</p>
+  </div>`;
+}
+
+function gameBinds(g) {
+  const self = S.self(g);
+  const upcoming = S.nextZoneChange(g, g.t);
+  const binds = {
+    clock: S.formatClock(phaseInfo(g).left),
+    lastUpdate: ago(g.t - self.lastUpdate),
+    nextPing: g.nextPingAt !== null ? S.formatClock(g.nextPingAt - g.t) : '—',
+    scanCd: S.formatClock(g.scan.readyAt - g.t),
+    incomingLeft: g.incoming ? S.formatClock(X.incomingTimeoutS - (g.t - g.incoming.since)) : '0:00',
+  };
+  if (upcoming) {
+    binds.zoneIn = S.formatClock(upcoming.at - g.t);
+  }
+  return binds;
+}
+
+// ------------------------------------------------------------------ mapa esquemático (SVG propio)
+
+function mapExtent(g) {
+  return g.zones[0].r * 1.25;
+}
+
+function streets(g) {
+  const E = mapExtent(g) * 3;
+  const random = S.mulberry32(g.seed ^ 0x5a5a);
+  const angle = -18 + random() * 36;
+  const gap = 70 + random() * 20;
+  const lines = [];
+  for (let i = -Math.ceil(E / gap); i <= Math.ceil(E / gap); i++) {
+    const off = i * gap + (random() - 0.5) * 12;
+    const avenue = i % 4 === 0;
+    lines.push(`<line x1="${-E}" y1="${off}" x2="${E}" y2="${off}" class="${avenue ? 'av' : 'st'}"/>`);
+    const off2 = i * gap * 1.1 + (random() - 0.5) * 12;
+    lines.push(`<line x1="${off2}" y1="${-E}" x2="${off2}" y2="${E}" class="${i % 5 === 0 ? 'av' : 'st'}"/>`);
+  }
+  const r0 = g.zones[0].r;
+  const park = { x: (random() - 0.5) * r0, y: (random() - 0.5) * r0, w: 110 + random() * 80, h: 80 + random() * 60 };
+  const riverY = (random() < 0.5 ? -1 : 1) * r0 * (1.05 + random() * 0.2);
+  const river = `M ${-E} ${riverY} C ${-E / 3} ${riverY - 120}, ${E / 3} ${riverY + 140}, ${E} ${riverY - 40}`;
+  return `<g transform="rotate(${angle.toFixed(1)})">
+      <path d="${river}" class="mz-river"/>
+      ${lines.join('')}
+      <rect x="${park.x}" y="${park.y}" width="${park.w}" height="${park.h}" rx="18" class="mz-park"/>
+    </g>`;
+}
+
+function mapStatic(g) {
+  const E = mapExtent(g);
+  const zone = S.zoneAt(g, g.t);
+  const upcoming = S.nextZoneChange(g, g.t);
+  const showNext = upcoming && upcoming.at - g.t <= X.dynamicZone.warnS;
+  const big = E * 4;
+  const c = zone.center;
+  const hole = `M ${-big} ${-big} H ${big} V ${big} H ${-big} Z M ${c.x - zone.r} ${c.y} a ${zone.r} ${zone.r} 0 1 0 ${zone.r * 2} 0 a ${zone.r} ${zone.r} 0 1 0 ${-zone.r * 2} 0 Z`;
+  return `<svg class="map" viewBox="${-E} ${-E} ${2 * E} ${2 * E}" preserveAspectRatio="xMidYMid meet" data-action="map" role="img"
+      aria-label="Mapa esquemático simulado de la zona de juego">
+    <rect x="${-big}" y="${-big}" width="${2 * big}" height="${2 * big}" class="mz-bg"/>
+    ${streets(g)}
+    <path d="${hole}" class="mz-out" fill-rule="evenodd"/>
+    <circle cx="${c.x}" cy="${c.y}" r="${zone.r}" class="mz-zone" vector-effect="non-scaling-stroke"/>
+    <text x="${c.x}" y="${c.y + zone.r + E * 0.09}" font-size="${E * 0.06}" class="mz-note" text-anchor="middle">Plano esquemático · no es un mapa real</text>
+    ${showNext ? `<circle cx="${upcoming.center.x}" cy="${upcoming.center.y}" r="${upcoming.r}" class="mz-next" vector-effect="non-scaling-stroke"/>` : ''}
+    <g id="m-dyn"></g>
+  </svg>`;
+}
+
+let unitCache = { w: 0, h: 0, u: 1 };
+function unitsPerPx(svg, g) {
+  const r = svg.getBoundingClientRect();
+  if (r.width !== unitCache.w || r.height !== unitCache.h || unitCache.E !== mapExtent(g)) {
+    unitCache = { w: r.width, h: r.height, E: mapExtent(g), u: (2 * mapExtent(g)) / Math.max(1, Math.min(r.width, r.height)) };
+  }
+  return unitCache.u;
+}
+
+/** tone: '' (texto), 'me' (lima), 'dim' (secundario), 'hunter'. El equipo se distingue por la forma, no por la etiqueta. */
+function label(x, y, text, u, tone = '', size = 12) {
+  return `<text x="${x}" y="${y}" class="m-label ${tone}" font-size="${size * u}" stroke-width="${3 * u}" text-anchor="middle">${esc(text)}</text>`;
+}
+
+function marker(team, x, y, u, opts = {}) {
+  const s = (opts.size ?? 10) * u;
+  const op = opts.opacity ?? 1;
+  if (opts.hollow) return `<circle cx="${x}" cy="${y}" r="${s}" class="mk-ping" stroke-width="${2.5 * u}" stroke-dasharray="${4 * u} ${3 * u}" opacity="${op}"/>`;
+  if (team === 'hunter') return `<path d="M ${x} ${y - s * 1.15} L ${x + s} ${y + s * 0.75} L ${x - s} ${y + s * 0.75} Z" class="mk-h" stroke-width="${2 * u}" opacity="${op}"/>`;
+  return `<circle cx="${x}" cy="${y}" r="${s * 0.85}" class="mk-r" stroke-width="${2 * u}" opacity="${op}"/>`;
+}
+
+function paintMarkers() {
+  const g = state.game;
+  const svg = document.querySelector('.map');
+  const dyn = document.getElementById('m-dyn');
+  if (!g || !svg || !dyn) return;
+  const u = unitsPerPx(svg, g);
+  const self = S.self(g);
+  const out = [];
+  const early = g.phase === 'countdown' || g.phase === 'headstart';
+  out.push(`<circle cx="0" cy="0" r="${4 * u}" class="mk-meet"/>${early ? label(0, -12 * u, 'Encuentro', u, 'dim') : ''}`);
+  if (g.scan.last && g.t - g.scan.last.t < 10) {
+    const a = g.scan.last.at;
+    out.push(`<circle cx="${a.x}" cy="${a.y}" r="${X.scan.radiusM}" class="mk-scan scan-ring" stroke-width="${2 * u}"/>`);
+    out.push(label(a.x, a.y - X.scan.radiusM - 6 * u, `${g.scan.last.count} cerca (aprox.)`, u, 'hunter'));
+  }
+  for (const v of S.visibleFor(g)) {
+    const { x, y } = v.pos;
+    if (v.kind === 'ping') {
+      out.push(marker('runner', x, y, u, { hollow: true, size: 11 }));
+      out.push(label(x, y - 17 * u, `${v.name} · ${ago(v.age)}`, u, 'dim'));
+    } else if (v.kind === 'exposed') {
+      out.push(`<circle cx="${x}" cy="${y}" r="${16 * u}" class="mk-ring pulse" stroke-width="${2 * u}"/>`);
+      out.push(marker('runner', x, y, u));
+      out.push(label(x, y - 17 * u, `${v.name} · fuera de zona`, u));
+    } else {
+      out.push(marker(v.team, x, y, u, { opacity: v.kind === 'spectator' ? 0.7 : 1 }));
+      out.push(label(x, y - 16 * u, v.kind === 'spectator' ? `${v.name} · −${X.spectatorDelayS} s` : v.name, u));
+    }
+  }
+  if (self.status === 'active') {
+    const { x, y } = self.pos;
+    if (self.target) {
+      out.push(`<line x1="${x}" y1="${y}" x2="${self.target.x}" y2="${self.target.y}" class="mk-route" stroke-width="${2 * u}" stroke-dasharray="${4 * u} ${4 * u}" opacity="0.8"/>`);
+      out.push(`<circle cx="${self.target.x}" cy="${self.target.y}" r="${6 * u}" class="mk-route" stroke-width="${2.5 * u}"/>`);
+    }
+    if (self.team === 'hunter' && g.phase === 'hunt') out.push(`<circle cx="${x}" cy="${y}" r="${X.captureRadiusM}" class="mk-reach" stroke-width="${1.2 * u}" stroke-dasharray="${3 * u} ${3 * u}"/>`);
+    // Tú: el elemento más visible del mapa (halo, anillo del equipo y núcleo lima).
+    out.push(`<circle cx="${x}" cy="${y}" r="${22 * u}" class="mk-me-halo"/>`);
+    out.push(`<circle cx="${x}" cy="${y}" r="${13 * u}" class="mk-me-ring ${self.team}" stroke-width="${3 * u}"/>`);
+    out.push(`<circle cx="${x}" cy="${y}" r="${8 * u}" class="mk-me-core"/>`);
+    out.push(label(x, y + 30 * u, 'Tú', u, 'me', 14));
+  }
+  const html = out.join('');
+  if (dyn._html !== html) {
+    dyn.innerHTML = html;
+    dyn._html = html;
+  }
+}
+
+// ------------------------------------------------------------------ capas: modales y cuenta atrás
+
+function renderLayer() {
+  const g = state.game;
+  let html = '';
+  if (state.route === 'partida' && g && g.phase === 'countdown') {
+    html += `<div class="countdown" aria-live="assertive"><div><b class="num">${Math.max(1, Math.ceil(-g.t))}</b><small>${esc(S.nextStep(g).text)}<br>Partida simulada</small></div></div>`;
+  }
+  if (state.route === 'partida' && g && state.finishing) {
+    html += `<div class="countdown"><div><b style="font-size:64px">Fin</b><small>${esc(g.outcome?.title ?? '')}</small></div></div>`;
+  }
+  const m = state.modal;
+  if (!m) return html;
+  const wrap = (inner, label) => `<div class="overlay" data-action="overlay"><div class="modal" role="dialog" aria-modal="true" aria-label="${esc(label)}">${inner}</div></div>`;
+  const disclaimer = '<p class="disclaimer">Simulación: en la demo la cercanía no se mide. En la app real, el servidor comprobaría que la cercanía GPS es plausible y el fugitivo confirmaría.</p>';
+  if (m.type === 'leave') {
+    return html + wrap(`<h2>¿Salir de la partida?</h2><p>La partida simulada terminará y verás el resumen.</p>
+      <div class="btn-row"><button class="btn" data-action="close" data-autofocus>Seguir jugando</button><button class="btn btn-danger" data-action="end-game">Terminar</button></div>`, 'Salir de la partida');
+  }
+  if (m.type === 'end') {
+    return html + wrap(`<h2>¿Terminar la partida?</h2><p>Como anfitrión puedes terminarla ya. No habrá ganador.</p>
+      <div class="btn-row"><button class="btn" data-action="close" data-autofocus>Cancelar</button><button class="btn btn-danger" data-action="end-game">Terminar</button></div>`, 'Terminar partida');
+  }
+  if (m.type === 'self-tag') {
+    return html + wrap(`<h2>¿Te han pillado?</h2><p>Declaras tu propia captura. Pasarás a modo espectador.</p>
+      <div class="btn-row"><button class="btn" data-action="close" data-autofocus>No</button><button class="btn btn-danger" data-action="confirm-self-tag">Sí, me han pillado</button></div>`, 'Declarar captura');
+  }
+  if (m.type === 'pick') {
+    const list = S.claimableRunners(g);
+    return html + wrap(`<h2>¿A quién capturas?</h2>${list.length ? list.map((r) => `<button class="btn btn-block" data-action="claim-runner" data-id="${r.id}">${esc(r.name)}</button>`).join('') : '<p>Ya no hay nadie a tu alcance.</p>'}
+      <button class="btn btn-ghost" data-action="close">Cancelar</button>${disclaimer}`, 'Elegir fugitivo');
+  }
+  if (m.type === 'claim') {
+    const c = g?.claims.find((x) => x.id === m.id);
+    if (!c) return html;
+    const states = {
+      pending: `<div class="big-state pending"><span class="spinner"></span> Pendiente: esperando a que ${esc(c.runnerName)} confirme…</div><p>Hasta que confirme, sigue en juego.</p>`,
+      confirmed: `<div class="big-state ok">✓ Captura confirmada</div><p>${esc(c.runnerName)} ha confirmado. Pasa a modo espectador.</p>`,
+      accepted: `<div class="big-state ok">✓ Aceptada tras la disputa</div>`,
+      disputed: `<div class="big-state dispute">⚠ Disputada: queda pendiente</div><p>${esc(c.runnerName)} dice que no le has pillado. Sigue en juego mientras esté pendiente. Debe resolverse antes del final; si no, no hay captura (regla provisional).</p>`,
+      withdrawn: '<div class="big-state closed">Reclamación retirada</div>',
+      default_no_capture: '<div class="big-state closed">Sin captura (regla provisional)</div>',
+    };
+    const actions = c.state === 'disputed'
+      ? `<div class="btn-row"><button class="btn" data-action="close">Mantener</button><button class="btn btn-danger" data-action="withdraw" data-id="${c.id}">Retirar</button></div>`
+      : `<button class="btn ${c.state === 'pending' ? '' : 'btn-primary'}" data-action="close" data-autofocus>${c.state === 'pending' ? 'Seguir jugando' : 'Cerrar'}</button>`;
+    return html + wrap(`<h2>Captura de ${esc(c.runnerName)}</h2>${states[c.state] ?? ''}${actions}${disclaimer}`, 'Estado de la captura');
+  }
+  if (m.type === 'incoming') {
+    if (!g.incoming) {
+      return html + wrap(`<h2>Reclamación cerrada</h2><p>${m.result === 'accepted' ? 'Has confirmado la captura. Pasas a modo espectador.' : m.result === 'disputed' ? 'Has disputado la captura: sigues en juego mientras esté pendiente.' : 'No respondiste a tiempo: no hay captura (regla provisional).'}</p>
+        <button class="btn btn-primary" data-action="close" data-autofocus>Entendido</button>`, 'Reclamación');
+    }
+    return html + wrap(`<h2>${esc(g.incoming.hunterName)} dice que te ha pillado</h2>
+      <div class="big-state pending"><span class="spinner"></span> Responde en <span class="num" data-bind="incomingLeft"></span></div>
+      <p>¿Es verdad? Si lo disputas, sigues en juego y queda pendiente.</p>
+      <div class="btn-row"><button class="btn btn-danger" data-action="incoming" data-accept="1">Sí, me ha pillado</button><button class="btn" data-action="incoming" data-accept="0">No, lo disputo</button></div>${disclaimer}`, 'Reclamación de captura');
+  }
+  if (m.type === 'dispute') {
+    const c = g?.claims.find((x) => x.id === m.id);
+    if (!c) return html;
+    const open = c.state === 'disputed';
+    return html + wrap(`<h2>Disputa con ${esc(c.hunterName)}</h2>
+      <div class="big-state ${open ? 'dispute' : 'closed'}">${open ? 'Disputa abierta: sigues en juego' : 'Disputa cerrada'} ${claimChip(c)}</div>
+      <p>${open ? 'Sigues en juego. Si cambias de opinión, puedes aceptar la captura. Si nadie la resuelve antes del final, no hay captura (regla provisional).' : 'Esta disputa ya está cerrada.'}</p>
+      <div class="btn-row"><button class="btn" data-action="close" data-autofocus>Cerrar</button>${open ? `<button class="btn btn-danger" data-action="accept-dispute" data-id="${c.id}">Aceptar la captura</button>` : ''}</div>`, 'Disputa');
+  }
+  return html;
+}
+
+// ------------------------------------------------------------------ bucle de la partida
+
+let loopTimer = null;
+let lastFrame = 0;
+let lobbyTimer = null;
+
+function startLoop() {
+  stopLoop();
+  lastFrame = performance.now();
+  loopTimer = setInterval(frame, 100);
+}
+function stopLoop() {
+  if (loopTimer) clearInterval(loopTimer);
+  loopTimer = null;
+}
+
+function frame() {
+  const now = performance.now();
+  const dt = Math.min(0.25, (now - lastFrame) / 1000);
+  lastFrame = now;
+  const g = state.game;
+  if (!g || state.route !== 'partida') return;
+  if (!state.paused && !document.hidden && g.phase !== 'finished') S.stepGame(g, dt * state.speed);
+  handleEvents(g);
+  if (g.phase === 'finished' && !state.finishing) {
+    state.finishing = true;
+    state.modal = null;
+    buzz([120, 60, 120, 60, 240]);
+    setTimeout(() => {
+      state.finishing = false;
+      state.leaving = true;
+      stopLoop();
+      go('final', true);
+    }, 1600);
+  }
+  paint();
+}
+
+function handleEvents(g) {
+  while (state.lastEvent < g.events.length) {
+    const e = g.events[state.lastEvent++];
+    const self = S.self(g);
+    switch (e.type) {
+      case 'phase': toast(e.text, 'info'); buzz([200]); break;
+      // La indicación del siguiente paso ya cubre la pista del cazador y la zona: solo vibran,
+      // para no repetir el mismo mensaje en dos sitios.
+      case 'ping':
+        if (self.team !== 'hunter') toast('Los cazadores acaban de recibir una pista con tu última posición.', 'ping');
+        buzz([80, 60, 80]);
+        break;
+      case 'zone': buzz([300]); break;
+      case 'capture': toast(e.text, 'capture'); buzz([150, 80, 150]); break;
+      case 'dispute': toast(e.text, 'dispute'); break;
+      case 'scan': break;
+      case 'incoming':
+        state.modal = { type: 'incoming' };
+        buzz([400, 120, 400]);
+        break;
+      case 'resolving': toast(e.text, 'dispute'); break;
+      default: break;
+    }
+  }
+  // Si la reclamación entrante caduca con el modal abierto, el modal muestra el resultado.
+}
+
+function startLobby() {
+  stopLobby();
+  state.hostStartAt = null;
+  lobbyTimer = setInterval(() => {
+    const room = state.room;
+    if (!room || state.route !== 'sala') return stopLobby();
+    const waiting = room.players.filter((p) => !p.isSelf && !p.ready);
+    if (waiting.length && Math.random() < 0.6) waiting[Math.floor(Math.random() * waiting.length)].ready = true;
+    if (room.joined && S.canStart(room)) {
+      state.hostStartAt ??= performance.now() + 1500;
+      if (performance.now() >= state.hostStartAt) {
+        toast('El anfitrión ha empezado la partida.', 'info');
+        return startGame();
+      }
+    } else state.hostStartAt = null;
+    paint();
+  }, 350);
+}
+function stopLobby() {
+  if (lobbyTimer) clearInterval(lobbyTimer);
+  lobbyTimer = null;
+}
+
+function startGame() {
+  stopLobby();
+  state.game = S.startGame(state.room);
+  state.lastEvent = 0;
+  state.modal = null;
+  state.sheetOpen = false;
+  state.tab = 'pistas';
+  state.paused = false;
+  state.finishing = false;
+  state.tapped = false;
+  go('partida');
+}
+
+// ------------------------------------------------------------------ acciones
+
+const ACTIONS = {
+  go: (d) => go(d.to),
+  'example-code': () => {
+    state.joinValue = 'HK7M2Q';
+    state.joinError = '';
+    painted.route = null;
+    paint();
+  },
+  set: (d) => {
+    const numeric = ['durationMin', 'zoneRadiusM'].includes(d.key);
+    state.settings[d.key] = numeric ? Number(d.value) : d.value;
+    paint();
+  },
+  players: (d) => {
+    state.settings.players = Math.max(X.minPlayers, Math.min(X.maxPlayers, state.settings.players + Number(d.delta)));
+    paint();
+  },
+  'toggle-dynamic': () => {
+    state.settings.dynamicZone = !state.settings.dynamicZone;
+    paint();
+  },
+  'create-room': () => {
+    // ?seed=N fija la semilla (pruebas reproducibles); si no, cada sala es distinta.
+    const fixed = Number(new URLSearchParams(location.search).get('seed'));
+    state.room = S.createRoom(state.settings, fixed > 0 ? fixed : (Date.now() ^ Math.floor(Math.random() * 1e9)) >>> 0);
+    state.game = null;
+    go('sala', true);
+  },
+  'copy-code': async () => {
+    const code = state.room.code;
+    try {
+      await navigator.clipboard.writeText(code);
+      toast(`Código ${code} copiado.`, 'info');
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = code;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      let ok = false;
+      try { ok = document.execCommand('copy'); } catch { ok = false; }
+      ta.remove();
+      toast(ok ? `Código ${code} copiado.` : `No se pudo copiar. El código es ${code}.`, 'info');
+    }
+  },
+  draw: () => {
+    S.drawTeams(state.room);
+    paint();
+  },
+  team: (d) => {
+    S.setTeam(state.room, d.id, d.team);
+    paint();
+  },
+  ready: () => {
+    const me = state.room.players.find((p) => p.isSelf);
+    S.setReady(state.room, 'me', !me.ready);
+    paint();
+  },
+  start: () => {
+    if (!S.canStart(state.room)) return;
+    startGame();
+  },
+  pause: () => {
+    state.paused = !state.paused;
+    paint();
+  },
+  sheet: (d) => {
+    if (d.tab && !state.sheetOpen) state.tab = d.tab;
+    state.sheetOpen = !state.sheetOpen;
+    paint();
+  },
+  tab: (d) => {
+    state.tab = d.tab;
+    paint();
+  },
+  speed: (d) => {
+    state.speed = Number(d.value);
+    paint();
+  },
+  'toggle-vibrate': () => {
+    state.vibrate = !state.vibrate;
+    paint();
+  },
+  map: (_d, el, ev) => {
+    const g = state.game;
+    const self = S.self(g);
+    if (self.status !== 'active' || g.phase === 'countdown' || g.phase === 'finished') return;
+    if (self.team === 'hunter' && g.phase === 'headstart') {
+      toast('Durante la ventaja los cazadores esperan en el punto de encuentro.', 'info');
+      return;
+    }
+    const m = el.getScreenCTM();
+    if (!m) return;
+    const pt = el.createSVGPoint();
+    pt.x = ev.clientX;
+    pt.y = ev.clientY;
+    const p = pt.matrixTransform(m.inverse());
+    const E = mapExtent(g) * 2;
+    self.target = { x: Math.max(-E, Math.min(E, p.x)), y: Math.max(-E, Math.min(E, p.y)) };
+    state.tapped = true;
+    paint();
+  },
+  'walk-to': (d) => {
+    const self = S.self(state.game);
+    if (self.status !== 'active') return;
+    self.target = { x: Number(d.x), y: Number(d.y) };
+    state.tapped = true;
+    state.sheetOpen = false;
+    paint();
+  },
+  claim: () => {
+    const list = S.claimableRunners(state.game);
+    if (list.length === 1) return ACTIONS['claim-runner']({ id: list[0].id });
+    state.modal = { type: 'pick' };
+    paint();
+  },
+  'claim-runner': (d) => {
+    const res = S.claimCapture(state.game, d.id);
+    if (!res.ok) {
+      state.modal = null;
+      toast(res.error, 'dispute');
+    } else {
+      state.modal = { type: 'claim', id: res.claim.id };
+      buzz([60]);
+    }
+    paint();
+  },
+  'show-claim': (d) => {
+    state.modal = { type: 'claim', id: d.id };
+    paint();
+  },
+  'show-dispute': (d) => {
+    state.modal = { type: 'dispute', id: d.id };
+    paint();
+  },
+  withdraw: (d) => {
+    S.withdrawClaim(state.game, d.id);
+    paint();
+  },
+  incoming: (d) => {
+    const accept = d.accept === '1';
+    S.respondIncoming(state.game, accept);
+    state.modal = { type: 'incoming', result: accept ? 'accepted' : 'disputed' };
+    paint();
+  },
+  'accept-dispute': (d) => {
+    S.acceptOwnDispute(state.game, d.id);
+    state.modal = null;
+    paint();
+  },
+  'self-tag': () => {
+    state.modal = { type: 'self-tag' };
+    paint();
+  },
+  'confirm-self-tag': () => {
+    S.selfTag(state.game);
+    state.modal = null;
+    paint();
+  },
+  scan: () => {
+    const res = S.scan(state.game);
+    toast(res.ok ? `Escáner: ${res.count} fugitivo(s) a menos de ${X.scan.radiusM} m. Es aproximado: no dice dónde.` : res.error, res.ok ? 'capture' : 'dispute');
+    if (res.ok) buzz([40, 40, 40]);
+    paint();
+  },
+  'ask-end': () => {
+    state.modal = { type: 'end' };
+    paint();
+  },
+  'end-game': () => {
+    state.modal = null;
+    S.endGame(state.game);
+    paint();
+  },
+  close: () => {
+    state.modal = null;
+    paint();
+  },
+  overlay: (_d, el, ev) => {
+    // Tocar fuera del cuadro cierra solo los modales informativos; nunca una reclamación entrante.
+    if (ev.target !== el) return;
+    if (state.modal && state.modal.type === 'incoming' && state.game?.incoming) return;
+    state.modal = null;
+    paint();
+  },
+  policy: (d) => {
+    state.nextPolicy = d.value;
+    paint();
+  },
+  'next-round': () => {
+    S.nextRound(state.room, state.game, state.nextPolicy);
+    state.game = null;
+    go('sala', true);
+  },
+  'back-lobby': () => {
+    S.nextRound(state.room, state.game, 'keep');
+    state.game = null;
+    go('sala', true);
+  },
+  exit: () => {
+    state.game = null;
+    state.room = null;
+    go('inicio', true);
+  },
+};
+
+function onClick(ev) {
+  const el = ev.target.closest('[data-action]');
+  if (!el || el.disabled) return;
+  const fn = ACTIONS[el.dataset.action];
+  if (fn) fn(el.dataset, el, ev);
+}
+
+function onSubmit(ev) {
+  const form = ev.target.closest('[data-form="join"]');
+  if (!form) return;
+  ev.preventDefault();
+  const res = S.joinRoom(state.joinValue);
+  if (!res.ok) {
+    state.joinError = res.error;
+    const input = document.getElementById('code');
+    if (input) input.setAttribute('aria-invalid', 'true');
+    paint();
+    return;
+  }
+  state.joinError = '';
+  state.joinValue = '';
+  state.room = res.room;
+  state.game = null;
+  go('sala', true);
+}
+
+function onInput(ev) {
+  if (ev.target.id !== 'code') return;
+  state.joinValue = ev.target.value;
+  if (state.joinError) {
+    state.joinError = '';
+    ev.target.setAttribute('aria-invalid', 'false');
+    paint();
+  }
+}
+
+// Se vuelve a pintar al cambiar de pantalla: arranca o para los temporizadores.
+function syncTimers() {
+  if (state.route === 'partida') {
+    if (!loopTimer) startLoop();
+  } else stopLoop();
+  if (state.route === 'sala') {
+    if (!lobbyTimer) startLobby();
+  } else stopLobby();
+}
+
+function boot() {
+  // Solo para las pruebas automáticas (?e2e): expone el estado simulado. No afecta al uso normal.
+  if (new URLSearchParams(location.search).has('e2e')) window.__rastro = { state, S };
+  document.addEventListener('click', onClick);
+  document.addEventListener('submit', onSubmit);
+  document.addEventListener('input', onInput);
+  document.addEventListener('toggle', (ev) => {
+    if (ev.target.matches?.('details.more')) state.moreOpen = ev.target.open;
+  }, true);
+  window.addEventListener('hashchange', onRoute);
+  window.addEventListener('resize', () => {
+    unitCache = { w: 0, h: 0, u: 1 };
+    if (state.route === 'partida') paint();
+  });
+  document.addEventListener('visibilitychange', () => {
+    lastFrame = performance.now();
+  });
+  onRoute();
+}
+
+boot();
+})();
+</script>
+</body>
+</html>
