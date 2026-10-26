@@ -115,6 +115,9 @@ try {
       waitFor,
       errors,
       reload: () => send('Page.reload', {}),
+      /** Da o retira el permiso de ubicación de esta página (como en los ajustes del navegador). */
+      setGeo: (allowed) =>
+        bsend('Browser.setPermission', { origin: server.url, permission: { name: 'geolocation' }, setting: allowed ? 'granted' : 'denied', browserContextId: ctx.browserContextId }),
       close: () => ws.close(),
       /** Cierra la pestaña (como cerrar la app): su WebSocket se corta de verdad. */
       closeTab: () => (ws.close(), bsend('Target.closeTarget', { targetId: created.targetId })),
@@ -330,7 +333,20 @@ try {
     await p.evaluate(click('[data-act="ready"]'));
   }
   await host.waitFor(`!!document.querySelector('[data-act="start"]:not([disabled])')`, 'empezar la revancha');
+  // Beto retira el permiso de ubicación después de estar listo (AC-D9): aviso fijo, sin fingir que
+  // comparte, y «Reintentar» cuando lo vuelve a dar.
+  await guest.setGeo(false);
   await host.evaluate(click('[data-act="start"]'));
+  await guest.waitFor(`document.querySelector('[data-act="retry-location"]')?.closest('.msg')?.textContent.includes('Falta el permiso de ubicación')`, 'aviso de permiso retirado');
+  await layout(guest, 'cuenta atrás sin permiso de ubicación');
+  check(
+    'sin permiso de ubicación en la partida: aviso fijo y el indicador no dice que se comparte',
+    await guest.evaluate(`document.querySelector('.sharing')?.textContent.includes('falta el permiso') && !document.querySelector('.sharing.on')`),
+  );
+  await guest.setGeo(true);
+  await guest.evaluate(click('[data-act="retry-location"]'));
+  await guest.waitFor(`!!document.querySelector('.sharing.on') && !document.querySelector('[data-act="retry-location"]')`, 'ubicación recuperada tras reintentar');
+  check('al devolver el permiso y pulsar «Reintentar», vuelve a compartir la ubicación', true);
   await late.waitFor(`!!document.querySelector('[data-act="leave-game"]')`, 'botón de abandonar en la cuenta atrás');
   await layout(late, 'cuenta atrás');
   check('durante la cuenta atrás se puede abandonar', true);
@@ -349,6 +365,12 @@ try {
   await late.waitFor(`!!document.querySelector('#home-form')`, 'Cris vuelve al inicio');
   check('al confirmar, sale de la partida y vuelve al inicio', cris()?.status === 'left' && cris()?.samples.length === 0, `estado ${cris()?.status}, lecturas ${cris()?.samples.length}`);
   check('la partida sigue para los demás', server.hub.roomStateByCode(code2)?.phase === 'ACTIVE');
+  // Permiso retirado con la persecución en marcha: el seguimiento ya activo (watchPosition) avisa.
+  await guest.setGeo(false);
+  const midGame = await guest
+    .waitFor(`document.querySelector('[data-act="retry-location"]')?.closest('.msg')?.textContent.includes('Falta el permiso')`, 'aviso con la partida en marcha', 8_000)
+    .then(() => true, () => false);
+  check('si se retira el permiso en plena persecución, aparece el mismo aviso', midGame);
   check('la declaración de edad se recuerda en el móvil: no se vuelve a pedir', !(await late.evaluate(`!!document.querySelector('#f-adult')`)));
 
   const bad = layoutReport.filter((r) => r.issues.length);

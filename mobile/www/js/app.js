@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -50,6 +50,7 @@ const ui = {
   gpsChecked: false, // este móvil ya ha dado una posición válida (se comprueba al pulsar «Estoy listo»)
   location: null,
   tracking: false,
+  locationDenied: false, // el permiso de ubicación falta o se ha retirado durante la partida (AC-D9)
   inviteCode: null, // código recibido por enlace de invitación (?sala=)
 };
 
@@ -155,6 +156,7 @@ function resetGame() {
   ui.snap = null;
   ui.positions = [];
   ui.ping = null;
+  ui.locationDenied = false;
   ui.claimSent = null;
   ui.zoneWarning = null;
   ui.startZoneWarning = false;
@@ -254,6 +256,7 @@ async function locationSource() {
 
 function onReading(r) {
   ui.reading = r;
+  ui.locationDenied = false;
   sendReading();
   render();
 }
@@ -278,21 +281,29 @@ function wantsTracking() {
 }
 
 async function syncTracking() {
-  if (wantsTracking() && !ui.tracking) {
+  // Sin permiso no se reintenta con cada instantánea (sería un aviso en bucle): solo con «Reintentar».
+  if (wantsTracking() && !ui.tracking && !ui.locationDenied) {
     ui.tracking = true;
     try {
       const src = await locationSource();
       // Sin señal o quieto: lo indica la barra de GPS con la antigüedad real; solo el permiso es un aviso.
-      await src.start(onReading, (code) => code === 'permission_missing' && toast('Se ha retirado el permiso de ubicación', 'danger'), {
+      await src.start(onReading, (code) => code === 'permission_missing' && locationDenied(), {
         upload: nativeUpload(),
       });
     } catch (e) {
       ui.tracking = false;
-      toast(e.message === 'permission_missing' ? 'Necesitas dar permiso de ubicación para jugar.' : 'No se pudo activar la ubicación.', 'danger');
+      if (e.message === 'permission_missing') locationDenied();
+      else toast('No se pudo activar la ubicación.', 'danger');
     }
   } else if (!wantsTracking() && ui.tracking) {
     stopTracking();
   }
+}
+
+function locationDenied() {
+  if (!ui.locationDenied) toast('Falta el permiso de ubicación', 'danger');
+  ui.locationDenied = true;
+  render();
 }
 
 /** Destino del envío nativo (solo app y servidor HTTPS): la sesión del jugador viaja al servicio. */
@@ -482,8 +493,11 @@ function countdownScreen(snap) {
 
 /** Si este móvil comparte su ubicación ahora mismo (Plan Maestro §4.5). */
 function sharingPill() {
-  const s = sharingStatus(ui.tracking, Boolean(ui.location?.uploading));
-  return `<p class="sharing${s.on ? ' on' : ''}" role="status">${esc(s.text)}</p>`;
+  const s = sharingStatus(ui.tracking, Boolean(ui.location?.uploading), ui.locationDenied);
+  const denied = wantsTracking() ? locationDeniedNotice(ui.locationDenied) : null;
+  return `<p class="sharing${s.on ? ' on' : ''}" role="status">${esc(s.text)}</p>${
+    denied ? `<div class="msg danger" role="alert"><p>${esc(denied)}</p><button class="btn btn-outline btn-small" data-act="retry-location">Reintentar</button></div>` : ''
+  }`;
 }
 
 /**
@@ -825,6 +839,11 @@ document.addEventListener('click', async (ev) => {
     case 'dismiss-reveal':
       ui.reveal = null;
       return render();
+    case 'retry-location':
+      // Se vuelve a pedir la ubicación desde cero (el navegador o el sistema pueden preguntar otra vez).
+      stopTracking();
+      ui.locationDenied = false;
+      return void syncTracking().then(render);
     case 'rematch':
       return void cmd({ type: 'rematch', swapRoles: false });
     case 'join_rematch':

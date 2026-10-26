@@ -300,7 +300,9 @@ export function startBlockers(snap, { forHost = true } = {}) {
  * cuándo comparte la ubicación»). `tracking`: la ubicación está activa para la partida; `uploading`:
  * el servicio nativo la envía también con la pantalla bloqueada.
  */
-export function sharingStatus(tracking, uploading) {
+export function sharingStatus(tracking, uploading, denied = false) {
+  // Con el permiso retirado no se envía nada, aunque el seguimiento siga «activo» en la página.
+  if (denied) return { on: false, text: 'No se comparte tu ubicación: falta el permiso' };
   if (!tracking) return { on: false, text: 'No se comparte tu ubicación' };
   return {
     on: true,
@@ -308,6 +310,15 @@ export function sharingStatus(tracking, uploading) {
       ? 'Compartiendo tu ubicación con el servidor de la partida (también con la pantalla bloqueada)'
       : 'Compartiendo tu ubicación con el servidor de la partida',
   };
+}
+
+/**
+ * Aviso fijo cuando falta el permiso de ubicación durante la partida (AC-D9; Plan Maestro §4.1: «si se
+ * deniega, la app no debe fingir que puede validar ubicación»). null si no hay nada que avisar.
+ */
+export function locationDeniedNotice(denied) {
+  if (!denied) return null;
+  return 'Falta el permiso de ubicación. Sin él, el servidor no sabe dónde estás y no puede validar capturas contigo. Actívalo en los ajustes del navegador o del móvil y pulsa «Reintentar».';
 }
 
 /**
