@@ -165,10 +165,28 @@ async function guarded(fn) {
   }
 }
 
+const messageOf = (e) => (e && e.message ? e.message : String(e));
+
+// Ningún paso del arranque puede quedarse esperando sin fin: los botones dependen de que termine.
+const BOOT_TIMEOUT_MS = 5_000;
+function withTimeout(promise, what) {
+  let timer;
+  const timeout = new Promise((_, reject) => {
+    timer = setTimeout(() => reject(new Error(`${what}: sin respuesta en ${BOOT_TIMEOUT_MS / 1000} s`)), BOOT_TIMEOUT_MS);
+  });
+  return Promise.race([promise, timeout]).finally(() => clearTimeout(timer));
+}
+
 async function boot() {
   layout();
-  const bridge = createLocationBridge(await nativePlugin().catch(() => null));
-  if (!bridge.available) log(errorText('unavailable'));
+  let plugin = null;
+  try {
+    ({ plugin } = await withTimeout(nativePlugin(), 'Carga de Capacitor'));
+    if (!plugin) log(errorText('unavailable'));
+  } catch (e) {
+    log(`No se pudo conectar con el módulo nativo (${messageOf(e)}). Cierra y vuelve a abrir la app.`);
+  }
+  const bridge = createLocationBridge(plugin);
 
   const refresh = async () => {
     if (!bridge.available) return;
@@ -179,14 +197,23 @@ async function boot() {
     if (state.status.lastError) log(errorText(state.status.lastError));
   };
 
-  await bridge.onReading((r) => {
-    state.reading = r;
-  }, () => log('Lectura descartada: datos incompletos del módulo nativo.'));
-  await bridge.onStatus((s) => {
-    if (s.lastError && s.lastError !== state.status.lastError) log(errorText(s.lastError));
-    if (!s.running) state.reading = null;
-    state.status = s;
-  });
+  // Si falla una suscripción se avisa en «Incidencias» y el resto de la pantalla sigue funcionando.
+  try {
+    await withTimeout(bridge.onReading((r) => {
+      state.reading = r;
+    }, () => log('Lectura descartada: datos incompletos del módulo nativo.')), 'Suscripción a lecturas');
+  } catch (e) {
+    log(`No se recibirán lecturas del módulo nativo (${messageOf(e)}).`);
+  }
+  try {
+    await withTimeout(bridge.onStatus((s) => {
+      if (s.lastError && s.lastError !== state.status.lastError) log(errorText(s.lastError));
+      if (!s.running) state.reading = null;
+      state.status = s;
+    }), 'Suscripción al estado');
+  } catch (e) {
+    log(`No se recibirá el estado de la sesión del módulo nativo (${messageOf(e)}).`);
+  }
 
   $('btn-perm').addEventListener('click', () => guarded(async () => {
     state.permissions = await bridge.requestPermissions();
@@ -227,4 +254,9 @@ async function boot() {
   setInterval(render, 500);
 }
 
-boot();
+// Un fallo inesperado del arranque se explica en pantalla en vez de dejarla inmóvil y en silencio.
+boot().catch((e) => {
+  const text = `La pantalla no terminó de arrancar (${messageOf(e)}). Cierra y vuelve a abrir la app.`;
+  if ($('log')) log(text);
+  else $('app').textContent = text;
+});

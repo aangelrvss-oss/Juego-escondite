@@ -137,8 +137,13 @@ export function createLocationBridge(plugin) {
   };
 }
 
-/** Módulo nativo real, solo dentro de la app (Capacitor). En un navegador devuelve null. */
-export async function nativePlugin() {
-  const { Capacitor, registerPlugin } = await import('../vendor/capacitor-core.js');
-  return Capacitor.isNativePlatform() ? registerPlugin(PLUGIN_NAME) : null;
+/**
+ * Módulo nativo real, solo dentro de la app (Capacitor): `{ plugin }`, con `plugin` a null en un
+ * navegador. Va envuelto a propósito: el proxy de `registerPlugin` responde a cualquier propiedad,
+ * también a «then», y devolverlo tal cual desde una función async deja la promesa sin resolverse
+ * nunca. `loadCore` permite probarlo con el runtime real de Capacitor fuera del WebView.
+ */
+export async function nativePlugin(loadCore = () => import('../vendor/capacitor-core.js')) {
+  const { Capacitor, registerPlugin } = await loadCore();
+  return { plugin: Capacitor.isNativePlatform() ? registerPlugin(PLUGIN_NAME) : null };
 }
