@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-**Última actualización:** 26/10/2026, tarde (recuperación en Windows, Plan Maestro v1.0, enlace/QR y cambio de código; **sin commit**)
+**Última actualización:** 26/10/2026, noche (sesión autónoma: commits locales de todo el trabajo, robustez, GPS, privacidad, sala y experiencia móvil; **todo en commits locales, sin push**)
 **Rama:** `recuperacion-h2` (local, sobre `4c190a0`; `origin` sigue en `ccr-f1962362-hvwb9i` = `4c190a0`)
 **Referencia de producto:** Plan Maestro v1.0 (PDF fuera del repositorio). Trazabilidad en `docs/product/PLAN_MAESTRO_TRAZABILIDAD.md`; sus contradicciones con este registro están en `DECISION_LOG.md` (D-043 a D-047), **sin resolver**.
 **Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
@@ -164,10 +164,31 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
   **El QR no se ha escaneado con una cámara ni con un lector de terceros.**
 - **Android en Windows:** no hay JDK 21 ni Android SDK. La compilación está bloqueada hasta que se autorice instalarlos.
 
+## Sesión autónoma (26/10/2026, 19:41-20:20): commits locales en `recuperacion-h2`, sin push
+
+| Commit | Contenido |
+|---|---|
+| `46192fb` | Invitación: enlace `?sala=`, QR propio y renovación del código (D-048) |
+| `1d913d5` | Mission Report mínimo con datos oficiales; se reconstruye tras reconectar |
+| `cb7f3e8` | Documentación: Plan Maestro, contradicciones D-043 a D-047, trazabilidad y criterios de aceptación |
+| `952b158` | Un salto aislado del GPS ya no valida una captura (D-049; Plan §4.1 y §10) |
+| `d420cc1` | Abandonar la partida desde la interfaz, dejando de compartir la ubicación (§4.5 y §10) |
+| `97410fe` | Comprobación de GPS al pulsar «Estoy listo», con explicación (§2.1 paso 4 y §4.1) |
+| `9d44bd8` | Persistencia opcional de las salas para sobrevivir a reinicios (`STATE_FILE`, D-050), sin coordenadas ni secretos |
+| `40ffc39` | Todos ven qué impide empezar y quién está sin conexión; aviso al perder la conexión (§7) |
+| `efd1235` | Límite de 5 salas activas por dirección: nadie acapara la capacidad |
+| `7521f1b` | Reglas de la partida visibles para todos, sincronizadas con el motor (§2.1 paso 5, §3.3 y §7) |
+| `f399f0d` | Controles de 44 px y texto de 12 px o más en 11 pantallas a 360×740 (2 defectos corregidos) |
+| `6739b68` | Indicador de cuándo se comparte la ubicación (§4.5) |
+| `7a6b56a` | Versión de reglas por partida (§8.3) |
+| `ab2d2dd` | Compartir el Mission Report como texto (§4.4) |
+
+Todo está probado con pruebas automáticas y en **Chrome de escritorio** (con emulación móvil y geolocalización emulada). **Nada se ha validado en un móvil real.** Detalle en `QUALITY_STATE.md`.
+
 ## Siguiente acción concreta
 
-0. ~~Configurar la identidad de Git y hacer los commits A y B.~~ Hecho: `664cf53` y `5611274`, locales y sin push. Pendiente: revisar y autorizar el commit del trabajo posterior (invitación y Mission Report).
-1. Revisar F1, H2 y el bloque de enlace/QR, y autorizar (o no) su commit. Decidir D-043 a D-047.
+0. ~~Configurar la identidad de Git y hacer los commits.~~ Hecho: hay commits locales de todo el trabajo, sin push. Decidir si se publica la rama `recuperacion-h2` en GitHub (no se ha hecho).
+1. **Decidir D-043 a D-047** (radio, PWA, INFECTION, número de jugadores, pistas y espectadores) y D-035 (disputas). Son los bloqueos de producto que quedan para HUNT.
 2. **Prueba con dos móviles:** seguir `mobile/PRUEBA_PARTIDA_ANDROID.md`.
    - Servidor y túnel HTTPS en tu ordenador.
    - APK `0.3.0-h2-bloqueo` en los dos Android.
