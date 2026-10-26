@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, WIN_TEXT, ago, clock, codeFromLink, errorText, gpsStatus, inviteLink, me, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, clock, codeFromLink, errorText, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -522,13 +522,22 @@ function pingList(ping) {
 
 function finishedScreen(snap) {
   const o = snap.outcome;
-  const winner = o?.winner ? `Ganan los ${o.winner === 'hunter' ? 'cazadores' : 'fugitivos'}` : 'Sin ganador';
+  const report = missionReport(snap, nameOf);
   const isHost = snap.hostId === ui.conn.playerId;
-  return `<section class="card result t-${o?.winner ?? 'x'}">
-      <p class="label">${esc(o ? WIN_TEXT[o.cause] ?? '' : '')}</p>
-      <h1>${esc(winner)}</h1>
-      <ul class="captures">${snap.captures.map((c) => `<li>${esc(nameOf(c.runnerId))} capturado a los ${clock(c.atOffsetMs)}${c.hunterId ? ` por ${esc(nameOf(c.hunterId))}` : ''}</li>`).join('') || '<li>Ninguna captura</li>'}</ul>
-      <p class="hint">Las ubicaciones de la partida ya se han borrado del servidor.</p>
+  if (!report) return `<section class="card"><p class="line">Calculando el resultado…</p></section>`;
+  const stat = (label, value) => `<div class="stat"><p class="label">${esc(label)}</p><p class="num">${esc(value)}</p></div>`;
+  return `<section class="card result t-${o?.winner ?? 'x'}" aria-label="Mission Report">
+      <p class="label">Mission Report · ${esc(report.cause)}</p>
+      <h1>${esc(report.winner)}</h1>
+      <div class="stats">
+        ${stat('Persecución', report.durationMs === null ? '—' : clock(report.durationMs))}
+        ${stat('Capturas', String(report.captureCount))}
+        ${report.timeToVictoryMs !== null ? stat('Hasta la victoria', clock(report.timeToVictoryMs)) : ''}
+      </div>
+      ${report.highlights.length ? `<h2>Momentos</h2><ul class="highlights">${report.highlights.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
+      <h2>Capturas</h2>
+      <ul class="captures">${report.captures.map((c) => `<li>${esc(c.runner)} capturado a los ${clock(c.atMs)}${c.hunter ? ` por ${esc(c.hunter)}` : ''}${c.via === 'self' ? ' · lo declaró el fugitivo' : ''}</li>`).join('') || '<li>Ninguna captura</li>'}</ul>
+      <p class="hint">Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado.</p>
     </section>
     ${isHost ? '<button class="btn btn-primary" data-act="rematch">Revancha</button>' : '<p class="line">Esperando a que el anfitrión proponga la revancha…</p>'}
     <button class="btn btn-ghost" data-act="leave">Salir</button>`;

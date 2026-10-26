@@ -65,6 +65,46 @@ export const WIN_TEXT = Object.freeze({
   ended_by_host: 'El anfitrión terminó la partida',
 });
 
+/**
+ * Mission Report (Plan Maestro §4.4), solo con datos oficiales de la instantánea del servidor:
+ * resultado, tiempo, estadísticas y momentos destacados verificables (capturas registradas por el
+ * motor). No revela el equipo de nadie que no lo haya revelado ya la partida (un capturado era
+ * fugitivo; quien captura era cazador) y no lleva coordenadas.
+ * `nameOf(id)` da el nombre a mostrar. Devuelve null si la partida no ha terminado.
+ */
+export function missionReport(snap, nameOf = (id) => id) {
+  if (!snap || snap.phase !== 'FINISHED' || !snap.outcome) return null;
+  const o = snap.outcome;
+  const captures = [...(snap.captures ?? [])].sort((a, b) => a.atOffsetMs - b.atOffsetMs);
+  const duration = snap.activeStart !== null && snap.activeStart !== undefined && snap.finishedAt !== null && snap.finishedAt !== undefined
+    ? Math.max(0, snap.finishedAt - snap.activeStart)
+    : null; // terminó antes de empezar la persecución
+  const byHunter = new Map();
+  for (const c of captures) if (c.hunterId) byHunter.set(c.hunterId, (byHunter.get(c.hunterId) ?? 0) + 1);
+  const ranking = [...byHunter.entries()].sort((a, b) => b[1] - a[1]);
+  const highlights = [];
+  if (captures.length > 0) highlights.push(`Primera captura: ${nameOf(captures[0].runnerId)} a los ${clock(captures[0].atOffsetMs)}`);
+  if (o.cause === 'all_captured' && captures.length > 0) {
+    const last = captures[captures.length - 1];
+    highlights.push(`Captura decisiva: ${nameOf(last.runnerId)}${last.hunterId ? ` por ${nameOf(last.hunterId)}` : ''} a los ${clock(last.atOffsetMs)}`);
+  }
+  if (o.cause === 'time_up' && o.winner === 'runner') highlights.push('Los fugitivos aguantaron hasta el final');
+  if (ranking.length > 0 && ranking[0][1] >= 2 && (ranking.length === 1 || ranking[1][1] < ranking[0][1])) {
+    highlights.push(`Más capturas: ${nameOf(ranking[0][0])} (${ranking[0][1]})`);
+  }
+  return {
+    winner: o.winner ? `Ganan los ${o.winner === 'hunter' ? 'cazadores' : 'fugitivos'}` : 'Sin ganador',
+    cause: WIN_TEXT[o.cause] ?? '',
+    durationMs: duration,
+    timeToVictoryMs: o.cause === 'all_captured' && captures.length > 0 ? captures[captures.length - 1].atOffsetMs : null,
+    captureCount: captures.length,
+    selfDeclared: captures.filter((c) => c.via === 'self').length,
+    hunterRanking: ranking.map(([id, n]) => ({ name: nameOf(id), captures: n })),
+    captures: captures.map((c) => ({ runner: nameOf(c.runnerId), hunter: c.hunterId ? nameOf(c.hunterId) : null, atMs: c.atOffsetMs, via: c.via })),
+    highlights,
+  };
+}
+
 /** mm:ss (o h:mm:ss) de un intervalo en ms; nunca negativo. */
 export function clock(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));

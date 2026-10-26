@@ -110,6 +110,10 @@ export interface Snapshot {
   headStartEnd: number | null;
   gameEnd: number | null;
   nextPingAt: number | null;
+  // Inicio de la persecución y momento del final (hora del servidor; iguales para todos). Permiten
+  // reconstruir el Mission Report tras una reconexión sin depender del evento game_finished.
+  activeStart: number | null;
+  finishedAt: number | null;
   players: PlayerView[];
   config: RoomState['config'];
   captures: RoomState['captures'];
@@ -142,6 +146,8 @@ export function snapshotFor(state: RoomState, viewerId: string, now: number): Sn
     headStartEnd: state.headStartEnd,
     gameEnd: state.gameEnd,
     nextPingAt: state.nextPingAt,
+    activeStart: state.activeStart,
+    finishedAt: state.finishedAt,
     players: state.playerOrder
       .map((id) => state.players[id])
       .filter((p): p is Player => p !== undefined && p.status !== 'left')

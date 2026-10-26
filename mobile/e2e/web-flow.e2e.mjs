@@ -1,4 +1,5 @@
-// Flujo web real de una sala (Plan Maestro D-002 y §2.2): enlace de invitación, QR y cambio de código.
+// Flujo web real de una sala (Plan Maestro D-002, §2.2 y §4.4): enlace de invitación, QR, cambio de
+// código y una partida corta hasta el Mission Report, que se vuelve a abrir tras recargar la página.
 // Servidor real (127.0.0.1, puerto aleatorio, solo este ordenador) con su reloj controlado por la
 // prueba, y Chrome o Edge sin interfaz controlado por el protocolo DevTools (sin Playwright ni
 // dependencias). Cada jugador va en un contexto aislado (almacenamiento propio, como móviles
@@ -187,6 +188,42 @@ try {
   await late.evaluate(click('[data-act="join"]'));
   await host.waitFor(`document.querySelectorAll('.players li').length === 3`, 'tres jugadores');
   check('con el código nuevo entra el tercero', true);
+
+  // Partida corta: Ana y Cris cazadores, Beto fugitivo (asignación manual del anfitrión).
+  const assign = (name, pref) =>
+    `(() => { const el = document.querySelector('select[aria-label="Rol de ${name}"]'); el.value = '${pref}'; el.dispatchEvent(new Event('change', { bubbles: true })); return true; })()`;
+  await host.evaluate(assign('Ana', 'hunter'));
+  await host.evaluate(assign('Beto', 'runner'));
+  await host.evaluate(assign('Cris', 'hunter'));
+  await host.evaluate(click('[data-act="center"]'));
+  await host.waitFor(`document.querySelector('[data-act="center"]')?.textContent.includes('Volver')`, 'zona centrada (geolocalización emulada)');
+  await host.evaluate(click('#c-safety'));
+  await host.waitFor(`document.querySelector('#c-safety')?.checked`, 'lista de seguridad');
+  for (const p of [host, guest, late]) await p.evaluate(click('[data-act="ready"]'));
+  await host.waitFor(`!!document.querySelector('[data-act="start"]:not([disabled])')`, 'botón de empezar activo');
+  await host.evaluate(click('[data-act="start"]'));
+  for (const p of [host, guest, late]) await p.waitFor(`document.body.textContent.includes('La partida empieza en')`, 'cuenta atrás');
+  await advance(5_000);
+  await guest.waitFor(`document.querySelector('.overlay.reveal')?.textContent.includes('FUGITIVO')`, 'Beto descubre que es fugitivo');
+  check('cuenta atrás y revelación privada del rol', true);
+  for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
+  await advance(2 * 60_000);
+  await guest.waitFor(`!!document.querySelector('[data-act="selftag"]')`, 'persecución');
+  await advance(75_000); // 1:15 de persecución
+  await guest.evaluate(click('[data-act="selftag"]'));
+  await guest.waitFor(`!!document.querySelector('[data-selftag]:not([data-selftag=""])')`, 'lista de cazadores');
+  await guest.evaluate(`(() => { [...document.querySelectorAll('[data-selftag]')].find((b) => b.textContent.trim() === 'Ana').click(); return true; })()`);
+
+  // Mission Report en los tres, y de nuevo tras recargar la página (reconexión con la sesión guardada).
+  const reportOk = `(() => { const r = document.querySelector('.result'); return !!r && r.textContent.includes('Mission Report') && r.textContent.includes('Ganan los cazadores') && r.textContent.includes('Captura decisiva: Beto por Ana a los 1:15'); })()`;
+  for (const p of [host, guest, late]) await p.waitFor(reportOk, 'Mission Report');
+  const texts = await Promise.all([host, guest, late].map((p) => p.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`)));
+  check('Mission Report igual en los tres móviles', texts.every((x) => x === texts[0]), texts[0].slice(0, 160));
+  check('el informe incluye duración y capturas', texts[0].includes('Persecución') && texts[0].includes('1:15') && texts[0].includes('Capturas'));
+  await guest.reload();
+  await guest.waitFor(reportOk, 'Mission Report tras recargar', 10_000);
+  const after = await guest.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`);
+  check('tras recargar, el Mission Report se reconstruye igual', after === texts[0]);
 
   const errs = [...host.errors, ...guest.errors, ...late.errors];
   check('sin errores de JavaScript en las tres páginas', errs.length === 0, errs.join(' | '));
