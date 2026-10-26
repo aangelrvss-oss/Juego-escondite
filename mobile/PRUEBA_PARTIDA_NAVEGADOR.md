@@ -66,14 +66,19 @@ node server/health-watch.mjs                                       # terminal 3:
 4. B responde **No** la primera vez (la partida sigue) y **Sí, me ha pillado** la segunda.
    - El Mission Report debe salir igual en los dos.
 
-### 5. Recuperación (con una segunda partida: «Revancha»)
+### 5. Segunda partida consecutiva, con recuperación («Revancha»)
+
+La puerta de salida de la Fase 2 del Plan Maestro es «dos partidas consecutivas completas con resultados correctos, sin reiniciar manualmente el backend y sin contradicciones entre dispositivos». Esta segunda partida **tiene que terminar con normalidad** (por captura o por tiempo), aunque incluya los cortes de abajo. **No reiniciéis el servidor entre las dos.**
 
 1. En plena persecución, **B recarga la página**. Debe volver a la partida sin repetir la tarjeta del rol ni los avisos antiguos.
 2. **A activa el modo avión** 30 s y lo quita. Arriba debe salir el aviso de conexión perdida y luego desaparecer.
    - Comprobad que el tiempo restante sigue igual que en B.
 3. **B retira el permiso de ubicación** en los ajustes del navegador. Debe salir el aviso fijo «Falta el permiso de ubicación», y el indicador debe dejar de decir que se comparte.
    - Al devolverlo y pulsar **Reintentar**, vuelve a compartir.
-4. **A** pulsa **Abandonar la partida** (dos toques). Debe volver al inicio, y el indicador debe dejar de decir que comparte.
+4. Terminad la partida: B se declara capturado o se agota el tiempo. El Mission Report debe salir igual en los dos.
+
+### 5b. Abandono (después, en una tercera partida opcional)
+**A** pulsa **Abandonar la partida** (dos toques). Debe volver al inicio, y el indicador debe dejar de decir que comparte. Si A era el único cazador, la partida termina sin ganador: por eso va aparte y no cuenta para la puerta de salida.
 
 ### 6. Cerrar
 
@@ -85,6 +90,7 @@ node server/health-watch.mjs                                       # terminal 3:
 | Pregunta | Se cumple si… |
 |---|---|
 | Partida completa | Entrar, jugar, capturar y ver el mismo Mission Report en los dos sin ayuda del ordenador |
+| **Puerta de la Fase 2 (Plan Maestro)** | Las partidas 1 y 2 son consecutivas y completas, con el mismo resultado en los dos móviles, sin reiniciar el servidor. Una sola prueba con dos personas es una primera señal, no la validación del juego (guía de criterio §8). Faltará repetirla con más jugadores y con personas ajenas al desarrollo (guía §9) |
 | QR | La cámara del sistema abre el enlace con el código puesto |
 | Pantalla encendida | No se apaga sola durante la partida (o el aviso lo dice claramente) |
 | Jugador quieto | La reclamación sobre un fugitivo que lleva 2–3 min quieto llega y se puede confirmar |

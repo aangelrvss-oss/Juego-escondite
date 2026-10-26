@@ -6,13 +6,16 @@
 
 | Tipo de prueba | Estado |
 |---|---|
-| Pruebas automatizadas del motor y de la simulación | **103 de 103** el 24/10/2026 (2 ejecuciones idénticas); **112 de 112** tras D-042 (25/10/2026); **130 de 130** con F1 (26/10/2026). Todas son **SIMULADAS** |
-| Servidor multijugador real (H2) | **19 de 19** (`npm run test:server`), incluido el envío de ubicación por HTTP y el ping de protocolo. Clientes reales por WebSocket y HTTP en un ordenador; reloj y ubicaciones **SIMULADOS** |
-| Interfaz de partida con 5 navegadores (H2) | **8 de 8 etapas** (`mobile/e2e/game.e2e.mjs`). Chromium con geolocalización **emulada**; **no son móviles** |
+| Pruebas automatizadas del motor y de la simulación | **144 de 144** (26/10/2026, noche; antes 103, 112 y 130). Todas son **SIMULADAS** |
+| Servidor multijugador real (H2) | **54 de 54** (`npm run test:server`, 26/10/2026, noche). Clientes reales por WebSocket y HTTP en un ordenador, incluido el proceso del servidor terminado sin aviso; reloj y ubicaciones **SIMULADOS** |
+| Cliente (`mobile/`, `npm test`) | **95 de 95**. Módulos de la interfaz con red, GPS y puente nativo **simulados** |
+| Interfaz en un navegador real | **41 de 41** comprobaciones en Chrome de escritorio con emulación móvil (`mobile/e2e/web-flow.e2e.mjs`, 26/10/2026, noche). La E2E de 5 navegadores con Playwright (`game.e2e.mjs`, 8 etapas) **no se ha vuelto a ejecutar**: Playwright no está instalado. **No son móviles** |
 | Verificación por mutación (3 invariantes de seguridad) | Las 3 mutaciones las detecta al menos una prueba |
 | Pruebas en dispositivos reales | **Una sesión corta de H1 en un Xiaomi 14T** (ver «H1» al final). El resto de pruebas físicas siguen **pendientes**: S1–S3, la lista de H1 y la partida con dos móviles (`mobile/PRUEBA_PARTIDA_ANDROID.md`, preparada y **no realizada**) |
 | Transporte de red real (WebSocket), latencia y cobertura móvil | WebSocket real **probado en local** (mismo ordenador). **No probado** desde redes distintas, ni con latencia o cobertura móvil reales |
 | Ubicación en segundo plano, GPS real, notificaciones y batería | **Evidencia preliminar en Android:** en esa sesión corta se recibieron posiciones con la pantalla apagada. **No validados:** sesión larga, caminando, mala señal, batería ni iOS |
+
+**Cómo leer estas cifras (guía de criterio §8):** son grupos distintos (motor, servidor, cliente, demo, H1 y navegador) y **no se suman**. Ninguno demuestra que el juego funcione en móviles reales ni que sea divertido. **Todavía no se ha jugado ninguna partida con dispositivos ni jugadores reales.**
 
 **Qué demuestra S0:** que las reglas del modo Clásico, la autoridad del servidor, el filtrado de datos por equipo, la validación de capturas, la reanudación y la idempotencia funcionan según lo documentado **en un entorno simulado y determinista**.
 **Qué no demuestra:** nada sobre GPS real, móviles bloqueados, redes móviles, latencias reales, consumo de batería ni el rendimiento del servidor en producción.
