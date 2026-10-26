@@ -10,11 +10,13 @@ Leyenda de la última columna del resumen: **Sí** = no se implementa nada sin a
 |---|---|---|---|
 | D-043 | Radio por equipos | El Plan sustituye a D-006, pero por pasos: primero un prototipo aislado de voz por WebRTC entre los miembros de cada equipo, sin grabar; mientras tanto, canal externo como plan B declarado | **Sí**: cambia D-006, pide micrófono y puede tener coste (servidor TURN) |
 | D-044 | PWA | Las dos cosas: web instalable (manifest y service worker mínimo) **y** app Android para jugar con la pantalla bloqueada | **Sí**: cambia D-005 |
-| D-045 | INFECTION | Compatible con D-030: orden HUNT → THE RACE → INFECTION, sin código hasta cerrar HUNT | Solo confirmar el orden |
+| D-045 | Siguiente modo | **Revisada con la guía (26/10, noche):** ningún modo nuevo hasta cerrar HUNT, y después elegir entre THE RACE e INFECTION por valor demostrado en las pruebas (guía), no por un orden fijo (Plan) | **Sí**: el Plan y la guía no coinciden |
 | D-046 | Número de jugadores | Motor en 2–20; la interfaz deja de anunciar 20 y recomienda 4–10 hasta probarlo en la calle | **Parcial**: el cambio de texto es pequeño, pero decide qué se promete |
 | D-047 | Pistas y capturados | Pistas aproximadas (zona, no punto) y los capturados dejan de ver a los cazadores | **Sí**: cambia el equilibrio del juego |
 | D-035 | Disputas de captura | Procedimiento de `GAME_MODES_AND_RULES.md` §9.3, con «sin captura» como regla predeterminada | **Sí**: falta aprobar la regla predeterminada y la ventana de resolución |
 | (nueva) | Estados CHECKS, BRIEFING y PAUSED | Mantener CHECKS y BRIEFING como pasos de la sala, sin fases nuevas; PAUSED solo tras decidir quién pausa y qué pasa con los plazos | **Sí** para PAUSED |
+| D-053 | Pausar o cancelar (guía §7) | Cancelar ya existe («Terminar partida» del anfitrión y abandono). Pausa solo del anfitrión, que congela todos los plazos y avisa a todos; nunca automática | **Sí** |
+| D-054 | Revisar las decisiones técnicas de las sesiones autónomas | Confirmarlas, salvo que quieras otra cosa en la pantalla encendida (D-051), por su coste de batería | **Sí** |
 
 ---
 
@@ -80,7 +82,7 @@ Motivo: B no necesita servidor de medios, el audio no pasa por nuestro servidor 
 
 **Consecuencias:** INFECTION toca el motor (cambio de equipo durante la partida), la vista autorizada (el infectado pasa a ver lo que ven los cazadores al instante) y, si hay radio, los permisos de voz. Adelantarla es más barato que THE RACE, pero el Plan (§1.4) prohíbe añadir modos antes de una partida completa en dispositivos reales.
 
-**Recomendación:** no hay contradicción real si «prioritario» significa «el siguiente modo tras cerrar HUNT». Propongo confirmar el orden del Plan y, cuando HUNT esté validado en la calle, valorar si INFECTION va antes que THE RACE por coste.
+**Recomendación (revisada el 26/10 por la noche, con la guía de criterio):** no empezar ningún modo hasta cerrar HUNT con dispositivos y jugadores reales (Plan §1.4 y guía §3). Después, elegir entre THE RACE e INFECTION por valor demostrado, coste y riesgo (guía §4, P2), con las pruebas de HUNT como evidencia. Esto contradice el orden fijo del Plan (PM-D-007), así que tienes que decidir cuál manda. Antes recomendaba confirmar el orden del Plan.
 
 **Necesita tu aprobación:** solo que confirmes el orden. No se implementa nada ahora.
 
@@ -173,3 +175,46 @@ Motivo: B no necesita servidor de medios, el audio no pasa por nuestro servidor 
 **Recomendación:** no crear fases CHECKS y BRIEFING en el motor. Añadirían estados y transiciones sin una regla nueva que proteger, y el criterio del Plan ya se cumple en la sala. PAUSED sí cambia reglas, y necesita respuestas tuyas: quién pausa (¿solo el sistema, o también el anfitrión?), si se congelan los plazos de huida, la persecución y las reclamaciones, y si un reinicio del servidor debe pausar automáticamente.
 
 **Necesita tu aprobación:** sí para PAUSED. Mantener CHECKS y BRIEFING como pasos de la sala es una lectura del Plan que te pido confirmar, pero no requiere cambiar código.
+
+---
+
+## Contraste con la Guía de criterio v1.0 (26/10/2026, noche)
+
+Guía: `docs/product/THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx` (copia idéntica al original). Es transversal: no sustituye al Plan, a las reglas ni al registro (guía §1). Aquí se registra lo que no coincide y lo que la guía obliga a revisar. **No se ha resuelto nada.**
+
+### Funciones de cada documento (guía §10, adaptada a lo que ya existe)
+| Función | Documento | Nota |
+|---|---|---|
+| Qué producto se construye | Plan Maestro (PDF fuera del repositorio) | Trazabilidad: `PLAN_MAESTRO_TRAZABILIDAD.md` |
+| Cómo se prioriza y se evalúa | La guía | Nuevo |
+| Cómo funciona cada modo | `GAME_MODES_AND_RULES.md` | Fuente única de reglas |
+| Contrato técnico | `docs/technical/GAME_STATE_MACHINE.md` y `server/protocol.ts` | **Sin revisar** frente a H2 en esta sesión |
+| Qué se ha decidido y qué falta | `DECISION_LOG.md` y este documento | |
+| Qué existe y con qué evidencia | `PROJECT_STATE.md` y `QUALITY_STATE.md` | |
+| Cómo se verifica | `ACCEPTANCE_CRITERIA.md` y los procedimientos de prueba (`mobile/PRUEBA_*.md`, `S1_ANDROID_PROTOCOL.md`) | |
+| Qué queda y en qué orden | `BACKLOG.md` | Reordenado con las prioridades de la guía |
+
+### Contradicciones y tensiones
+| Tema | Plan Maestro | Guía | Registro y código | Dónde |
+|---|---|---|---|---|
+| Radio | Requisito fijo (PM-D-003) | Pregunta abierta: ¿compensa su complejidad? (§13) | D-006: sin radio en el MVP; no hay código | D-043 |
+| Siguiente modo | Orden fijo: THE RACE y después INFECTION (PM-D-007), INFECTION «prioridad alta» | Elegir por valor demostrado (P2) | D-030: Clásico primero | D-045 |
+| Pausa | Solo por incidencias del sistema (§2.3) | «Forma clara de pausar o cancelar» (§7) | Se puede terminar o abandonar; no hay pausa | D-053 |
+| Criterio de salida de HUNT | «Dos partidas consecutivas completas… sin reiniciar el backend» (F2) | «Partidas consecutivas… el protocolo debe fijar cuántas» (§5) | **No hay contradicción**: el número lo da el Plan. Los procedimientos de prueba deben adoptarlo | `PRUEBA_PARTIDA_NAVEGADOR.md`, actualizado |
+| Proceso | — | Proponer → autorizar → implementar (§11) | Las sesiones autónomas implementaron decisiones técnicas reversibles | D-054 |
+
+### Riesgos que la guía obliga a mirar (seguridad, privacidad y justicia)
+1. **«Una advertencia no arregla una mecánica peligrosa» (§7).** Hoy la seguridad depende de textos: la lista del anfitrión, las reglas, el aviso nocturno y las normas de captura. La mecánica de captura es un toque suave confirmado en la app, sin agarrar ni empujar, y cumple la guía. Pero nada impide una zona con calzadas: la app no puede comprobarlo (`USER_FLOWS.md` F5.5). Necesita una decisión, por ejemplo un constructor de zonas que excluya vías (`COMPETITIVE_ANALYSIS.md`).
+2. **«No exigir correr mirando la pantalla» (§7).** En el navegador, la pantalla tiene que seguir encendida (D-051), lo que invita a llevar el móvil en la mano. En la app no hace falta. Hay que observarlo en la prueba con jugadores.
+3. **Información por rol y necesidad (§3, §7).** Los capturados ven a los cazadores con 60 s de retraso y las pistas son posiciones exactas. Es D-047, todavía abierta.
+4. **Justicia percibida (§2, §6).** El umbral de captura (≤ 30 m de precisión, lecturas de ≤ 15 s) y el filtro de saltos (12 m/s) son hipótesis (D-038). La guía pide no exigir una precisión que los móviles no garantizan: solo se puede comprobar en la calle. Y una captura disputada sigue cerrándose sin captura al instante (D-035 sin implementar).
+5. **Conservación de datos (§7 y §13).** Las lecturas se borran al terminar la partida y nunca van al archivo de estado. Pero no hay una política escrita de conservación (cuánto, para qué), ni revisión legal. Es una tarea del backlog (`PRIVACY_AND_COMPLIANCE.md`).
+6. **Evidencia (§3 y §8).** Los recuentos de pruebas del motor, el servidor, el cliente, la demo y H1 son de grupos distintos y no se suman. Ninguno demuestra que el juego funcione en móviles reales ni que sea divertido. `QUALITY_STATE.md` se ha corregido en ese sentido.
+
+### Requisitos según su evidencia
+| Evidencia | Requisitos |
+|---|---|
+| Solo simulación o pruebas automáticas | Reglas del motor (capturas, zona, pistas, final y revancha), filtrado por equipo, idempotencia, persistencia y reconexión |
+| Además, en Chrome de escritorio con emulación (no en un móvil) | Flujo completo de 3–4 jugadores, enlace, QR decodificado por un lector de prueba, declaración de edad, permiso retirado, pantalla encendida, recarga y Mission Report |
+| Con un dispositivo real | Solo H1: una sesión corta de GPS en un Xiaomi 14T, con la pantalla apagada. **El CSV de esa prueba no está en el repositorio ni en este ordenador: falta analizarlo (guía §6)** |
+| Con jugadores reales | **Nada.** Ni una partida, ni medidas de diversión o comprensión (guía §9) |

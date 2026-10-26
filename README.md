@@ -5,12 +5,21 @@ Proyecto de juego social de escondite y persecución en la vida real con geoloca
 **Estado:**
 - **H2:** partida multijugador con servidor autoritativo (`server/`) y cliente (`mobile/`, app Android y web).
   - Probada con 5 clientes reales y 5 navegadores en un ordenador; **todavía no se ha jugado con móviles reales**.
-  - La prueba con dos Android está preparada en [`mobile/PRUEBA_PARTIDA_ANDROID.md`](./mobile/PRUEBA_PARTIDA_ANDROID.md).
+  - La prueba con dos Android está preparada en [`mobile/PRUEBA_PARTIDA_ANDROID.md`](./mobile/PRUEBA_PARTIDA_ANDROID.md), y la de dos móviles en el navegador en [`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`](./mobile/PRUEBA_PARTIDA_NAVEGADOR.md). Ninguna se ha hecho.
 - **H1:** el diagnóstico GPS superó una prueba física preliminar en un Xiaomi 14T.
 - **S0:** completada en simulación.
 - Hay una **demo visual simulada**, sin GPS ni red.
 
 ## Documentación
+
+**Qué documento manda en qué** (guía de criterio §10). Si dos documentos no coinciden, la discrepancia se registra en `DECISION_LOG.md` y no se resuelve en silencio.
+- **Producto:** Plan Maestro v1.0 (PDF fuera del repositorio; trazabilidad en [docs/product/PLAN_MAESTRO_TRAZABILIDAD.md](./docs/product/PLAN_MAESTRO_TRAZABILIDAD.md)).
+- **Criterio, prioridades y calidad:** [docs/product/THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx](./docs/product/THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx). Es transversal y no sustituye a ningún otro documento.
+- **Reglas:** `GAME_MODES_AND_RULES.md`.
+- **Decisiones:** `DECISION_LOG.md`, con el análisis de las pendientes en [docs/product/DECISIONES_PENDIENTES.md](./docs/product/DECISIONES_PENDIENTES.md).
+- **Estado y evidencia:** `PROJECT_STATE.md` y `QUALITY_STATE.md`.
+- **Verificación:** `ACCEPTANCE_CRITERIA.md` y los procedimientos de prueba.
+- **Trabajo pendiente:** `BACKLOG.md`.
 
 - [PROJECT_STATE.md](./PROJECT_STATE.md): estado actual y siguiente acción
 - [DECISION_LOG.md](./DECISION_LOG.md): decisiones y propuestas

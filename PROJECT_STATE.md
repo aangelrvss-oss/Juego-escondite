@@ -3,6 +3,8 @@
 **Última actualización:** 26/10/2026, noche (dos sesiones autónomas: 19:41-20:20 y 22:43-23:30; robustez, GPS, privacidad, reconexión, caídas del servidor y juego en el navegador; **todo en commits locales, sin push**)
 **Rama:** `recuperacion-h2` (local, sobre `4c190a0`; `origin` sigue en `ccr-f1962362-hvwb9i` = `4c190a0`)
 **Referencia de producto:** Plan Maestro v1.0 (PDF fuera del repositorio). Trazabilidad en `docs/product/PLAN_MAESTRO_TRAZABILIDAD.md`; sus contradicciones con este registro están en `DECISION_LOG.md` (D-043 a D-047), **sin resolver**.
+**Criterio transversal:** guía de criterio y desarrollo v1.0 (`docs/product/THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx`, incorporada el 26/10/2026 por la noche). Fija las prioridades del backlog (P0 a P3) y qué evidencia hace falta para dar algo por terminado. Sus discrepancias con el Plan (radio, siguiente modo y pausa) están en `DECISION_LOG.md` (D-043, D-045, D-053 y D-054), **sin resolver**.
+**Evidencia real hasta hoy:** ninguna partida con dispositivos ni con jugadores reales. Solo una sesión corta de GPS de H1 en un Xiaomi 14T, con su CSV todavía sin analizar.
 **Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
 
 ## Fase activa

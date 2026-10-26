@@ -404,3 +404,41 @@ El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este r
 - **AC-B4 (propuesto):** «Captura: toque suave, nunca en la calzada» en la tarjeta del rol.
 
 **No cambia** ninguna regla de juego.
+
+---
+
+## Guía de criterio y desarrollo v1.0 · 26/10/2026 (incorporada, contrastes sin resolver)
+
+El propietario aportó `THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx` (v1.0, 26/10/2026). La copia del repositorio, idéntica al original, está en `docs/product/` (SHA-256 `5ef14475…98dbd4`). Es una guía **transversal** de prioridades, riesgos y calidad. **No sustituye** al Plan Maestro, a las reglas, a este registro ni al backlog (guía §1).
+
+Este apartado registra dónde la guía no coincide con otros documentos. **No modifica ninguna decisión.** Análisis y recomendaciones en `docs/product/DECISIONES_PENDIENTES.md`, sección «Contraste con la Guía de criterio».
+
+### D-043 (ampliación) · La radio: requisito fijo o pregunta abierta
+- **Plan:** requisito fijo (PM-D-003, §4.3).
+- **Guía §13:** pregunta abierta hasta tener evidencia: «¿La radio de equipo mejora la experiencia lo suficiente para justificar su complejidad?».
+- **Registro:** D-006 (aprobada): sin radio en el MVP, «se revisará tras las pruebas».
+- Hay tres posiciones distintas. Decide el propietario.
+
+### D-045 (ampliación) · El siguiente modo
+- **Plan:** el orden es THE RACE (F3) y después INFECTION (F4); INFECTION tiene «prioridad alta» (PM-D-004, PM-D-007).
+- **Guía §4 (P2) y §13:** elegir entre THE RACE e INFECTION «por valor demostrado, coste y riesgo», después de las pruebas reales de HUNT.
+- Contradicen el orden fijo del Plan. Decide el propietario.
+
+### D-053 · Contradicción pendiente · Pausar o cancelar una partida
+- **Guía §7:** «proporcionar una forma clara de pausar o cancelar una partida».
+- **Plan §2.3:** PAUSED/DEGRADED «solo para incidencias del sistema cuando sea seguro pausar».
+- **Código:**
+  - no hay pausa;
+  - el anfitrión puede **terminar** la partida sin ganador en la huida o la persecución (`end_game`), que es una forma de cancelar;
+  - cualquiera puede abandonar.
+- **Pendiente:** si los jugadores (o el anfitrión) pueden pausar, y qué pasa con los tiempos.
+
+### D-054 · Revisión pendiente · Decisiones técnicas tomadas en sesiones autónomas
+La guía §11 pide «proponer → autorizar → implementar» en arquitectura, reglas, privacidad y alcance. D-011 (aprobada) exige revisión humana. En las sesiones autónomas del 26/10, con la autorización general del propietario, se implementaron como **decisiones técnicas reversibles**:
+- **D-049:** un salto del GPS no valida una captura. Añade un motivo de rechazo de captura.
+- **D-050:** persistencia opcional. Guarda nombres, equipos y la zona en un archivo local.
+- **D-051:** pantalla encendida y lectura nueva con el móvil quieto en el navegador. Consume más batería y obliga a llevar la pantalla encendida.
+- **D-052:** declaración de edad, aviso nocturno y normas en la tarjeta del rol.
+- Además: un máximo de 5 salas por dirección, y que los eventos de hace más de 15 s no vuelvan a avisar.
+
+**Pendiente:** que el propietario las confirme o pida revertirlas. Todas están en commits separados y se pueden revertir una a una.
