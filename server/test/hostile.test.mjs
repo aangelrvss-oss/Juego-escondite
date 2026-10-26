@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
+import { fileURLToPath } from 'node:url';
 import { RATE } from '../hub.ts';
 import { gameConfig, room, settle, testServer, waitFor } from './helpers.mjs';
 
@@ -154,7 +155,7 @@ describe('protocolo hostil', () => {
 describe('robustez del servidor HTTP y de las sesiones duplicadas', () => {
   it('URL mal formada o intento de salir de la carpeta pública: 400/404 y el servidor sigue vivo', async () => {
     const { startServer } = await import('../main.ts');
-    const s = await startServer({ staticRoot: new URL('../../mobile/www/', import.meta.url).pathname });
+    const s = await startServer({ staticRoot: fileURLToPath(new URL('../../mobile/www/', import.meta.url)) });
     const { request } = await import('node:http');
     const get = (path) =>
       new Promise((ok) => request(`${s.url}${path}`, { method: 'GET' }, (res) => ok(res.statusCode)).end());
