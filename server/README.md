@@ -88,7 +88,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
    - Android: la APK de depuración (`mobile/README.md`), y en la app se escribe la dirección del servidor;
    - o cualquier móvil, iPhone incluido: abrir la dirección en el navegador. En el navegador la pantalla tiene que **seguir encendida**; ver «Limitaciones».
 3. **El anfitrión:**
-   - escribe su nombre y pulsa **Crear sala**;
+   - escribe su nombre y pulsa **Crear sala** (la primera vez, cada móvil confirma que tiene 18 años o más);
    - comparte el código de 6 letras, el **enlace** («Compartir enlace»: `https://…/?sala=CÓDIGO`, que abre la web con el código ya puesto) o el **QR** («Mostrar QR», con el mismo enlace);
    - si el código ha llegado a quien no debía, **Cambiar el código** (dos toques): el anterior deja de servir y los que ya están dentro siguen en la sala;
    - se coloca en el punto de encuentro y pulsa **Centrar la zona aquí**;
@@ -110,9 +110,9 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 ## Pruebas
 
 ```bash
-npm run test:server        # 42 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida, persistencia y capacidad por dirección
-npm test                   # motor y simulación (140)
-cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report, comprobación de GPS, estado de la sala, reglas, indicador de ubicación compartida y texto del informe para compartir (85)
+npm run test:server        # pruebas con clientes reales: cinco por WebSocket, hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida, persistencia (también matando el proceso de verdad), reconexión en los momentos delicados, registro sin coordenadas y capacidad por dirección
+npm test                   # motor y simulación
+cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report, comprobación de GPS, estado de la sala, reglas, indicadores, avisos repetidos al reanudar, permiso retirado, pantalla encendida y aviso nocturno
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)
 node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, QR, cambio de código y partida corta hasta el Mission Report en un navegador real (sin Playwright)
 ```
@@ -122,8 +122,8 @@ node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, Q
 - **Pantalla bloqueada:**
   - En la app Android, el GPS sigue en segundo plano gracias al servicio de H1, y en partida ese mismo servicio envía las lecturas por HTTPS. **No está comprobado en un móvil real** que HyperOS deje enviar con la pantalla bloqueada. Es la próxima prueba física imprescindible (`mobile/PRUEBA_PARTIDA_ANDROID.md`).
   - Con la pantalla bloqueada, el fugitivo no ve la reclamación de captura. Si no la confirma en 30 s, la reclamación caduca sin captura (regla actual del motor). El procedimiento de disputa (D-035) sigue pendiente de decisión y no se ha implementado.
-  - En el navegador (también en iPhone), la ubicación se detiene con la pantalla apagada.
+  - En el navegador (también en iPhone), la ubicación se detiene con la pantalla apagada. Por eso, durante la partida, la web pide mantener la pantalla encendida (Screen Wake Lock) y avisa si no puede. Sin comprobar en un móvil real.
 - **Expulsiones:** se basan en un identificador de instalación que el móvil puede regenerar. Es una medida débil, suficiente para una sala entre amigos.
-- **Salas en memoria:** sin `STATE_FILE`, si el servidor se reinicia, las partidas en curso se pierden. Con `STATE_FILE`, sobreviven: tras una caída se pierde como mucho lo de los últimos 2 s, y las posiciones se recuperan con las siguientes lecturas. Probado en un ordenador (`server/test/persistence.test.mjs`), no en una partida real.
+- **Salas en memoria:** sin `STATE_FILE`, si el servidor se reinicia, las partidas en curso se pierden. Con `STATE_FILE`, sobreviven: tras una caída se pierde como mucho lo de los últimos 2 s, y las posiciones se recuperan con las siguientes lecturas. Probado en un ordenador, también terminando el proceso sin aviso y arrancándolo de nuevo (`server/test/persistence.test.mjs` y `crash.test.mjs`), no en una partida real.
 - **Ubicación falsificada:** se marca (bandera de ubicación simulada, velocidad imposible), pero no se puede impedir.
 - **Reglas pendientes de decisión:** D-035 (disputas), si los equipos se revelan al final, y los casos límite de D-033 (`QUALITY_STATE.md`).

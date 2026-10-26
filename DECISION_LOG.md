@@ -376,3 +376,31 @@ El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este r
 - caída con un archivo anterior, donde una mutación del margen de numeración se detecta;
 - archivo ilegible;
 - sin `STATE_FILE`, nada cambia.
+
+**Ampliado (26/10/2026, noche):** `server/test/crash.test.mjs` (3), con el proceso terminado sin aviso y arrancado de nuevo, y una prueba más en `persistence.test.mjs`: un comando reenviado tras el reinicio no se aplica dos veces.
+
+### D-051 · Decisión técnica reversible (26/10/2026, noche) · En el navegador, pantalla encendida y lectura nueva con el móvil quieto
+**Motivo:**
+- En el navegador, con la pantalla apagada, no se da ni se envía la ubicación (`server/README.md`, «Limitaciones»). El móvil la apaga solo a los pocos segundos.
+- Con el móvil quieto (un fugitivo escondido), muchos navegadores apenas entregan lecturas nuevas. La última lectura caduca a los 15 s (`TAG.maxAgeMs`) y entonces nadie puede reclamar esa captura.
+- Las dos cosas pueden impedir terminar una partida en el navegador, que es la próxima prueba posible sin compilar Android.
+
+**Decisión (solo en el navegador; la app Android no cambia):**
+- Durante la cuenta atrás, la huida y la persecución, la web pide mantener la pantalla encendida (Screen Wake Lock). La suelta al terminar o al salir y la vuelve a pedir al volver a la pestaña. Si el navegador no lo permite, lo dice.
+- Si pasan 8 s sin lectura, la web pide una nueva con `getCurrentPosition` (sin caché), sin duplicar peticiones.
+
+**Coste:** más batería en el navegador (pantalla encendida y GPS activo). No está medido.
+
+**Parámetros:** los 8 s son **experimentales** (D-038): están por debajo de los 15 s de antigüedad máxima, contando el reenvío cada 5 s.
+
+**No decide:** el cliente final (D-005 y D-044). Si se aprueba la PWA, estas dos medidas son las que la hacen jugable con la pantalla encendida.
+
+**Pruebas:** `mobile/test/screen.test.mjs` y `game.test.mjs`; `web-flow.e2e.mjs` en Chrome de escritorio (el bloqueo se concede durante la partida). **Sin comprobar en un móvil real.**
+
+### D-052 · Implementación de D-008 y de dos criterios de aceptación (26/10/2026, noche)
+**Qué:**
+- **D-008 (aprobada):** declaración de edad («Tengo 18 años o más») antes de crear o unirse, una vez por móvil (AC-A1). No es una verificación.
+- **AC-B3 (propuesto):** aviso de juego nocturno en la sala de espera, solo informativo. El horario de 21:00 a 7:00 es una **hipótesis** (D-038); la alternativa prevista es la puesta y la salida del sol (`USER_FLOWS.md` F5.6).
+- **AC-B4 (propuesto):** «Captura: toque suave, nunca en la calzada» en la tarjeta del rol.
+
+**No cambia** ninguna regla de juego.

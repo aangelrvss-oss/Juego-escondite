@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-**Última actualización:** 26/10/2026, noche (sesión autónoma: commits locales de todo el trabajo, robustez, GPS, privacidad, sala y experiencia móvil; **todo en commits locales, sin push**)
+**Última actualización:** 26/10/2026, noche (dos sesiones autónomas: 19:41-20:20 y 22:43-23:30; robustez, GPS, privacidad, reconexión, caídas del servidor y juego en el navegador; **todo en commits locales, sin push**)
 **Rama:** `recuperacion-h2` (local, sobre `4c190a0`; `origin` sigue en `ccr-f1962362-hvwb9i` = `4c190a0`)
 **Referencia de producto:** Plan Maestro v1.0 (PDF fuera del repositorio). Trazabilidad en `docs/product/PLAN_MAESTRO_TRAZABILIDAD.md`; sus contradicciones con este registro están en `DECISION_LOG.md` (D-043 a D-047), **sin resolver**.
 **Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
@@ -185,10 +185,34 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 
 Todo está probado con pruebas automáticas y en **Chrome de escritorio** (con emulación móvil y geolocalización emulada). **Nada se ha validado en un móvil real.** Detalle en `QUALITY_STATE.md`.
 
+## Segunda sesión autónoma (26/10/2026, 22:43-23:30): commits locales, sin push
+
+**Decisiones:** análisis de D-043 a D-047, del procedimiento pendiente de D-035 y de los estados CHECKS, BRIEFING y PAUSED en `docs/product/DECISIONES_PENDIENTES.md`. Para cada una: alternativas, consecuencias, recomendación y si necesita tu aprobación. **No se ha cambiado ninguna decisión.**
+
+| Commit | Contenido |
+|---|---|
+| `3d9e9e8` | Persistencia probada matando el proceso de verdad |
+| `b339ae4` | Recargar en plena partida ya no repite avisos ni pierde la pista. Pruebas de reconexión en los momentos delicados |
+| `6013890` | Análisis de las decisiones pendientes |
+| `7fa52be` | Declaración de edad (D-008, AC-A1) |
+| `1a51c97` | El registro del servidor real no tiene coordenadas (AC-D7) |
+| `70cbee0` | Aviso fijo si falta el permiso de ubicación (AC-D9) |
+| `b2a3134` | Aviso nocturno (AC-B3, horario hipotético) y normas de captura en la tarjeta del rol (AC-B4) |
+| `cebf485` | Pantalla encendida durante la partida en el navegador (D-051) |
+| `dc845c3` | En el navegador, la posición de un jugador quieto ya no caduca (D-051) |
+| `b6f911a` | Reglas y roles fijados desde «Empezar» (BRIEFING del Plan) |
+| `dc998b8` | La reclamación de captura queda encima de cualquier otra hoja |
+| `3ad4e2d` | Un comando reenviado tras un reinicio no se aplica dos veces |
+| `23f260d` | Reglas de seguridad completas (§4.5) y sin posiciones ajenas fuera de la partida |
+| `5509126` | Procedimiento de la prueba real con dos móviles en el navegador |
+
+Pruebas al cerrar: motor 144, servidor 54, cliente 95, demo 62 y E2E en Chrome 41/41; typecheck sin errores. **Nada se ha validado en un móvil real.**
+
 ## Siguiente acción concreta
 
 0. ~~Configurar la identidad de Git y hacer los commits.~~ Hecho: hay commits locales de todo el trabajo, sin push. Decidir si se publica la rama `recuperacion-h2` en GitHub (no se ha hecho).
-1. **Decidir D-043 a D-047** (radio, PWA, INFECTION, número de jugadores, pistas y espectadores) y D-035 (disputas). Son los bloqueos de producto que quedan para HUNT.
+1. **Decidir D-043 a D-047** (radio, PWA, INFECTION, número de jugadores, pistas y espectadores), el procedimiento de D-035 (disputas) y si hace falta PAUSED. Son los bloqueos de producto que quedan para HUNT. Alternativas y recomendaciones: `docs/product/DECISIONES_PENDIENTES.md`.
+1b. **Prueba con dos móviles en el navegador** (sin APK, también con iPhone): `mobile/PRUEBA_PARTIDA_NAVEGADOR.md`. Necesita tu autorización para el túnel HTTPS.
 2. **Prueba con dos móviles:** seguir `mobile/PRUEBA_PARTIDA_ANDROID.md`.
    - Servidor y túnel HTTPS en tu ordenador.
    - APK `0.3.0-h2-bloqueo` en los dos Android.

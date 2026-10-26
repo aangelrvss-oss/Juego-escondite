@@ -1,6 +1,6 @@
 # Estado de calidad
 
-**Última actualización:** 26/10/2026 (F1 motor seguro, H2 multijugador y preparación de la prueba real en Android; sin commit)
+**Última actualización:** 26/10/2026, noche (sesión autónoma 22:43-23:30: reconexión, caída real del servidor, privacidad, permisos y juego en el navegador; ver la última sección). Todo en commits locales, sin push
 
 ## Resumen
 
@@ -44,25 +44,28 @@ Además, antes de ejecutar las pruebas se detectó y corrigió un **fallo de dis
 
 Leyenda: ✅ superado en simulación · ◐ parcialmente (la parte del servidor sí; falta la del dispositivo o la interfaz) · ⬜ no probado
 
+**Revisión del 26/10/2026 (noche):** se actualizan las filas marcadas con «(26/10)». «Chrome» significa Chrome de escritorio con emulación móvil y geolocalización emulada (`mobile/e2e/web-flow.e2e.mjs`), **no un móvil**. Ningún criterio que dependa de un dispositivo está cumplido.
+
 | Criterio | Estado | Prueba o motivo |
 |---|---|---|
-| AC-A1 (18+ y nombre) | ◐ | Validación del nombre (2–20) probada. La declaración de edad es de interfaz |
+| AC-A1 (18+ y nombre) | ✅ en Chrome (26/10) | Validación del nombre (2–20) probada. Declaración de edad implementada (D-008): sin ella no se crea ninguna sala y se recuerda en el móvil (`web-flow.e2e.mjs`) |
 | AC-A2 (código y caducidad) | ✅ | `host.test` (formato, alfabeto, no reutilización) y `transitions.test` (30 min) |
 | AC-A3 (límite de intentos) | ✅ | `host.test` |
 | AC-A4 (no entrar a una partida empezada) | ✅ | `transitions.test` |
-| AC-A5, AC-A6 (enlace y QR) | ⬜ | Requieren app y dispositivo |
+| AC-A5, AC-A6 (enlace y QR) | ◐ (26/10) | El enlace abre la **web** con el código puesto y el QR se decodifica con el enlace exacto (Chrome y lector de prueba). AC-A5 tal como está escrito (abrir la app) **no se cumple**; el QR **no se ha escaneado con una cámara**. Detalle en `docs/product/ACCEPTANCE_CRITERIA.md` |
 | AC-A7 (expulsión) | ✅ | `transitions.test` |
 | AC-B1, AC-B2 (configuración y seguridad previa) | ✅ | `transitions.test` |
-| AC-B3, AC-B4 (avisos de interfaz) | ⬜ | Interfaz |
+| AC-B3, AC-B4 (avisos de interfaz) | ✅ en Chrome (26/10) | Aviso nocturno de 21:00 a 7:00 (**horario hipotético**, D-038; `night.test.mjs` con los límites; en Chrome solo se ha visto de noche) y normas de captura en la tarjeta del rol (`web-flow.e2e.mjs`) |
 | AC-C1 a AC-C8 (autoridad, tiempo, idempotencia, `seq`, resultado, anfitrión, todos desconectados) | ✅ | `transitions.test`, `timing.test`, `host.test` y `resilience.test`. **AC-C3 solo con latencia simulada 0** |
 | AC-D1, AC-D2, AC-D3 (aislamiento por equipo) | ✅ | `visibility.test` y `simulation.test` (invariantes en 15 partidas completas de 2, 10 y 20 jugadores) |
 | AC-D4, AC-D5 (antigüedad, muestras tardías) | ✅ | `visibility.test` y `timing.test` |
-| AC-D6 (dejar de compartir al terminar) | ◐ | El servidor borra las muestras y deja de enviar. Que el cliente deje de enviar en 10 s o menos requiere dispositivo |
-| AC-D7 (logs sin coordenadas) | ✅ | `host.test` (partida completa) |
-| AC-D8, AC-D9 (móvil bloqueado, permiso revocado) | ⬜ | **Requieren dispositivos reales (S1–S3)** |
+| AC-D6 (dejar de compartir al terminar) | ◐ | El servidor borra las muestras y deja de enviar. En Chrome, al abandonar se deja de compartir y el servidor rechaza lo que llegue (`leave.test.mjs`, `web-flow.e2e.mjs`). Que el móvil deje de enviar en 10 s o menos requiere dispositivo |
+| AC-D7 (logs sin coordenadas) | ✅ | `host.test` (partida completa, simulación) y, desde el 26/10, el **servidor real** (`server/test/logs.test.mjs`: ni coordenadas, ni nombres, ni códigos, ni secretos; con mutación) |
+| AC-D8 (móvil bloqueado) | ⬜ | **Requiere dispositivos reales (S1–S3).** En el navegador, la pantalla se mantiene encendida durante la partida (Screen Wake Lock, comprobado en Chrome) porque con ella apagada no hay ubicación |
+| AC-D9 (permiso revocado) | ◐ (26/10) | En Chrome, con el permiso retirado de verdad antes y durante la partida: aviso fijo, el indicador deja de decir que se comparte y «Reintentar» lo recupera. El estado `UNAVAILABLE` lo calcula el servidor por la antigüedad. Falta un dispositivo real |
 | AC-E1 a AC-E7 (capturas) | ✅ | `capture.test` |
-| AC-F1 (resincronizar tras 60 s) | ◐ | Lógica de reanudación probada en simulación. El objetivo de 10 s o menos requiere red real |
-| AC-F2 (cierre forzado) | ◐ | Reanudación por instantánea probada. El cierre real de la app requiere dispositivo |
+| AC-F1 (resincronizar tras 60 s) | ◐ | Lógica de reanudación probada en simulación y, desde el 26/10, con el servidor real: reclamación, revelación del rol y pista perdidas durante el corte, y cortes más largos de lo que se guarda (`reconnect.test.mjs`). El objetivo de 10 s o menos requiere red real |
+| AC-F2 (cierre forzado) | ◐ | Reanudación por instantánea probada. En Chrome, recargar en plena partida vuelve a ella sin repetir avisos y con la pista (26/10). También tras una caída real del servidor (`crash.test.mjs`). El cierre real de la app requiere dispositivo |
 | AC-F3 (abandono) | ✅ | `transitions.test` |
 | AC-G1 (resultados sin coordenadas) | ◐ | Los datos de `game_finished` no llevan coordenadas. La pantalla es de interfaz |
 | AC-G2, AC-G3 (revancha sin datos previos) | ✅ | `transitions.test` y `host.test` |
@@ -567,3 +570,49 @@ Botón «Compartir resultado» en el final, para todos. Usa el menú del sistema
 - `mobile/e2e/game.e2e.mjs` y `boot.e2e.cjs`: necesitan Playwright, que no está instalado. Se comprobó que sus selectores (`.code`, `#f-code` en minúsculas, `[data-act=…]`) siguen existiendo.
 - Pruebas Java y Gradle: no hay JDK ni SDK.
 
+## Sesión autónoma del 26/10/2026, noche (22:43-23:30): reconexión, caídas y juego en el navegador
+
+Todo es automático o en **Chrome de escritorio con emulación** (pantalla de 360×740, geolocalización emulada, reloj del servidor controlado). **Nada se ha probado en un móvil real.** Las decisiones abiertas están analizadas en `docs/product/DECISIONES_PENDIENTES.md`; no se ha implementado ninguna.
+
+### Defectos encontrados y corregidos
+| Defecto | Corrección | Cómo se ha comprobado |
+|---|---|---|
+| Al recargar en plena partida se repetían la tarjeta del rol, avisos y vibraciones de hace minutos, y el cazador podía perder la última pista | `net.js` entrega los eventos repetidos tras la instantánea, con su antigüedad según la hora del servidor; los de más de 15 s no avisan; la pista sale de la vista | `replay.test.mjs` (3), `reconnect.test.mjs` y E2E. Mutación: sin el arreglo, la E2E falla |
+| Con el permiso de ubicación retirado: aviso de 4,5 s, indicador «Compartiendo» falso y aviso en bucle | Aviso fijo con «Reintentar»; el indicador lo refleja; sin reintentos automáticos | `location-denied.test.mjs` y E2E con el permiso retirado de verdad, antes y durante la partida. Mutación detectada |
+| En el navegador, la pantalla se apagaba sola y se perdía la ubicación | Screen Wake Lock durante la partida (D-051) | `screen.test.mjs` y E2E (la petición se concede) |
+| Con el móvil quieto, el navegador puede dejar de dar lecturas: un fugitivo escondido no se podía capturar | Lectura nueva si pasan 8 s sin ninguna (D-051) | `game.test.mjs` (+1) |
+| La reclamación de captura quedaba debajo de la hoja «Me han pillado» | Se pinta la última | E2E con una reclamación real. Mutación detectada |
+| Faltaban prohibiciones del Plan §4.5 en las reglas y quedaban posiciones ajenas en memoria tras la partida | Texto completo y borrado al salir de la persecución | `briefing.test.mjs` (el borrado no tiene prueba propia) |
+
+### Criterios implementados
+- AC-A1, la declaración de edad (D-008).
+- AC-B3, el aviso nocturno (horario hipotético).
+- AC-B4, las normas de captura en la tarjeta del rol.
+
+Ver D-052 y la tabla de trazabilidad de arriba.
+
+### Pruebas nuevas sin cambios de código
+| Prueba | Qué demuestra |
+|---|---|
+| `server/test/crash.test.mjs` (3) | `node server/main.ts` terminado sin aviso (SIGKILL / TerminateProcess) y arrancado de nuevo con `STATE_FILE`: la partida sigue y los móviles se reconectan solos. El archivo no tiene lecturas ni secretos. Lo de los últimos instantes se pierde sin romper nada. Un archivo dañado no impide arrancar. Repetida 3 veces |
+| `server/test/reconnect.test.mjs` (6) | Sin cobertura cuando reclaman la captura (al volver se ve y se confirma, o caduca), al revelarse el rol y al llegar la pista; recarga y cortes más largos de lo que se guarda. Mutación: sin la repetición de eventos fallan 2 |
+| `server/test/logs.test.mjs` (2) | AC-D7 en el servidor real: el registro de una partida completa no tiene coordenadas, nombres, códigos ni secretos. Mutación detectada |
+| `persistence.test.mjs` (+1) | Un comando reenviado tras un reinicio con el mismo id da la misma respuesta y no captura dos veces (Fase 1 del Plan). Mutación detectada |
+| `engine/test/briefing-lock.test.ts` (4) | Desde «Empezar» no se puede cambiar configuración, roles, expulsiones ni el «listo»; en la sala, cambiar las reglas quita el «listo» a todos (BRIEFING del Plan). Mutación detectada |
+
+### Pruebas al cerrar (26/10/2026, 23:27-23:29)
+| Suite | Resultado |
+|---|---|
+| `npm test` (motor y simulación) | **144 de 144** |
+| `npm run typecheck` | Sin errores |
+| `npm run test:server` | **54 de 54** |
+| `mobile/` `npm test` | **95 de 95** |
+| `npm run test:demo` | 62 de 62 |
+| `node mobile/e2e/web-flow.e2e.mjs <chrome.exe>` | **41 de 41** (12 pantallas a 360×740 sin desbordes, controles de 44 px o más y texto de 12 px o más). Al terminar no quedan procesos ni archivos temporales |
+
+**No ejecutadas:** `game.e2e.mjs` y `boot.e2e.cjs` (no está Playwright; `game.e2e.mjs` adaptado a la casilla de edad, sin ejecutar) y las pruebas Java (no hay JDK ni SDK).
+**Pendiente en un dispositivo:**
+- la pantalla encendida y el refresco con el móvil quieto en Android e iPhone, y su consumo de batería;
+- el QR con una cámara;
+- el permiso retirado desde los ajustes del sistema;
+- la pantalla bloqueada con la app.
