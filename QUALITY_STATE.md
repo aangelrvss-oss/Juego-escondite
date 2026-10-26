@@ -423,6 +423,17 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 
 **No validado:** con GPS real. El umbral (12 m/s más la precisión) es experimental (D-038).
 
+### Abandonar en mitad de la partida (Plan Maestro §4.5 y §10, 26/10/2026, 19:50-19:55)
+**Defecto encontrado:** el motor y el servidor ya admitían `leave` durante la partida, pero la interfaz solo ofrecía «Salir» en la sala de espera y en el final. Un jugador **no podía abandonar** durante la cuenta atrás ni la partida sin cerrar la app. El Plan exige poder abandonar y dejar de compartir la ubicación (§4.5), y lo trata como criterio de privacidad (§10).
+**Corrección:** botón «Abandonar la partida» en la cuenta atrás y en la partida (también para los capturados). Pide doble toque y avisa de que se deja de compartir la ubicación. Usa el mismo camino que «Salir de la sala»: `leave` y detener la ubicación local.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `server/test/leave.test.mjs`: al salir se borra su posición y `POST /api/loc` responde **410** (el servicio nativo se detiene); por WebSocket tampoco cuenta; los demás dejan de verlo y la partida sigue; quien sale no recibe nada más (ni posiciones, ni pistas, ni eventos); si sale el último fugitivo, la partida termina por abandono; si sale el anfitrión, hay un nuevo anfitrión y la partida sigue | **4 de 4** | Servidor y clientes reales en un ordenador; tiempo SIMULADO |
+| `web-flow.e2e.mjs`: revancha; botón visible en la cuenta atrás; en la persecución, el primer toque pide confirmación y el segundo devuelve al inicio; en el servidor queda `left` y sin lecturas; la partida sigue para los demás | **21 de 21** en total | Chrome real; geolocalización emulada |
+
+**No validado:** que el servicio nativo de Android se detenga de verdad al recibir el 410 en un móvil. Está probado el contrato (`UploadContractTest`), no el dispositivo.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

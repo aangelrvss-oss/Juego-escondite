@@ -108,7 +108,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 ## Pruebas
 
 ```bash
-npm run test:server        # 29 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código y Mission Report
+npm run test:server        # 33 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report y abandono en partida
 npm test                   # motor y simulación (130)
 cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR y Mission Report (72)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)

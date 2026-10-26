@@ -225,6 +225,34 @@ try {
   const after = await guest.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`);
   check('tras recargar, el Mission Report se reconstruye igual', after === texts[0]);
 
+  // Revancha y abandono a mitad de partida con el botón real (Plan Maestro §4.5).
+  await host.evaluate(click('[data-act="rematch"]'));
+  for (const p of [guest, late]) {
+    await p.waitFor(`!!document.querySelector('[data-act="join_rematch"]')`, 'invitación a la revancha');
+    await p.evaluate(click('[data-act="join_rematch"]'));
+  }
+  for (const p of [host, guest, late]) {
+    await p.waitFor(`!!document.querySelector('[data-act="ready"]') && document.querySelector('[data-act="ready"]').textContent.includes('Estoy listo')`, 'sala de la revancha');
+    await p.evaluate(click('[data-act="ready"]'));
+  }
+  await host.waitFor(`!!document.querySelector('[data-act="start"]:not([disabled])')`, 'empezar la revancha');
+  await host.evaluate(click('[data-act="start"]'));
+  await late.waitFor(`!!document.querySelector('[data-act="leave-game"]')`, 'botón de abandonar en la cuenta atrás');
+  check('durante la cuenta atrás se puede abandonar', true);
+  await advance(5_000);
+  for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
+  await advance(2 * 60_000);
+  await late.waitFor(`document.querySelector('.hud')?.textContent.includes('Persecución')`, 'persecución en la revancha');
+  const cris = () => Object.values(server.hub.roomStateByCode(code2)?.players ?? {}).find((p) => p.name === 'Cris');
+  await late.waitFor(`!!document.querySelector('[data-act="leave-game"]')`, 'botón de abandonar en la persecución');
+  await late.evaluate(click('[data-act="leave-game"]'));
+  await late.waitFor(`document.querySelector('[data-act="leave-game"]').textContent.includes('dejarás de compartir tu ubicación')`, 'confirmación de abandono');
+  check('el primer toque pide confirmación y avisa de que deja de compartir la ubicación', cris()?.status === 'active');
+  await late.evaluate(click('[data-act="leave-game"]'));
+  await late.waitFor(`!!document.querySelector('#home-form')`, 'Cris vuelve al inicio');
+  check('al confirmar, sale de la partida y vuelve al inicio', cris()?.status === 'left' && cris()?.samples.length === 0, `estado ${cris()?.status}, lecturas ${cris()?.samples.length}`);
+  check('la partida sigue para los demás', server.hub.roomStateByCode(code2)?.phase === 'ACTIVE');
+
   const errs = [...host.errors, ...guest.errors, ...late.errors];
   check('sin errores de JavaScript en las tres páginas', errs.length === 0, errs.join(' | '));
   for (const p of [host, guest, late]) p.close();

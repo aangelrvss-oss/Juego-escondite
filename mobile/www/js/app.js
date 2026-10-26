@@ -45,6 +45,7 @@ const ui = {
   leaving: false,
   confirmEnd: false,
   confirmNewCode: false,
+  confirmLeave: false,
   location: null,
   tracking: false,
   inviteCode: null, // código recibido por enlace de invitación (?sala=)
@@ -450,7 +451,16 @@ function countdownScreen(snap) {
   return `<section class="countdown" aria-live="assertive">
     <p class="label">La partida empieza en</p>
     <p class="big num">${Math.max(1, Math.ceil(left / 1000))}</p>
-    <p class="lead">Tu rol aparecerá al terminar. Nadie lo sabe todavía.</p></section>`;
+    <p class="lead">Tu rol aparecerá al terminar. Nadie lo sabe todavía.</p></section>
+    ${leaveGameButton()}`;
+}
+
+/**
+ * Plan Maestro §4.5: se puede abandonar la partida en cualquier momento, y al salir se deja de
+ * compartir la ubicación. Doble toque para no salir por error.
+ */
+function leaveGameButton() {
+  return `<button class="btn btn-ghost" data-act="leave-game">${ui.confirmLeave ? 'Toca otra vez: saldrás y dejarás de compartir tu ubicación' : 'Abandonar la partida'}</button>`;
 }
 
 function gameScreen(snap) {
@@ -476,7 +486,8 @@ function gameScreen(snap) {
     ${!captured && snap.phase === 'ACTIVE' ? actions(snap, team) : ''}
     ${team === 'hunter' && ui.ping ? pingList(ui.ping) : ''}
     <p class="foot num">Capturas: ${snap.captures.length}</p>
-    ${snap.hostId === ui.conn.playerId ? `<button class="btn btn-ghost" data-act="end">${ui.confirmEnd ? 'Toca otra vez para terminar la partida' : 'Terminar partida (anfitrión)'}</button>` : ''}`;
+    ${snap.hostId === ui.conn.playerId ? `<button class="btn btn-ghost" data-act="end">${ui.confirmEnd ? 'Toca otra vez para terminar la partida' : 'Terminar partida (anfitrión)'}</button>` : ''}
+    ${leaveGameButton()}`;
 }
 
 function radarModel(snap, team) {
@@ -749,6 +760,17 @@ document.addEventListener('click', async (ev) => {
       return void cmd({ type: 'rematch', swapRoles: false });
     case 'join_rematch':
       return void cmd({ type: 'join_rematch' });
+    case 'leave-game':
+      if (!ui.confirmLeave) {
+        ui.confirmLeave = true;
+        setTimeout(() => {
+          ui.confirmLeave = false;
+          render();
+        }, 4_000);
+        return render();
+      }
+      ui.confirmLeave = false;
+    // falls through: mismo camino que «Salir de la sala» (el servidor deja de aceptar su ubicación)
     case 'leave':
       ui.leaving = true;
       if (ui.snap && ui.snap.phase !== 'CANCELLED') await ui.conn.command({ type: 'leave' });
