@@ -7,8 +7,11 @@
 //   TRUST_PROXY=1       usar CF-Connecting-IP / X-Forwarded-For como dirección del cliente (solo
 //                       detrás de un túnel o proxy de confianza).
 //   LOG=1               registro de operaciones (sin nombres, coordenadas ni secretos).
+//   STATE_FILE          (opcional) archivo donde guardar las salas para sobrevivir a un reinicio del
+//                       servidor. Sin coordenadas de jugadores ni secretos (solo sus hashes). Sin esta
+//                       variable, las salas viven solo en memoria, como antes.
 
-import { createReadStream, existsSync, statSync } from 'node:fs';
+import { createReadStream, existsSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import type { IncomingMessage, Server } from 'node:http';
 import type { Duplex } from 'node:stream';
@@ -41,6 +44,17 @@ export interface ServerOptions {
   hub?: HubOptions;
   /** Tiempos del WebSocket (las pruebas los acortan). */
   ws?: { idleTimeoutMs?: number; pingIntervalMs?: number };
+  /** Archivo de estado para sobrevivir a reinicios (ver STATE_FILE). null o ausente: solo en memoria. */
+  stateFile?: string | null;
+  /** Cada cuánto se guarda si ha habido cambios (por defecto, 2 s). */
+  saveIntervalMs?: number;
+}
+
+/** Escritura atómica: primero un archivo temporal y después se renombra encima del bueno. */
+function saveState(file: string, hub: Hub): void {
+  const tmp = `${file}.tmp`;
+  writeFileSync(tmp, JSON.stringify(hub.exportState()));
+  renameSync(tmp, file);
 }
 
 export interface RunningServer {
@@ -108,6 +122,32 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   const trustProxy = options.trustProxy ?? false;
   const root = options.staticRoot === undefined ? fileURLToPath(new URL('../mobile/www/', import.meta.url)) : options.staticRoot;
   const rootAbs = root ? resolve(root) : null;
+
+  // Estado guardado: se restaura antes de aceptar conexiones. Un archivo ilegible no impide arrancar
+  // (se avisa y se empieza sin salas), y no se sobrescribe hasta que haya cambios nuevos.
+  const stateFile = options.stateFile ?? null;
+  let savedRevision = -1;
+  if (stateFile && existsSync(stateFile)) {
+    try {
+      const restored = hub.importState(JSON.parse(readFileSync(stateFile, 'utf8')));
+      console.log(new Date().toISOString(), `estado restaurado: ${restored} salas`);
+    } catch (e) {
+      console.error(new Date().toISOString(), 'no se pudo leer el archivo de estado:', (e as Error).message);
+    }
+    savedRevision = hub.revision();
+  }
+  const persist = () => {
+    if (!stateFile || hub.revision() === savedRevision) return;
+    try {
+      savedRevision = hub.revision();
+      saveState(stateFile, hub);
+    } catch (e) {
+      savedRevision = -1; // se reintenta en el siguiente ciclo
+      console.error(new Date().toISOString(), 'no se pudo guardar el estado:', (e as Error).message);
+    }
+  };
+  const saver = stateFile ? setInterval(persist, options.saveIntervalMs ?? 2_000) : undefined;
+  saver?.unref?.();
 
   let timer: NodeJS.Timeout | undefined;
   const schedule = () => {
@@ -216,6 +256,8 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     close: () =>
       new Promise((done) => {
         if (timer) clearTimeout(timer);
+        if (saver) clearInterval(saver);
+        persist(); // último guardado al apagar
         for (const socket of upgraded) socket.destroy();
         server.closeAllConnections?.();
         server.close(() => done());
@@ -230,6 +272,11 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     allowedOrigins: (process.env.ALLOWED_ORIGINS ?? '').split(',').filter(Boolean),
     trustProxy: process.env.TRUST_PROXY === '1',
     hub: { log: process.env.LOG === '1' ? (line) => console.log(new Date().toISOString(), line) : undefined },
+    stateFile: process.env.STATE_FILE || null,
   });
   console.log(`THE OUTRUN escuchando en ${running.url} (WebSocket en /ws, estado en /health)`);
+  // Ctrl+C o parada del sistema: se guarda el estado (si STATE_FILE está definido) antes de salir.
+  for (const signal of ['SIGINT', 'SIGTERM'] as const) {
+    process.once(signal, () => void running.close().then(() => process.exit(0)));
+  }
 }

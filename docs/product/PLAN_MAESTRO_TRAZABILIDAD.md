@@ -32,6 +32,6 @@ Ninguna fase está **terminada** según su puerta de salida: todas exigen eviden
 | F4 | INFECTION | **Ausente** (solo diseño en `GAME_MODES_AND_RULES.md`) | — | F2, F3; **D-045** | — | — |
 | F5 | FOX HUNT, SARDINES, FREEZE TAG, PURSUIT | Ausentes | — | F2–F4 | — | — |
 | F6 | Modos experimentales | Ausentes (el radar SVG actual es solo visual) | — | F0–F5 | — | — |
-| F7 | STREET LEGENDS | Ausente; no hay persistencia (salas en memoria) | `server/README.md` | Persistencia fiable | — | — |
+| F7 | STREET LEGENDS | Ausente. Persistencia: **solo la de las salas activas para sobrevivir a reinicios** (opcional, `STATE_FILE`, D-050), no hay historial | `server/test/persistence.test.mjs` | Persistencia de resultados e historial con privacidad | — | — |
 | F8 | PWA instalable, accesibilidad, batería, radio con auriculares | PWA **ausente** (sin manifest ni service worker). Accesibilidad de `mobile/www` sin prueba equivalente a la de la demo | `mobile/www/index.html` | **Decisión D-044** | Medio | Manifest + SW mínimo si se acepta D-044 |
 | F9 | Campo con 4–10 jugadores; release candidate | **No hecho**; la capacidad anunciada (20) no está probada | `engine/src/constants.ts` | **D-046** | Alto | — |

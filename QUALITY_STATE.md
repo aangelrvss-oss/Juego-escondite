@@ -451,6 +451,18 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 
 **No validado:** el diálogo de permisos real de Android y de iOS en un móvil.
 
+### Persistencia opcional del servidor (D-050, 26/10/2026, 19:55-20:00)
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `server/test/persistence.test.mjs`: (1) partida en ACTIVE con una captura: tras reiniciar en el mismo puerto, los 3 clientes reales se reconectan solos y se conservan la fase, el final oficial y las capturas; el archivo no tiene lecturas, pistas ni secretos; después se reclama, se confirma y la partida termina; (2) en la sala de espera, el anfitrión sigue siéndolo, el código restaurado sirve y una sesión falsa da `bad_session`; (3) **caída** con un archivo anterior a lo que vieron los móviles: aceptan el estado restaurado y la numeración sigue hacia delante; (4) un archivo ilegible no impide arrancar y no se sobrescribe sin cambios; (5) sin `STATE_FILE` no se escribe nada | **5 de 5** | Servidor real reiniciado y clientes reales en un ordenador; tiempo SIMULADO |
+| Mutación: margen de numeración a 0 | Falla la prueba (3), la de la caída (revertida) | Automatizada |
+| Regresión | 138, servidor 38, cliente 75 y E2E 23 | — |
+
+**No validado:**
+- un reinicio real en mitad de una partida con móviles;
+- el comportamiento del túnel ante el reinicio;
+- un apagado brusco del proceso: la prueba simula la caída con un archivo anterior, no matando el proceso.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

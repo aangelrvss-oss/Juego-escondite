@@ -88,6 +88,31 @@ export interface ClientHandle {
   closed(): void;
 }
 
+// ------------------------------------------------------------ persistencia (opcional)
+// Formato del archivo de estado (server/main.ts, STATE_FILE). NUNCA lleva coordenadas de jugadores:
+// las lecturas y la última pista se quitan al guardar (se vuelven a llenar con las siguientes
+// lecturas). Sí lleva la zona de la partida, que forma parte de la configuración.
+export const STATE_VERSION = 1;
+// Al restaurar, la numeración de eventos de cada jugador avanza este margen: así cualquier cliente
+// acepta la nueva instantánea aunque hubiera visto eventos posteriores al último guardado.
+export const RESTORE_SEQ_MARGIN = 100_000;
+
+export interface SavedRoom {
+  id: string;
+  code: string;
+  state: RoomState;
+  deleteAt: number | null;
+  seqs: Record<string, number>;
+  sessions: Record<string, string>; // playerId → hash del secreto (hex); nunca el secreto
+  replies: Record<string, [string, ServerResult][]>;
+}
+
+export interface SavedHub {
+  version: typeof STATE_VERSION;
+  savedAt: number;
+  rooms: SavedRoom[];
+}
+
 const hash = (secret: string): Buffer => createHash('sha256').update(secret).digest();
 const randomId = (prefix: string): string => `${prefix}_${randomBytes(9).toString('base64url')}`;
 
@@ -110,6 +135,7 @@ export class Hub {
   private readonly failures = new Map<string, number[]>();
   private readonly accepted = { ws: 0, http: 0 }; // lecturas registradas por el motor, por canal
   private nextPositionsAt: number;
+  private changes = 0; // aumenta con cada cambio de salas o sesiones (para saber cuándo guardar)
 
   constructor(options: HubOptions = {}) {
     this.now = options.now ?? Date.now;
@@ -155,6 +181,73 @@ export class Hub {
       locWs: this.accepted.ws,
       locHttp: this.accepted.http,
     };
+  }
+
+  /** Número de cambios hasta ahora: si no ha variado desde el último guardado, no hace falta guardar. */
+  revision(): number {
+    return this.changes;
+  }
+
+  /** Copia guardable del estado: salas, códigos, hashes de sesión y respuestas, sin coordenadas. */
+  exportState(): SavedHub {
+    const rooms: SavedRoom[] = [];
+    for (const room of this.rooms.values()) {
+      const state = structuredClone(room.state);
+      for (const p of Object.values(state.players)) p.samples = [];
+      state.lastPing = null;
+      const sessions: Record<string, string> = {};
+      for (const [pid, s] of this.sessions) if (s.roomId === room.id) sessions[pid] = s.hash.toString('hex');
+      const seqs: Record<string, number> = {};
+      for (const [pid, box] of room.outboxes) seqs[pid] = box.seq;
+      const replies: Record<string, [string, ServerResult][]> = {};
+      for (const [pid, map] of room.replies) replies[pid] = [...map.entries()];
+      rooms.push({ id: room.id, code: room.code, state, deleteAt: room.deleteAt, seqs, sessions, replies });
+    }
+    return { version: STATE_VERSION, savedAt: this.now(), rooms };
+  }
+
+  /**
+   * Restaura un estado guardado (al arrancar, antes de aceptar conexiones). Todos los jugadores quedan
+   * desconectados hasta que su móvil reanude la sesión. Devuelve cuántas salas se han restaurado; las
+   * mal formadas o con un código ya en uso se ignoran.
+   */
+  importState(data: unknown): number {
+    const saved = data as Partial<SavedHub> | null;
+    if (!saved || saved.version !== STATE_VERSION || !Array.isArray(saved.rooms)) return 0;
+    const now = this.now();
+    let restored = 0;
+    for (const r of saved.rooms) {
+      if (!r || typeof r.id !== 'string' || typeof r.code !== 'string' || !r.state || typeof r.state !== 'object') continue;
+      if (this.rooms.has(r.id) || this.codes.has(r.code)) continue;
+      const state = r.state;
+      for (const p of Object.values(state.players ?? {})) {
+        p.samples = [];
+        if (p.connected) {
+          p.connected = false;
+          p.disconnectedSince = now;
+        }
+      }
+      state.lastPing = null;
+      const room: Room = {
+        id: r.id,
+        code: r.code,
+        state,
+        outboxes: new Map(Object.entries(r.seqs ?? {}).map(([pid, seq]) => [pid, { seq: Number(seq) + RESTORE_SEQ_MARGIN, entries: [] }])),
+        replies: new Map(Object.entries(r.replies ?? {}).map(([pid, list]) => [pid, new Map(list)])),
+        lastClaimAt: new Map(),
+        lastLocAt: new Map(),
+        deleteAt: typeof r.deleteAt === 'number' ? r.deleteAt : null,
+      };
+      this.rooms.set(room.id, room);
+      if (room.deleteAt === null) this.codes.set(room.code, room.id);
+      for (const [pid, hex] of Object.entries(r.sessions ?? {})) {
+        if (typeof hex === 'string' && /^[0-9a-f]{64}$/.test(hex)) this.sessions.set(pid, { roomId: room.id, hash: Buffer.from(hex, 'hex') });
+      }
+      restored++;
+    }
+    if (restored) this.changes++;
+    this.log(`state_restored rooms=${restored}`);
+    return restored;
   }
 
   /** Estado interno de una sala (solo para pruebas y diagnóstico local; nunca se envía). */
@@ -327,6 +420,7 @@ export class Hub {
   private bind(client: Client, room: Room, playerId: string): void {
     const secret = randomBytes(32).toString('base64url');
     this.sessions.set(playerId, { roomId: room.id, hash: hash(secret) });
+    this.changes++;
     client.playerId = playerId;
     this.connections.set(playerId, client);
     this.send(client, { t: 'welcome', playerId, code: room.code, secret });
@@ -376,6 +470,7 @@ export class Hub {
     this.codes.delete(room.code);
     room.code = code;
     this.codes.set(code, room.id);
+    this.changes++;
     for (const id of room.state.playerOrder) {
       const conn = this.connections.get(id);
       if (conn && room.state.players[id]?.status !== 'left') this.send(conn, { t: 'code', code });
@@ -450,6 +545,7 @@ export class Hub {
 
   private commit(room: Room, step: Step): void {
     room.state = step.state;
+    this.changes++;
     const touched = new Set<string>();
     for (const event of step.events) {
       for (const pid of room.state.playerOrder) {
@@ -559,6 +655,7 @@ export class Hub {
 
   private deleteRoom(room: Room): void {
     this.rooms.delete(room.id);
+    this.changes++;
     if (this.codes.get(room.code) === room.id) this.codes.delete(room.code);
     for (const pid of room.state.playerOrder) {
       this.sessions.delete(pid);

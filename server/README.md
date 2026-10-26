@@ -54,6 +54,7 @@ node server/health-watch.mjs     # registro de contadores cada 10 s (para la pru
 | `TRUST_PROXY=1` | Usar la IP real del cliente que indica el túnel (`CF-Connecting-IP`), para los límites por dirección. Solo detrás de un túnel de confianza |
 | `ALLOWED_ORIGINS` | Orígenes web extra admitidos en `/ws`, separados por comas |
 | `LOG=1` | Registro **sin nombres, coordenadas ni secretos**: solo tipos de comando, resultados y número de salas |
+| `STATE_FILE` | *(Opcional.)* Archivo donde se guardan las salas cada 2 s (si hay cambios) y al apagar con Ctrl+C. Al arrancar, se restauran y los móviles se reconectan solos con su sesión. **No guarda coordenadas de jugadores** (ni lecturas ni pistas) **ni secretos** (solo sus hashes). **Sí guarda** nombres, identificadores de instalación, equipos, capturas y la zona de la partida. Una sala borrada desaparece del archivo en el siguiente guardado. Sin esta variable, todo vive solo en memoria |
 
 ## Acceso desde los móviles (redes distintas)
 
@@ -108,7 +109,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 ## Pruebas
 
 ```bash
-npm run test:server        # 33 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report y abandono en partida
+npm run test:server        # 38 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida y persistencia
 npm test                   # motor y simulación (130)
 cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report y comprobación de GPS (75)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)
@@ -122,6 +123,6 @@ node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, Q
   - Con la pantalla bloqueada, el fugitivo no ve la reclamación de captura. Si no la confirma en 30 s, la reclamación caduca sin captura (regla actual del motor). El procedimiento de disputa (D-035) sigue pendiente de decisión y no se ha implementado.
   - En el navegador (también en iPhone), la ubicación se detiene con la pantalla apagada.
 - **Expulsiones:** se basan en un identificador de instalación que el móvil puede regenerar. Es una medida débil, suficiente para una sala entre amigos.
-- **Salas en memoria:** si el servidor se reinicia, las partidas en curso se pierden.
+- **Salas en memoria:** sin `STATE_FILE`, si el servidor se reinicia, las partidas en curso se pierden. Con `STATE_FILE`, sobreviven: tras una caída se pierde como mucho lo de los últimos 2 s, y las posiciones se recuperan con las siguientes lecturas. Probado en un ordenador (`server/test/persistence.test.mjs`), no en una partida real.
 - **Ubicación falsificada:** se marca (bandera de ubicación simulada, velocidad imposible), pero no se puede impedir.
 - **Reglas pendientes de decisión:** D-035 (disputas), si los equipos se revelan al final, y los casos límite de D-033 (`QUALITY_STATE.md`).

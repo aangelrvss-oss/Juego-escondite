@@ -344,3 +344,33 @@ El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este r
 - el campo es interno y no se envía a ningún cliente.
 **Parámetros:** 12 m/s y el intervalo mínimo de 1 s son **experimentales** (D-038) y hay que calibrarlos en campo. Con lecturas cada 5 s, un salto real retrasa la captura unos 5 s.
 **Pruebas:** `engine/test/gps-jump.test.ts` (8, con lecturas simuladas). No se ha probado con GPS real.
+
+### D-050 · Decisión técnica reversible (26/10/2026) · Persistencia opcional de las salas
+**Motivo:**
+- El Plan Maestro pide persistencia de «sala y configuración, eventos ordenados, resultado» con «retención mínima necesaria» (§8.1, pág. 15).
+- Las salas vivían solo en memoria, así que un reinicio del servidor (en el ordenador del organizador, detrás de un túnel) perdía la partida.
+
+**Decisión:**
+- Variable opcional `STATE_FILE`. **Sin ella no cambia nada.**
+- Con ella, el servidor guarda las salas en un archivo JSON local cada 2 s, si hay cambios, y al apagarse. La escritura es atómica: un archivo temporal y después se renombra.
+- Al arrancar las restaura, marca a todos como desconectados y adelanta la numeración de eventos para que los móviles acepten la nueva instantánea.
+
+**Datos que se guardan y que no:**
+- **Nunca se guardan:**
+  - coordenadas de jugadores: ni las lecturas ni la última pista, que se quitan al guardar y se recuperan con las siguientes lecturas;
+  - los secretos de sesión, de los que solo se guarda su hash.
+- **Sí se guardan:**
+  - nombres e identificadores de instalación;
+  - equipos, capturas y respuestas a comandos;
+  - la configuración, incluido el centro de la zona y el punto de encuentro.
+- El archivo está en el ordenador del servidor. Una sala borrada sale del archivo en el siguiente guardado: una sala terminada dura como mucho la ventana de revancha de 30 min, más 60 s.
+
+**No decide:** el alojamiento definitivo (D-014 / PM-D-008) ni una base de datos. Es un paso mínimo y reversible.
+
+**Pruebas:** `server/test/persistence.test.mjs` (5):
+- partida en curso que sigue tras el reinicio y se termina;
+- archivo sin coordenadas ni secretos;
+- código y sesiones válidos, y sesión falsa rechazada;
+- caída con un archivo anterior, donde una mutación del margen de numeración se detecta;
+- archivo ilegible;
+- sin `STATE_FILE`, nada cambia.
