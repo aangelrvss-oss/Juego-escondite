@@ -49,6 +49,7 @@ Estados:
   - permiso retirado;
   - pantalla encendida y lectura con el móvil quieto en el navegador.
 - [ ] **Defecto conocido:** si una partida termina más de 6 h después de crear la sala, el Mission Report se sustituye enseguida por «sala cerrada». Para corregirlo hay que decidir un margen (D-038).
+- [ ] **Fallo intermitente** en la suite del servidor: 1 de 13 ejecuciones, prueba sin identificar (`QUALITY_STATE.md`). Guardar la salida completa de las próximas ejecuciones y revisar la carrera del guardado en `crash.test.mjs`.
 - [ ] Pausa o cancelación clara (D-053).
 - [ ] Seguridad de la zona más allá de los avisos (guía §7: «una advertencia no arregla una mecánica peligrosa»), por ejemplo un constructor de zonas que excluya vías. Necesita decisión.
 - [ ] Política de conservación y borrado de datos, `PRIVACY_AND_COMPLIANCE.md` y `THREAT_MODEL.md`. Revisión legal antes de abrir al público.

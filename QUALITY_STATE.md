@@ -619,3 +619,27 @@ Ver D-052 y la tabla de trazabilidad de arriba.
 - el QR con una cámara;
 - el permiso retirado desde los ajustes del sistema;
 - la pantalla bloqueada con la app.
+
+### Incorporación de la guía de criterio y pruebas nuevas (26/10/2026, 23:34-23:50)
+- La guía está en `docs/product/`, idéntica al original. Contrastes registrados en `DECISION_LOG.md` (D-043 y D-045 ampliadas, D-053 y D-054) y en `docs/product/DECISIONES_PENDIENTES.md`.
+- `server/test/capture-race.test.mjs` (5), con el servidor real y mensajes que se cruzan:
+  - dos reclamaciones simultáneas;
+  - una autodeclaración cruzada con una reclamación;
+  - una confirmación tardía;
+  - una confirmación repetida;
+  - una lectura retrasada.
+
+  Mutación detectada: si el servidor usara la hora de llegada, falla la de la lectura retrasada.
+- `GAME_STATE_MACHINE.md` §10: diferencias entre el diseño y el código actual.
+
+| Suite (23:44) | Resultado |
+|---|---|
+| Motor y simulación | 144 de 144 |
+| Typecheck | Sin errores |
+| Servidor | **58 de 59 en la primera ejecución**. Luego **59 de 59 en 12 ejecuciones seguidas**, dos de ellas con la E2E en paralelo |
+| Cliente | 95 de 95 |
+| Demo | 62 de 62 |
+| E2E en Chrome | 41 de 41 (tres veces) |
+
+**Fallo intermitente sin identificar:** una prueba del servidor falló una vez en 13 ejecuciones de la suite completa. De esa ejecución solo se guardó el resumen, así que no se sabe cuál fue. No se ha reproducido ni aislada ni con carga. Las sospechosas son las que dependen del reloj real (`crash.test.mjs` y `keepalive.test.mjs`): en `crash.test.mjs` hay una carrera conocida de probabilidad baja, si el guardado periódico cae entre la entrada de un jugador y la caída. **No se ha corregido** (está en el backlog). La próxima ejecución completa debe guardar la salida entera.
+
