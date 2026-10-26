@@ -309,8 +309,30 @@ try {
   check(
     'al recargar en plena partida no se repiten la tarjeta del rol ni los avisos antiguos',
     await host.evaluate(`!document.querySelector('.overlay.reveal') && !['Empieza la persecución', 'ha entrado'].some((t) => document.body.textContent.includes(t))`),
-    await host.evaluate(`document.body.textContent.replace(/\s+/g, ' ').slice(0, 200)`),
+    await host.evaluate(`document.body.textContent.replace(/\\s+/g, ' ').slice(0, 200)`),
   );
+  // Reclamación real con la hoja «Me han pillado» abierta: la reclamación (30 s para responder) queda
+  // encima. Ana y Beto están en el mismo punto emulado; tras adelantar el reloj, Ana reintenta hasta
+  // que llegan lecturas nuevas (cada ≤ 5 s).
+  await guest.evaluate(click('[data-act="selftag"]'));
+  await guest.waitFor(`!!document.querySelector('[data-selftag]')`, 'hoja «Me han pillado» abierta');
+  // El límite de una reclamación cada 3 s usa el reloj del servidor, que aquí está parado: se reclama
+  // una sola vez, cuando las dos lecturas que tiene el servidor ya son actuales (≤ 15 s).
+  const fresh = (name) => {
+    const p = Object.values(server.hub.roomStateByCode(code2)?.players ?? {}).find((x) => x.name === name);
+    const last = p?.samples.at(-1);
+    return !!last && clock.t - last.effectiveAt <= 10_000;
+  };
+  for (let i = 0; i < 150 && !(fresh('Ana') && fresh('Beto')); i++) await sleep(100);
+  await host.evaluate(`(() => { const b = [...document.querySelectorAll('[data-claim]')].find((x) => x.textContent.trim() === 'Beto'); b?.click(); return true; })()`);
+  const claimed = await guest.waitFor(`!!document.querySelector('[role="alertdialog"]')`, 'reclamación', 5_000).then(() => true, () => false);
+  const onTop = claimed && (await guest.evaluate(`(() => { const r = document.querySelector('[data-respond="no"]').getBoundingClientRect(); const el = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2); return !!el?.closest('[role="alertdialog"]'); })()`));
+  check('la reclamación de captura queda encima de la hoja «Me han pillado» y se puede responder', onTop, claimed ? '' : await host.evaluate(`[...document.querySelectorAll('.toast')].map((t) => t.textContent).join(' | ') || document.querySelector('.gps')?.textContent`));
+  if (claimed) {
+    await guest.evaluate(click('[data-respond="no"]'));
+    await guest.waitFor(`!document.querySelector('[role="alertdialog"]')`, 'reclamación respondida');
+  }
+  await guest.evaluate(click('[data-act="close-sheet"]'));
   await guest.evaluate(click('[data-act="selftag"]'));
   await guest.waitFor(`!!document.querySelector('[data-selftag]:not([data-selftag=""])')`, 'lista de cazadores');
   await layout(guest, 'declararse capturado');

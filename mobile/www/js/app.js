@@ -655,14 +655,6 @@ function overlays() {
       <p class="lead">${esc(CAPTURE_NORMS)}</p>
       <p class="hint">Solo lo ves tú. Toca para continuar.</p></div>`;
   }
-  const pending = snap?.pendingClaimForMe;
-  if (pending && snap.phase === 'ACTIVE') {
-    out += `<div class="overlay sheet" role="alertdialog" aria-label="Reclamación de captura">
-      <p class="label">Reclamación · ${clock(pending.expiresAt - serverNow())}</p>
-      <h2>¿Te ha pillado ${esc(nameOf(pending.hunterId))}?</h2>
-      <div class="row2"><button class="btn btn-danger" data-respond="yes">Sí, me ha pillado</button>
-      <button class="btn btn-outline" data-respond="no">No</button></div></div>`;
-  }
   const invite = currentInvite();
   if (ui.sheet === 'qr' && snap?.phase === 'LOBBY' && invite) {
     let qr;
@@ -684,6 +676,15 @@ function overlays() {
       <div class="chips">${hunters.map((h) => `<button class="btn btn-outline btn-small" data-selftag="${esc(h.id)}">${esc(h.name)}</button>`).join('')}
       <button class="btn btn-outline btn-small" data-selftag="">No lo sé</button></div>
       <button class="btn btn-ghost" data-act="close-sheet">Cancelar</button></div>`;
+  }
+  // La reclamación de captura va la última, encima de cualquier otra hoja: tiene 30 s para responder.
+  const pending = snap?.pendingClaimForMe;
+  if (pending && snap.phase === 'ACTIVE') {
+    out += `<div class="overlay sheet" role="alertdialog" aria-label="Reclamación de captura">
+      <p class="label">Reclamación · ${clock(pending.expiresAt - serverNow())}</p>
+      <h2>¿Te ha pillado ${esc(nameOf(pending.hunterId))}?</h2>
+      <div class="row2"><button class="btn btn-danger" data-respond="yes">Sí, me ha pillado</button>
+      <button class="btn btn-outline" data-respond="no">No</button></div></div>`;
   }
   return out;
 }
