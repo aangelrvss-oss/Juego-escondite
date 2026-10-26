@@ -22,7 +22,8 @@ www/                      Interfaz (HTML/CSS/JS sin empaquetador), compartida co
   index.html, js/app.js     Partida (H2): pantallas; se dibuja desde la vista autorizada del servidor
   js/net.js                 Único módulo con red: WebSocket, reanudación, seq, latido, hora del servidor
   js/location.js            Ubicación: nativa (Android hoy, iOS después) o del navegador; misma salida
-  js/game-view.js, radar.js Textos, tiempos y radar SVG (puros, probados en Node; sin mapas externos)
+  js/game-view.js, radar.js Textos, tiempos, enlace de invitación y radar SVG (puros, probados en Node; sin mapas externos)
+  js/qr.js                  QR del enlace de invitación (codificador propio, sin dependencias)
   diagnostic.html           Diagnóstico GPS (H1), sin red
   js/diagnostic.js          Pantalla: solo DOM, sobre el modelo de vista
   js/view-model.js          Textos y estados de la pantalla (puro, probado en Node)
@@ -80,7 +81,8 @@ Requisitos de Capacitor 8.5.3 comprobados en su plantilla: AGP 8.13.0, Gradle 8.
 
 | Prueba | Comando | Qué comprueba | Límite |
 |---|---|---|---|
-| JS (`test/*.test.mjs`, 49) | `npm test` | Puente, modelo de vista, estados de lectura, marca, red solo desde `net.js`, textos y tiempos del juego, radar sin coordenadas, adaptador de ubicación y latido. `native-plugin.test.mjs` reproduce el defecto de arranque con el runtime real de `@capacitor/core`. `lockscreen.test.mjs`: envío nativo, receptor de lecturas y latido con temporizadores retrasados | El puente Android, el WebSocket y la geolocalización están **simulados** |
+| JS (`test/*.test.mjs`, 72) | `npm test` | Puente, modelo de vista, estados de lectura, marca, red solo desde `net.js`, textos y tiempos del juego, radar sin coordenadas, adaptador de ubicación y latido. `native-plugin.test.mjs` reproduce el defecto de arranque con el runtime real de `@capacitor/core`. `lockscreen.test.mjs`: envío nativo, receptor de lecturas y latido con temporizadores retrasados | El puente Android, el WebSocket y la geolocalización están **simulados** |
+| E2E del flujo web (17 comprobaciones) | `node e2e/web-flow.e2e.mjs <chrome.exe>` (desde `mobile/` o la raíz) | Tres jugadores en contextos aislados de Chrome contra el servidor real: enlace `?sala=`, QR de la interfaz decodificado, cambio de código y enlace antiguo rechazado; partida corta (zona, cuenta atrás, rol privado, huida, captura) hasta el Mission Report, igual en los tres y de nuevo tras recargar | Chrome de escritorio, no un móvil. Geolocalización emulada y reloj del servidor controlado. El QR lo lee un lector de prueba, no una cámara. Solo decodifica QR de versión 5 o menor (URL corta) |
 | E2E de la partida (8 etapas) | `node e2e/game.e2e.mjs [capturas]` | Cinco navegadores contra el servidor real: sala, asignación, cuenta atrás, revelación privada, huida, persecución, captura validada, corte de red y reconexión, final, revancha y tramas sin datos ajenos | Navegadores en un ordenador, geolocalización emulada, reloj del servidor controlado. **No** son móviles |
 | E2E de arranque del diagnóstico (4 escenarios) | `npm run vendor` y después `node e2e/boot.e2e.cjs` | Que la pantalla arranca y «Comprobar de nuevo» llega al módulo nativo. Que los fallos (plugin sin registrar, Capacitor que no carga o no responde) se ven en «Incidencias» sin bloquear los botones | Usa el `native-bridge.js` real de `node_modules/@capacitor/android` (requiere `npm install`) y el Playwright y Chromium del entorno, que **no** son dependencias del proyecto. El lado nativo está **simulado** |
 | Java de la app (19) | `:app:testDebugUnitTest` (comando Gradle de arriba) | Contrato del puente, exportación del CSV sin coordenadas, destino y cuerpo del envío. `UploaderTest`: el envío real (`HttpURLConnection`) contra un servidor local | Sin dispositivo; el servidor de `UploaderTest` es HTTP sin TLS |

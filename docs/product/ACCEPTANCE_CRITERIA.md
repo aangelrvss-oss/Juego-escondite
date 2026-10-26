@@ -24,6 +24,15 @@ Los umbrales marcados con [H] se recalibrarán tras la prueba técnica. **Ningú
 | AC-A5 | **Dado** un enlace de invitación, **cuando** se abre en un móvil con la app instalada, **entonces** la app se abre en la pantalla de unirse con el código ya puesto | D |
 | AC-A6 | **Cuando** el anfitrión pulsa [Mostrar QR], **entonces** el QR contiene el mismo enlace y se puede escanear con la cámara del sistema | D |
 | AC-A7 | **Cuando** el anfitrión expulsa a un jugador en la sala de espera, **entonces** ese jugador sale y no puede volver a entrar en esa sala | I |
+| AC-A8 | *(Propuesta, 26/10/2026, por el Plan Maestro §2.2.)* **Cuando** el anfitrión renueva el código en la sala de espera, **entonces** el código anterior deja de servir para entrar, los jugadores que ya están dentro reciben el nuevo y conservan su sesión, y nadie más (ni otro jugador, ni el anfitrión fuera de `LOBBY`) puede renovarlo | I, D |
+
+> **Estado de AC-A5, AC-A6 y AC-A8 (26/10/2026, sin commit; D-048).** Se distingue entre pruebas automáticas, navegador de escritorio y móvil real:
+>
+> | Criterio | Automatizado | Navegador real (Chrome de escritorio) | Móvil real |
+> |---|---|---|---|
+> | AC-A5 (enlace) | `mobile/test/invite.test.mjs` (8): generación, extracción, códigos y URL no válidos | `mobile/e2e/web-flow.e2e.mjs`: el enlace abre la **web** con el código puesto y se entra | **No probado.** Además, **no cumple el criterio tal como está escrito**: el enlace abre la web, no la app instalada (App Links necesita un dominio propio; M4) |
+> | AC-A6 (QR) | `mobile/test/qr.test.mjs` (10): vectores publicados de la norma y un lector escrito aparte del codificador | `web-flow.e2e.mjs`: el QR de la pantalla se decodifica con el enlace exacto (con un lector de prueba) | **No probado.** El QR **no se ha escaneado con ninguna cámara ni con un lector de terceros**: en este equipo no hay ninguno (Chrome y Edge de Windows no tienen `BarcodeDetector`) |
+> | AC-A8 (renovar código) | `server/test/invite.test.mjs` (9): solo el anfitrión, solo en `LOBBY`, códigos anteriores sin validez, colisiones, idempotencia, reanudación y cierre de la sala | `web-flow.e2e.mjs`: doble toque, los dos ven el nuevo, el enlace antiguo da «No existe ninguna sala» | **No probado** |
 
 ## B. Configuración y seguridad previa
 

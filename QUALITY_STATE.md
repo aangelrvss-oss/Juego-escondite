@@ -332,3 +332,99 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 
 **Sin validar:** todo lo de la columna «Físico», la batería en partida, iOS (no existe la app), y D-035 (pendiente de decisión, sin implementar).
 
+## Recuperación en Windows y enlace/QR (26/10/2026, tarde, sin commit)
+
+**Entorno:** Windows 11, Node 24.12.0, npm 11.6.2, Chrome del sistema. Copia `C:\Users\aange\Projects\Juego-escondite-recuperacion`, rama `recuperacion-h2` sobre `4c190a0`. Sin JDK ni Android SDK: no se ha compilado ni probado nada de Android.
+
+### Recuperación
+- El parche de F1/H2/H2.1 (`the-outrun-h2-h2.1-sobre-4c190a0.patch`, SHA-256 `ef5e9a2f…22989163`) se aplicó sobre `4c190a0` y dio el árbol esperado `e0e2bcb1be6cbca6c468813165de02773ae4d39a`.
+- **Corrección de portabilidad (autorizada):** `server/test/hostile.test.mjs` usaba `new URL(...).pathname` como ruta de archivo, que en Windows da `/C:/…`; ahora usa `fileURLToPath`. El servidor no cambió: ya usaba `fileURLToPath`.
+- **Commits (después, con la identidad local que facilitó el propietario):**
+  - `664cf53`, con el árbol `e0e2bcb1…`: el esperado del parche;
+  - `5611274`, con el árbol `53bc009b…`: igual al del primer respaldo, y solo `hostile.test.mjs` (+2/−1) respecto a `664cf53`.
+
+  Se crearon con `commit-tree` y `update-ref` (comprobando el valor anterior), sin tocar el árbol de trabajo. Locales, sin push.
+- **Respaldo:** `C:\Users\aange\Downloads\outrun-respaldo-20261026-182641\`. Contiene el parche de la recuperación con la corrección de Windows (reproduce el árbol `53bc009b…` sobre `4c190a0`, comprobado), el parche original y `SHA256SUMS.txt`.
+
+### Pruebas al empezar el bloque (antes de cambiar código)
+| Suite | Resultado |
+|---|---|
+| `npm test` | 130 de 130 |
+| `npm run typecheck` | Sin errores |
+| `npm run test:server` | 19 de 19 |
+| `mobile/` `npm test` | 49 de 49 |
+| `npm run test:demo` | 62 de 62 |
+
+### Enlace de invitación, QR y cambio de código (D-048)
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/qr.test.mjs`: Reed-Solomon del ejemplo «HELLO WORLD» 1-M; bits de formato del nivel M (8 máscaras); bits de versión 7; capacidades; ida y vuelta de versión 1 a 10 con comprobación Reed-Solomon de cada bloque; patrones fijos; SVG | **7 de 7** | Automatizada. Los vectores son de la norma. La ida y vuelta usa piezas del propio codificador (orden de colocación y máscaras) |
+| `mobile/test/invite.test.mjs`: alfabeto igual al del servidor, normalización, enlace sin credenciales, ida y vuelta del enlace | **5 de 5** | Automatizada |
+| `server/test/invite.test.mjs`: el anfitrión cambia el código, todos lo reciben una vez, el anterior da `not_found` y el nuevo sirve; un invitado → `forbidden`; campos extra → `invalid_command`; tras empezar → `wrong_phase` | **2 de 2** | Servidor y clientes reales por WebSocket en un ordenador |
+| `node mobile/e2e/web-flow.e2e.mjs <chrome.exe>` (primera parte): Chrome real sin interfaz y servidor real en 127.0.0.1, con tres jugadores en contextos aislados. El anfitrión crea la sala; **el QR de la interfaz se decodifica con el enlace exacto**; el enlace precarga el código y se borra de la barra; el invitado entra; doble toque para cambiar el código; los dos ven el nuevo; el enlace antiguo da «No existe ninguna sala»; con el nuevo entra un tercero | 11 comprobaciones | **Navegador real** (Chrome de escritorio). No es un móvil |
+
+**Pendiente de validar:**
+- escanear el QR con la cámara de un móvil (AC-A6);
+- abrir el enlace en un móvil;
+- abrir la app Android desde el enlace (App Links): no implementado, necesita dominio propio.
+
+### Mission Report mínimo (Plan Maestro §4.4)
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/report.test.mjs`: sin final no hay informe; todos capturados (duración, tiempo hasta la victoria, orden cronológico, ranking, momentos); fin por tiempo (sin «hasta la victoria»; un empate no es «más capturas»); fin del anfitrión durante la huida (sin duración); sin coordenadas ni equipos | **5 de 5** | Automatizada |
+| `server/test/report.test.mjs`: partida real de 3 jugadores hasta «todos capturados»; el informe es igual para todos y coincide con el estado del servidor (`finishedAt − activeStart`, capturas, tiempo hasta la victoria); un jugador reconecta con su sesión y el informe es idéntico | **1 de 1** | Servidor y clientes reales por WebSocket; tiempo SIMULADO |
+| `web-flow.e2e.mjs` (segunda parte): asignación manual de roles, centrar la zona con geolocalización **emulada**, lista de seguridad, todos listos, cuenta atrás, **revelación privada** («FUGITIVO» solo para Beto), huida, persecución, «Me han pillado», **Mission Report igual en los tres navegadores**, recarga de la página y **el mismo informe**, 0 errores de JavaScript | **5 comprobaciones** (16 en total entonces; 17 tras la revisión) | **Navegador real**; reloj del servidor controlado y posiciones emuladas |
+
+**Cambio en la vista del motor:** la instantánea incluye ahora `activeStart` y `finishedAt`. Son horas del servidor iguales para todos, sin datos privados. Las pruebas de privacidad del motor y del servidor siguen superadas.
+**Fuera de este bloque (§4.4):** mapa o recorridos, compartir el informe y revelar los equipos al final (decisión pendiente).
+
+### Revisión y refuerzo de la invitación (26/10/2026, 19:17-19:30)
+**Revisión del codificador QR:** se leyó entero, sin defectos encontrados. Se revisaron la colocación de los patrones fijos (también la alineación sobre la temporización en v7+), las dos copias del formato, la información de versión, las 8 máscaras en la notación de la norma, el terminador y el relleno, el intercalado de bloques y la penalización N1–N4.
+
+**Independencia de las referencias (cambio en `mobile/test/qr.test.mjs`, ahora 10 pruebas):**
+- **Vectores publicados**, escritos como constantes:
+  - Reed-Solomon de «HELLO WORLD» 1-M y del anexo I de la norma («01234567» 1-M);
+  - las 8 cadenas de formato del nivel M;
+  - la información de versión de 7 a 10;
+  - las capacidades en bytes de v1 a v10.
+- Codewords de datos de «Hi» **calculados a mano** a partir de la norma.
+- **Lector propio, sin importar nada del codificador:**
+  - mapa de módulos reservados, máscaras con i = fila y j = columna, y su propio zigzag;
+  - comprueba que las dos copias del formato están en la tabla publicada y coinciden;
+  - comprueba los síndromes de Reed-Solomon con tablas exponenciales (otro método que el del codificador).
+- Una prueba comprueba que el lector rechaza un QR dañado.
+- **Mutación:** con las filas y columnas de la máscara 4 intercambiadas, la ida y vuelta **falla** (el lector anterior, que compartía las máscaras del codificador, no lo detectaba). Revertida.
+- **Límite:** el lector sigue escrito en este proyecto. No hay ningún lector de terceros disponible sin instalar herramientas, y en Windows Chrome y Edge no exponen `BarcodeDetector` (comprobado). **El QR no está validado con una cámara ni en un móvil.**
+
+**Renovación del código (`server/test/invite.test.mjs`, 9 pruebas, servidor y clientes reales en un ordenador):**
+- código nuevo para todos, con un solo aviso;
+- el anterior da `not_found` y deja de apuntar a la sala;
+- tras dos renovaciones no sirve ninguno de los anteriores;
+- quien ya está dentro reanuda con su sesión y recibe el código vigente;
+- un jugador que no es el anfitrión → `forbidden`, sin cambio y con el código aún válido;
+- campos extra → `invalid_command`, y no se puede elegir el código;
+- el mismo comando repetido con el mismo id no renueva dos veces;
+- **colisiones** (generador forzado `HubOptions.generateCode`): nunca coincide con el código de otra sala activa ni con el actual;
+- `wrong_phase` en COUNTDOWN, HEAD_START, ACTIVE y FINISHED, y vuelve a estar permitido en la sala de espera de la revancha;
+- al cancelar la sala, el código vigente también deja de servir.
+
+**Mutaciones** (revertidas, comprobado que no queda rastro): no borrar el código anterior → 3 pruebas fallan; quitar la comprobación de anfitrión → 1 falla.
+
+**Enlaces (`mobile/test/invite.test.mjs`, 8 pruebas):** códigos no válidos de todo tipo (longitud, caracteres ambiguos, tildes, espacios de ancho cero, tipos no texto); parámetro repetido, en el fragmento, codificado o con otra clave; URL de servidor con puerto, ruta, consulta, fragmento o credenciales; esquemas no permitidos. **Cambio de comportamiento:** `codeFromLink` acepta solo enlaces http(s) (antes también `javascript:…?sala=`, que no era explotable porque solo extrae un código de 6 caracteres de la propia dirección).
+
+**Flujo completo en un navegador real:** `web-flow.e2e.mjs` comprueba ahora también que un código mal escrito muestra el aviso sin entrar. **17 de 17.** Su lector de QR reutiliza piezas del codificador; la verificación independiente es la de `qr.test.mjs`.
+
+### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
+| Suite | Resultado |
+|---|---|
+| `npm test` | 130 de 130 |
+| `npm run typecheck` | Sin errores |
+| `npm run test:server` | **29 de 29** (19 + 9 de renovación del código + 1 de Mission Report) |
+| `mobile/` `npm test` | **72 de 72** (49 + 10 de QR + 8 de enlace + 5 de Mission Report) |
+| `npm run test:demo` | 62 de 62 |
+| `node mobile/e2e/web-flow.e2e.mjs <chrome.exe>` | **17 de 17**. Al terminar no quedan procesos de Chrome ni de Node |
+
+**No ejecutadas:**
+- `mobile/e2e/game.e2e.mjs` y `boot.e2e.cjs`: necesitan Playwright, que no está instalado. Se comprobó que sus selectores (`.code`, `#f-code` en minúsculas, `[data-act=…]`) siguen existiendo.
+- Pruebas Java y Gradle: no hay JDK ni SDK.
+

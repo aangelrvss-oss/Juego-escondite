@@ -273,3 +273,61 @@ Reglas completas en `docs/product/GAME_MODES_AND_RULES.md`. Las entradas "Aproba
 - Tras la revelación, la instantánea del motor sigue mostrando el equipo de todos los jugadores, como antes: D-042 no cambia esa regla.
 - En la **demo** el reloj se para mientras se lee la tarjeta (fase 2E). En la partida real manda la hora del servidor: la tarjeta no puede parar el tiempo de huida.
 - La demo no puede mostrar el aviso de zona de salida: allí el cazador no se mueve durante la huida.
+
+---
+
+## Plan Maestro v1.0 · 26/10/2026 (contradicciones registradas, sin resolver)
+
+El propietario aportó `THE_OUTRUN_Plan_Maestro_de_Producto_y_Desarrollo.pdf` (v1.0, 26/10/2026; 22 páginas; fuera del repositorio), que se declara «fuente de verdad del diseño» (pág. 2). Contradice varias decisiones de este registro. **Ninguna decisión anterior se modifica ni se borra aquí**: cada contradicción queda abierta hasta que el propietario decida. Lo que sigue son propuestas.
+
+### Identificadores del Plan Maestro (`PM-D-xxx`)
+El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este registro pero con otro contenido. Para no confundirlas, en el repositorio se citan con el prefijo **`PM-`**:
+
+| Plan Maestro | Contenido (resumen) | Estado en el Plan | Mismo número aquí |
+|---|---|---|---|
+| PM-D-001 | Identidad THE OUTRUN, estética oscura/naranja, lema | Fija | D-001: investigar antes de programar |
+| PM-D-002 | PWA instalable, salas por código/enlace/QR | Fija; «verificar implementación actual» | D-002: enfoque de producto A/C |
+| PM-D-003 | Radio privada por equipos y Mission Report en el producto base | Fija | D-003: sin partidas con desconocidos |
+| PM-D-004 | INFECTION, modo completo y prioritario | Fija | D-004: salas privadas gratuitas |
+| PM-D-005 | THE RACE, modo independiente | Concepto confirmado; parámetros por validar | D-005: cliente nativo, PWA descartada |
+| PM-D-006 | URBAN HUNT es el núcleo; STREET LEGENDS después | Dirección aprobada | D-006: sin chat ni radio en el MVP |
+| PM-D-007 | Orden: auditoría, fundamentos, HUNT, RACE, INFECTION… | Plan propuesto base | D-007: alojamiento en la UE |
+| PM-D-008 | Proveedor/backend tras auditar el repositorio | Pendiente de evidencia | D-008: solo mayores de 18 |
+
+**Propuesta:** las decisiones nuevas de este registro siguen la numeración propia (D-043…), y las del Plan siempre con `PM-`.
+
+### D-043 · Contradicción pendiente · Radio de equipo
+- **Plan:** PM-D-003 y §4.3 (pág. 7): radio privada por equipos, «requisito fijo», P0 (Anexo A); prueba técnica temprana en la PWA real (§9, F1 punto 10).
+- **Registro:** D-006 (aprobada en la sesión 2): «sin chat ni radio de equipo en el MVP».
+- **Código:** no hay radio ni uso del micrófono. La interfaz dice «Sin chat» (`mobile/www/js/app.js`).
+- **Propuesta:** que el propietario confirme si el Plan sustituye a D-006. Si es así, el primer paso es un prototipo técnico aislado (voz por equipo, pulsar para hablar, silencio) en Android y navegador, con su coste por partida, antes de integrarlo. Consecuencias: un servicio de voz (WebRTC con o sin servidor de medios) puede tener coste y exige revisar privacidad (D-007, D-009, D-010).
+
+### D-044 · Contradicción pendiente · Cliente PWA
+- **Plan:** PM-D-002 y §1.3 (pág. 3): «la primera experiencia debe ser una web app instalable (PWA)».
+- **Registro:** D-005 (propuesta, pendiente): «se descarta una PWA como cliente de juego» porque la ubicación con el móvil bloqueado es imprescindible. H1/H2 eligieron Capacitor (Android) con un servicio nativo que envía la ubicación con la pantalla bloqueada; el navegador deja de enviar con la pantalla apagada (`server/README.md`).
+- **Código:** la misma interfaz `mobile/www/` sirve como app Android y como web desde el servidor, pero **no es instalable**: no hay manifest ni service worker.
+- **Propuesta:** las dos cosas a la vez, sin reescribir nada: (1) hacer instalable la web servida por el servidor (manifest + service worker mínimo), para entrar por enlace o QR sin instalar nada; (2) mantener la app Android para jugar con la pantalla bloqueada. Hay que decir al jugador de navegador que debe mantener la pantalla encendida. Pendiente de que el propietario lo acepte, porque cambia D-005.
+
+### D-045 · Contradicción pendiente · INFECTION
+- **Plan:** PM-D-004 y §5.2 (pág. 9): modo completo, «prioridad alta»; roadmap: Fase 4, después de HUNT (F2) y THE RACE (F3); P1 en el Anexo A.
+- **Registro:** D-030 (aprobada en la sesión 5): el primer modo jugable es Clásico; Infección queda como «ampliación futura».
+- **Lectura:** son compatibles si «prioritario» significa «el siguiente tras HUNT y RACE» y no «en la primera versión». No hay código de INFECTION; el diseño está en `docs/product/GAME_MODES_AND_RULES.md`.
+- **Propuesta:** confirmar el orden HUNT → THE RACE → INFECTION del Plan. No se implementa nada hasta cerrar HUNT (Plan §1.4: no añadir modos antes de una partida completa en dispositivos reales).
+
+### D-046 · Contradicción pendiente · Número de jugadores
+- **Plan:** §2.2 (pág. 4): «4-10 jugadores al inicio; no presentar cifras superiores como soportadas hasta probarlas»; §12.1.
+- **Registro:** D-019 (propuesta): de 2 a 20 jugadores.
+- **Código:** `engine/src/constants.ts` (`minPlayers: 2`, `maxPlayers: 20`); la interfaz muestra «x/20» y el texto «máximo 20».
+- **Propuesta:** dejar el motor en 2–20 (las pruebas simuladas cubren hasta 20) y que la interfaz deje de anunciar 20 como capacidad soportada mientras no haya una partida real con 4–10. Decisión del propietario: si el mínimo jugable pasa a 4 (cambia las reglas de inicio) o solo cambia el mensaje.
+
+### D-047 · Contradicción pendiente · Pistas exactas y espectadores
+- **Plan:** §5.1 (pág. 9): «la geolocalización no debe revelar automáticamente escondites con precisión falsa»; §3.1 (pág. 5): el observador «no es obligatorio en MVP» y «no debe revelar ubicación… a los jugadores activos».
+- **Código:** la pista periódica envía a los cazadores la última posición de cada fugitivo con su precisión y antigüedad (`engine/src/engine.ts`, `doPing`); un capturado ve a todos los activos con 60 s de retraso (`engine/src/view.ts`).
+- **Propuesta:** decidir si la pista sigue siendo la posición medida (con su precisión visible, como ahora) o pasa a ser aproximada (D-034), y si los capturados siguen viendo posiciones.
+
+### D-048 · Decisión técnica reversible (26/10/2026) · Enlace de invitación, QR y cambio de código
+**Decisión:** implementar lo que el Plan (PM-D-002, §2.2) y el propio repositorio (`MVP_SCOPE.md` M4 y M5; AC-A5 y AC-A6) piden por igual:
+- **Enlace:** `https://<servidor>/?sala=<CÓDIGO>`. Solo lleva el código, nunca datos de sesión. Al abrirlo, la web precarga el código en «Unirme» y quita el parámetro de la barra de direcciones.
+- **QR:** se genera en el móvil del anfitrión con un codificador propio, sin dependencias (`mobile/www/js/qr.js`), con el mismo enlace.
+- **Cambiar el código:** comando del anfitrión `new_code`, solo en la sala de espera y con doble toque para confirmar. El código anterior deja de servir y los jugadores que ya están dentro conservan su sesión.
+**Límites:** el enlace abre la **web** (navegador), no la app Android. Abrir la app desde un enlace (App Links) necesita dominio propio y está pendiente (M4). El QR no se ha escaneado todavía con la cámara de un móvil.

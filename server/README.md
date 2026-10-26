@@ -87,7 +87,8 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
    - o cualquier móvil, iPhone incluido: abrir la dirección en el navegador. En el navegador la pantalla tiene que **seguir encendida**; ver «Limitaciones».
 3. **El anfitrión:**
    - escribe su nombre y pulsa **Crear sala**;
-   - comparte el código de 6 letras;
+   - comparte el código de 6 letras, el **enlace** («Compartir enlace»: `https://…/?sala=CÓDIGO`, que abre la web con el código ya puesto) o el **QR** («Mostrar QR», con el mismo enlace);
+   - si el código ha llegado a quien no debía, **Cambiar el código** (dos toques): el anterior deja de servir y los que ya están dentro siguen en la sala;
    - se coloca en el punto de encuentro y pulsa **Centrar la zona aquí**;
    - elige el radio, la duración, la huida (2 min como mínimo) y la frecuencia de las pistas;
    - marca la lista de seguridad.
@@ -102,15 +103,16 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
    - el cazador toca al fugitivo y pulsa su nombre;
    - el servidor comprueba que ambas ubicaciones son **recientes (≤ 15 s)** y **precisas (≤ 30 m)**, que estáis **cerca** y que el cazador está **dentro de la zona** (D-033);
    - el fugitivo confirma en 30 s, o se declara capturado él mismo con «Me han pillado».
-8. **Final:** el resultado se ve sin coordenadas, y el anfitrión puede proponer la **revancha**.
+8. **Final:** el **Mission Report** (resultado, causa, duración, capturas y momentos destacados) se ve sin coordenadas ni equipos ocultos, y se vuelve a abrir igual tras reconectar. El anfitrión puede proponer la **revancha**.
 
 ## Pruebas
 
 ```bash
-npm run test:server        # 19 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP y ping
+npm run test:server        # 29 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código y Mission Report
 npm test                   # motor y simulación (130)
-cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo y latido (49)
+cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR y Mission Report (72)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)
+node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, QR, cambio de código y partida corta hasta el Mission Report en un navegador real (sin Playwright)
 ```
 
 ## Limitaciones conocidas

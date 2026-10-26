@@ -1,7 +1,8 @@
 # Estado del proyecto
 
-**Última actualización:** 26/10/2026 (F1 motor seguro, H2 multijugador y preparación de la prueba real en Android; **sin commit**)
-**Rama:** `ccr-f1962362-hvwb9i`
+**Última actualización:** 26/10/2026, tarde (recuperación en Windows, Plan Maestro v1.0, enlace/QR y cambio de código; **sin commit**)
+**Rama:** `recuperacion-h2` (local, sobre `4c190a0`; `origin` sigue en `ccr-f1962362-hvwb9i` = `4c190a0`)
+**Referencia de producto:** Plan Maestro v1.0 (PDF fuera del repositorio). Trazabilidad en `docs/product/PLAN_MAESTRO_TRAZABILIDAD.md`; sus contradicciones con este registro están en `DECISION_LOG.md` (D-043 a D-047), **sin resolver**.
 **Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
 
 ## Fase activa
@@ -139,9 +140,34 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 - El adaptador de servidor sigue sin decidir (D-014): no se ha probado ningún transporte real.
 - El coste de CPU del motor (clona el estado en cada comando) no se ha medido en un adaptador real.
 
+## Recuperación en Windows y enlace/QR (26/10/2026, tarde)
+
+- **Recuperación:** F1/H2/H2.1 venían en un parche del entorno original. Se aplicó en una copia nueva (`C:\Users\aange\Projects\Juego-escondite-recuperacion`, rama `recuperacion-h2`) y se verificó contra el árbol esperado. La única diferencia es una corrección de portabilidad a Windows en `server/test/hostile.test.mjs`. Detalle en `QUALITY_STATE.md`.
+- **Commits locales (26/10/2026, sin push):** con la identidad local del repositorio (`aangelrvss-oss`):
+  - `664cf53`: la recuperación exacta (árbol `e0e2bcb1…`);
+  - `5611274`: el ajuste de Windows de `hostile.test.mjs` (árbol `53bc009b…`, igual que el primer respaldo).
+
+  El trabajo posterior (invitación por enlace/QR, renovación del código, Mission Report y documentación) sigue **sin commit**. Respaldos verificados en `C:\Users\aange\Downloads\outrun-respaldo-*`.
+- **Nuevo (D-048):**
+  - enlace de invitación `https://<servidor>/?sala=<CÓDIGO>`, que precarga el código;
+  - QR generado en el móvil sin dependencias (`mobile/www/js/qr.js`);
+  - «Cambiar el código» del anfitrión (`new_code` en `server/hub.ts`): el anterior deja de servir.
+
+  Probado con pruebas automáticas y en Chrome real contra el servidor real (`mobile/e2e/web-flow.e2e.mjs`). **No probado en un móvil.**
+- **Mission Report mínimo (Plan §4.4):** resultado y causa; tiempo (persecución y tiempo hasta la victoria); capturas por cazador; momentos verificables (primera captura, captura decisiva, más capturas). Solo usa datos oficiales de la instantánea: `activeStart` y `finishedAt` se añadieron a la vista (`engine/src/view.ts`), así que se reconstruye igual tras una reconexión. No revela equipos ni coordenadas.
+- **Partida web completa en un navegador real:** `mobile/e2e/web-flow.e2e.mjs`, con Chrome sin interfaz, tres jugadores, geolocalización emulada y reloj del servidor controlado. Recorrido: invitación por enlace/QR → cambio de código → configuración → cuenta atrás → rol privado → huida → persecución → captura → Mission Report igual en los tres → recarga y mismo informe. **17 de 17.** No sustituye a la prueba con móviles.
+- **Revisión de la invitación (19:17-19:30):**
+  - pruebas del QR con vectores publicados y un lector escrito aparte del codificador;
+  - 9 pruebas de servidor de la renovación del código (autorización, códigos anteriores, colisiones, fases e idempotencia), con mutaciones detectadas;
+  - casos de enlaces no válidos; `codeFromLink` acepta ahora solo enlaces http(s).
+
+  **El QR no se ha escaneado con una cámara ni con un lector de terceros.**
+- **Android en Windows:** no hay JDK 21 ni Android SDK. La compilación está bloqueada hasta que se autorice instalarlos.
+
 ## Siguiente acción concreta
 
-1. Revisar F1 y H2 y autorizar (o no) su commit.
+0. ~~Configurar la identidad de Git y hacer los commits A y B.~~ Hecho: `664cf53` y `5611274`, locales y sin push. Pendiente: revisar y autorizar el commit del trabajo posterior (invitación y Mission Report).
+1. Revisar F1, H2 y el bloque de enlace/QR, y autorizar (o no) su commit. Decidir D-043 a D-047.
 2. **Prueba con dos móviles:** seguir `mobile/PRUEBA_PARTIDA_ANDROID.md`.
    - Servidor y túnel HTTPS en tu ordenador.
    - APK `0.3.0-h2-bloqueo` en los dos Android.
