@@ -2,9 +2,10 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { PHASE_TEXT, TEAM_TEXT, WIN_TEXT, ago, clock, errorText, gpsStatus, me, phaseDeadline, rivals, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, WIN_TEXT, ago, clock, codeFromLink, errorText, gpsStatus, inviteLink, me, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
+import { qrSvg } from './qr.js';
 import { radarSvg } from './radar.js';
 
 const $app = document.getElementById('app');
@@ -38,14 +39,32 @@ const ui = {
   zoneWarning: null, // { exposedAt } (fugitivo fuera de la zona)
   startZoneWarning: false,
   draft: { durationMin: 20, headStartMin: 2, pingMin: 3, radiusM: 400, safety: false, center: null },
-  sheet: null, // 'selftag' | null
+  sheet: null, // 'selftag' | 'qr' | null
   locating: false,
   homeError: null,
   leaving: false,
   confirmEnd: false,
+  confirmNewCode: false,
   location: null,
   tracking: false,
+  inviteCode: null, // código recibido por enlace de invitación (?sala=)
 };
+
+// Enlace de invitación: se toma el código y se quita de la barra de direcciones (no hace falta
+// conservarlo, y así no se vuelve a aplicar al recargar después de entrar).
+ui.inviteCode = codeFromLink(location.href);
+if (new URL(location.href).searchParams.has(INVITE_PARAM)) {
+  try {
+    const clean = new URL(location.href);
+    clean.searchParams.delete(INVITE_PARAM);
+    history.replaceState(null, '', clean.pathname + clean.search + clean.hash);
+  } catch {
+    /* sin history (p. ej., algunas vistas incrustadas): no pasa nada */
+  }
+}
+
+/** Enlace de invitación de la sala actual, o null si no hay servidor o código. */
+const currentInvite = () => (ui.conn?.code ? inviteLink(serverUrl(), ui.conn.code) : null);
 
 // ------------------------------------------------------------------ utilidades
 
@@ -115,6 +134,7 @@ function connect() {
     render();
   });
   conn.on('error', (code) => toast(errorText(code), 'danger'));
+  conn.on('code', (code) => toast(`Nuevo código de sala: ${code}. El anterior ya no sirve.`));
   conn.on('session_lost', (code) => {
     resetGame();
     if (!ui.leaving) ui.homeError = errorText(code);
@@ -339,9 +359,10 @@ function homeScreen() {
     <label class="field">Tu nombre<input id="f-name" name="name" maxlength="20" minlength="2" required value="${esc(store.getItem('outrun.name') ?? '')}" placeholder="Cómo te verán los demás"></label>
     ${needsServer ? `<label class="field">Servidor<input id="f-server" name="server" inputmode="url" value="${esc(serverInput())}" placeholder="tu-tunel.trycloudflare.com"></label>` : ''}
     <button class="btn btn-primary" type="submit" data-act="create">Crear sala</button>
+    ${ui.inviteCode ? `<p class="msg">Te han invitado a la sala <strong class="num">${esc(ui.inviteCode)}</strong>. Escribe tu nombre y pulsa «Unirme».</p>` : ''}
     <div class="join-row">
-      <input id="f-code" name="code" maxlength="6" placeholder="CÓDIGO" autocapitalize="characters" aria-label="Código de la sala">
-      <button class="btn btn-outline" type="button" data-act="join">Unirme</button>
+      <input id="f-code" name="code" maxlength="6" placeholder="CÓDIGO" autocapitalize="characters" aria-label="Código de la sala" value="${esc(ui.inviteCode ?? '')}">
+      <button class="btn ${ui.inviteCode ? 'btn-primary' : 'btn-outline'}" type="button" data-act="join">Unirme</button>
     </div>
     ${ui.homeError ? `<p class="msg danger">${esc(ui.homeError)}</p>` : ''}
   </form>
@@ -378,7 +399,11 @@ function lobbyScreen(snap) {
   return `<section class="card code-card">
       <p class="label">Código de la sala</p>
       <p class="code num">${esc(code)}</p>
-      <button class="btn btn-outline btn-small" data-act="share">Compartir código</button>
+      <div class="row2">
+        <button class="btn btn-outline btn-small" data-act="share">Compartir enlace</button>
+        <button class="btn btn-outline btn-small" data-act="qr"${currentInvite() ? '' : ' disabled'}>Mostrar QR</button>
+      </div>
+      ${isHost ? `<button class="btn btn-ghost btn-small" data-act="new-code">${ui.confirmNewCode ? 'Toca otra vez: el código actual dejará de servir' : 'Cambiar el código'}</button>` : ''}
     </section>
     ${invited ? `<button class="btn btn-primary" data-act="join_rematch">Unirme a la revancha</button>` : ''}
     <section class="card">
@@ -531,6 +556,20 @@ function overlays() {
       <div class="row2"><button class="btn btn-danger" data-respond="yes">Sí, me ha pillado</button>
       <button class="btn btn-outline" data-respond="no">No</button></div></div>`;
   }
+  const invite = currentInvite();
+  if (ui.sheet === 'qr' && snap?.phase === 'LOBBY' && invite) {
+    let qr;
+    try {
+      qr = qrSvg(invite, { label: `QR para entrar en la sala ${ui.conn.code}` });
+    } catch {
+      qr = '<p class="msg danger">La dirección del servidor es demasiado larga para un QR.</p>';
+    }
+    out += `<div class="overlay sheet qr-sheet" role="dialog" aria-label="QR de la sala">
+      <p class="label">Escanéalo con la cámara</p>${qr}
+      <p class="code num">${esc(ui.conn.code)}</p>
+      <p class="hint">Abre la partida en el navegador con el código ya puesto.</p>
+      <button class="btn btn-ghost" data-act="close-sheet">Cerrar</button></div>`;
+  }
   if (ui.sheet === 'selftag' && snap?.phase === 'ACTIVE') {
     const hunters = rivals(snap, ui.conn.playerId);
     out += `<div class="overlay sheet" role="dialog" aria-label="Declararte capturado">
@@ -562,7 +601,12 @@ async function enter(kind) {
   try {
     for (let i = 0; i < 50 && conn.status !== 'open'; i++) await new Promise((r) => setTimeout(r, 100));
     if (kind === 'create') await conn.create(name);
-    else await conn.join(form.elements.code.value.trim().toUpperCase(), name);
+    else {
+      const code = normalizeCode(form.elements.code.value);
+      if (!code) throw new Error('invalid_code');
+      await conn.join(code, name);
+      ui.inviteCode = null;
+    }
   } catch (e) {
     ui.homeError = errorText(e.message);
   }
@@ -632,18 +676,34 @@ document.addEventListener('click', async (ev) => {
       return enter('join');
     case 'share': {
       const code = ui.conn.code;
+      const link = currentInvite();
       const text = `Únete a mi partida de THE OUTRUN con el código ${code}`;
       try {
-        if (navigator.share) await navigator.share({ text });
+        if (navigator.share) await navigator.share(link ? { title: 'THE OUTRUN', text, url: link } : { text });
         else {
-          await navigator.clipboard.writeText(code);
-          toast('Código copiado');
+          await navigator.clipboard.writeText(link ?? code);
+          toast(link ? 'Enlace copiado' : 'Código copiado');
         }
       } catch {
         /* compartir cancelado */
       }
       return;
     }
+    case 'qr':
+      ui.sheet = 'qr';
+      return render();
+    case 'new-code':
+      if (!ui.confirmNewCode) {
+        ui.confirmNewCode = true;
+        setTimeout(() => {
+          ui.confirmNewCode = false;
+          render();
+        }, 4_000);
+        return render();
+      }
+      ui.confirmNewCode = false;
+      if (ui.sheet === 'qr') ui.sheet = null;
+      return void cmd({ type: 'new_code' });
     case 'ready':
       return void cmd({ type: 'set_ready', ready: !self?.ready });
     case 'center':

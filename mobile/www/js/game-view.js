@@ -15,6 +15,7 @@ export const TEAM_TEXT = Object.freeze({ hunter: 'CAZADOR', runner: 'FUGITIVO' }
 export const ERROR_TEXT = Object.freeze({
   offline: 'Sin conexión con el servidor. Reintentando…',
   not_found: 'No existe ninguna sala con ese código.',
+  invalid_code: 'El código tiene 6 letras o números (sin 0, O, 1, I ni L).',
   rate_limited: 'Demasiados intentos seguidos. Espera unos segundos.',
   bad_session: 'La sesión ya no es válida. Vuelve a entrar en la sala.',
   removed: 'Ya no estás en la sala.',
@@ -108,6 +109,49 @@ export function gpsStatus(reading, nowPerf) {
   if (age > 15_000) return { text: `Lectura antigua (${ago(age)})`, tone: 'warn' };
   if (reading.accuracyM > 50) return { text: `Imprecisa · ±${Math.round(reading.accuracyM)} m`, tone: 'warn' };
   return { text: `GPS ±${Math.round(reading.accuracyM)} m`, tone: 'ok' };
+}
+
+// Códigos de sala: mismo alfabeto y longitud que el servidor (server/hub.ts, sin 0/O ni 1/I/L).
+export const CODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+export const CODE_LENGTH = 6;
+export const INVITE_PARAM = 'sala';
+
+/** Código normalizado (mayúsculas, sin espacios) o null si no puede ser un código de sala. */
+export function normalizeCode(text) {
+  const code = String(text ?? '').replace(/\s+/g, '').toUpperCase();
+  if (code.length !== CODE_LENGTH) return null;
+  return [...code].every((c) => CODE_ALPHABET.includes(c)) ? code : null;
+}
+
+/**
+ * Enlace de invitación: la dirección web del servidor con el código como único parámetro. No lleva
+ * datos de sesión ni nombres: solo lo mismo que el código que se comparte de palabra.
+ * `serverWsUrl` es la URL del WebSocket (wss://host/ws); null si no se puede formar un enlace.
+ */
+export function inviteLink(serverWsUrl, code) {
+  const valid = normalizeCode(code);
+  if (!valid) return null;
+  let url;
+  try {
+    url = new URL(serverWsUrl);
+  } catch {
+    return null;
+  }
+  if (url.protocol === 'wss:') url.protocol = 'https:';
+  else if (url.protocol === 'ws:') url.protocol = 'http:';
+  if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+  return `${url.origin}/?${INVITE_PARAM}=${valid}`;
+}
+
+/** Código de una URL de invitación http(s), o null si no trae uno válido. */
+export function codeFromLink(href) {
+  try {
+    const url = new URL(href);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    return normalizeCode(url.searchParams.get(INVITE_PARAM));
+  } catch {
+    return null;
+  }
 }
 
 /** Comprobaciones previas al inicio, en el orden en que las exige el motor (para el anfitrión). */

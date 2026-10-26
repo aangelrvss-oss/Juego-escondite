@@ -5,7 +5,10 @@
 //   create  { name, installId }                  crea una sala; el creador es el anfitrión
 //   join    { code, name, installId }            entra en una sala por su código
 //   resume  { playerId, secret, lastSeq }        recupera la sesión tras una desconexión
-//   cmd     { id, cmd }                          comando del motor (id: idempotencia)
+//   cmd     { id, cmd }                          comando del motor (id: idempotencia). Además,
+//                                                { type: 'new_code' } lo resuelve el servidor: el
+//                                                anfitrión cambia el código en la sala de espera
+//                                                (Plan Maestro §2.2)
 //   loc     { lat, lng, acc, age, mock? }        lectura de ubicación; `age` = ms desde la medida
 //   ping    { c }                                sincronización de reloj (c = hora del cliente)
 //
@@ -15,6 +18,7 @@
 //   event    { seq, type, at, data }             evento filtrado por destinatario, seq contiguo
 //   positions{ at, positions }                   posiciones autorizadas (cada 5 s en partida)
 //   result   { id, result }                      respuesta a un `cmd`
+//   code     { code }                            nuevo código de la sala (el anterior ya no sirve)
 //   pong     { c, s }                            s = hora del servidor
 //   error    { error }                           error de protocolo (sin datos privados)
 //

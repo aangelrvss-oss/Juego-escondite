@@ -30,6 +30,7 @@ export interface HubOptions {
   replyLimit?: number; // respuestas guardadas por jugador para la idempotencia
   closedRoomGraceMs?: number; // tiempo que se conserva una sala cerrada antes de borrarla
   log?: (line: string) => void;
+  generateCode?: () => string; // generador de códigos de sala (las pruebas fuerzan colisiones)
 }
 
 // Parámetros técnicos de abuso (no son reglas de juego).
@@ -98,8 +99,9 @@ export function generateCode(): string {
 
 export class Hub {
   private readonly now: () => number;
-  private readonly opts: Required<Omit<HubOptions, 'now' | 'log'>>;
+  private readonly opts: Required<Omit<HubOptions, 'now' | 'log' | 'generateCode'>>;
   private readonly log: (line: string) => void;
+  private readonly makeCode: () => string;
   private readonly rooms = new Map<string, Room>();
   private readonly codes = new Map<string, string>();
   private readonly sessions = new Map<string, { roomId: string; hash: Buffer }>();
@@ -112,6 +114,7 @@ export class Hub {
   constructor(options: HubOptions = {}) {
     this.now = options.now ?? Date.now;
     this.log = options.log ?? (() => {});
+    this.makeCode = options.generateCode ?? generateCode;
     this.opts = {
       positionsIntervalMs: options.positionsIntervalMs ?? 5_000,
       maxRooms: options.maxRooms ?? 100,
@@ -269,8 +272,7 @@ export class Hub {
       seed: randomInt(2 ** 31),
     });
     if (!step.result.ok) return this.send(client, { t: 'error', error: step.result.error });
-    let code = generateCode();
-    while (this.codes.has(code)) code = generateCode();
+    const code = this.uniqueCode();
     const room: Room = {
       id: roomId,
       code,
@@ -346,6 +348,9 @@ export class Hub {
     if (type === 'join' || type === 'connection' || type === 'location') {
       // join/connection los genera el servidor; la ubicación entra por `loc` (con hora del servidor).
       result = { ok: false, error: 'forbidden' };
+    } else if (type === 'new_code') {
+      // El código de sala es del servidor, no del motor: se cambia aquí.
+      result = this.newCode(room, pid, cmd);
     } else if (type === 'claim_tag' && this.now() - (room.lastClaimAt.get(pid) ?? Number.NEGATIVE_INFINITY) < RATE.claimMinIntervalMs) {
       result = { ok: false, error: 'rate_limited' };
     } else {
@@ -355,6 +360,35 @@ export class Hub {
     replies.set(msg.id, result);
     while (replies.size > this.opts.replyLimit) replies.delete(replies.keys().next().value as string);
     this.send(client, { t: 'result', id: msg.id, result });
+  }
+
+  /**
+   * Plan Maestro §2.2: el anfitrión puede cambiar el código de una sala privada, y el anterior deja de
+   * servir para entrar. Solo en la sala de espera (después no se puede entrar de todos modos). Los
+   * jugadores que ya están dentro reciben el nuevo código; sus sesiones no cambian.
+   */
+  private newCode(room: Room, pid: string, cmd: unknown): ServerResult {
+    if (Object.keys(cmd as object).length !== 1) return { ok: false, error: 'invalid_command', detail: 'type' };
+    if (room.state.hostId !== pid) return { ok: false, error: 'forbidden' };
+    if (room.state.phase !== 'LOBBY') return { ok: false, error: 'wrong_phase' };
+    // Nunca coincide con el de otra sala activa ni con el actual de esta (los dos están en `codes`).
+    const code = this.uniqueCode();
+    this.codes.delete(room.code);
+    room.code = code;
+    this.codes.set(code, room.id);
+    for (const id of room.state.playerOrder) {
+      const conn = this.connections.get(id);
+      if (conn && room.state.players[id]?.status !== 'left') this.send(conn, { t: 'code', code });
+    }
+    this.log('room_code_changed');
+    return { ok: true, data: { code } };
+  }
+
+  /** Código que no usa ninguna sala activa (se reintenta ante una colisión). */
+  private uniqueCode(): string {
+    let code = this.makeCode();
+    while (this.codes.has(code)) code = this.makeCode();
+    return code;
   }
 
   private location(client: Client, msg: Extract<ClientMessage, { t: 'loc' }>): void {

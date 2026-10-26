@@ -300,6 +300,13 @@ export class GameConnection {
       case 'positions':
         this.#emit('positions', msg);
         return;
+      case 'code':
+        // El anfitrión ha cambiado el código: el anterior ya no sirve para entrar.
+        if (typeof msg.code !== 'string') return;
+        this.code = msg.code;
+        if (this.session) this.#saveSession({ ...this.session, code: msg.code });
+        this.#emit('code', msg.code);
+        return;
       case 'result': {
         const p = this.pending.get(msg.id);
         if (!p) return;
