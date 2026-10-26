@@ -54,6 +54,7 @@ try {
 
   // 1. Inicio: Ana crea la sala; los demás entran con el código.
   await ana.page.fill('#f-name', 'Ana');
+  await ana.page.check('#f-adult'); // declaración de edad (D-008)
   await shot(ana, '01-inicio');
   await ana.page.click('[data-act=create]');
   await ana.page.waitForSelector('.code');
@@ -61,6 +62,7 @@ try {
   assert.match(code, /^[A-Z2-9]{6}$/);
   for (const p of [beto, caro, dani, eva]) {
     await p.page.fill('#f-name', p.name);
+    await p.page.check('#f-adult');
     await p.page.fill('#f-code', code.toLowerCase()); // minúsculas: también vale
     await p.page.click('[data-act=join]');
   }

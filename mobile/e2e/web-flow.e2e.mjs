@@ -154,6 +154,11 @@ try {
   await host.waitFor(`!!document.querySelector('#home-form')`, 'inicio del anfitrión');
   await layout(host, 'inicio');
   await host.evaluate(type('#f-name', 'Ana'));
+  // Declaración de edad (D-008, AC-A1): sin ella no se puede entrar.
+  await host.evaluate(`(document.querySelector('[data-act="create"]').click(), true)`);
+  await host.waitFor(`document.querySelector('.msg.danger')?.textContent.includes('18 años')`, 'aviso de edad');
+  check('sin declarar que tiene 18 años o más no puede crear la sala', server.hub.exportState().rooms.length === 0 && !(await host.evaluate(`!!document.querySelector('.code-card')`)));
+  await host.evaluate(click('#f-adult'));
   await host.evaluate(`(document.querySelector('[data-act="create"]').click(), true)`);
   await host.waitFor(`!!document.querySelector('.code-card .code')`, 'sala de espera');
   await layout(host, 'sala de espera (anfitrión)');
@@ -200,6 +205,7 @@ try {
   check('el aviso de invitación muestra la sala', await guest.evaluate(`document.body.textContent.includes('Te han invitado a la sala')`));
   check('el parámetro se quita de la barra de direcciones', !(await guest.evaluate(`location.search.includes('sala=')`)), await guest.evaluate('location.href'));
   await guest.evaluate(type('#f-name', 'Beto'));
+  await guest.evaluate(click('#f-adult'));
   await guest.evaluate(click('[data-act="join"]'));
   await guest.waitFor(`!!document.querySelector('.code-card .code')`, 'invitado en la sala');
   await host.waitFor(`document.querySelectorAll('.players li').length === 2`, 'dos jugadores en la lista del anfitrión');
@@ -219,6 +225,7 @@ try {
   const late = await newPage(`${server.url}/?sala=${code1}`);
   await late.waitFor(`!!document.querySelector('#f-code')`, 'inicio del tercero');
   await late.evaluate(type('#f-name', 'Cris'));
+  await late.evaluate(click('#f-adult'));
   // Un código mal escrito se rechaza en el propio móvil, sin consultar al servidor.
   const before = code1;
   await late.evaluate(type('#f-code', 'ABC10O'));
@@ -238,6 +245,7 @@ try {
   const dani = await newPage(`${server.url}/?sala=${code2}`, { geolocation: false });
   await dani.waitFor(`!!document.querySelector('#f-code')`, 'inicio de Dani');
   await dani.evaluate(type('#f-name', 'Dani'));
+  await dani.evaluate(click('#f-adult'));
   await dani.evaluate(click('[data-act="join"]'));
   await dani.waitFor(`!!document.querySelector('[data-act="ready"]')`, 'Dani en la sala');
   check('antes de estar listo se explica que se comprobará el GPS', await dani.evaluate(`document.body.textContent.includes('se comprueba tu GPS')`));
@@ -341,6 +349,7 @@ try {
   await late.waitFor(`!!document.querySelector('#home-form')`, 'Cris vuelve al inicio');
   check('al confirmar, sale de la partida y vuelve al inicio', cris()?.status === 'left' && cris()?.samples.length === 0, `estado ${cris()?.status}, lecturas ${cris()?.samples.length}`);
   check('la partida sigue para los demás', server.hub.roomStateByCode(code2)?.phase === 'ACTIVE');
+  check('la declaración de edad se recuerda en el móvil: no se vuelve a pedir', !(await late.evaluate(`!!document.querySelector('#f-adult')`)));
 
   const bad = layoutReport.filter((r) => r.issues.length);
   for (const r of bad) console.log(`     · ${r.screen}: ${r.issues.join(' | ')}`);

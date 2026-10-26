@@ -42,6 +42,7 @@ const ui = {
   sheet: null, // 'selftag' | 'qr' | null
   locating: false,
   homeError: null,
+  adult: false, // casilla «Tengo 18 años o más» marcada (se recuerda en el móvil al entrar, D-008)
   leaving: false,
   confirmEnd: false,
   confirmNewCode: false,
@@ -371,6 +372,7 @@ function homeScreen() {
   <form class="card stack" id="home-form" autocomplete="off">
     <label class="field">Tu nombre<input id="f-name" name="name" maxlength="20" minlength="2" required value="${esc(store.getItem('outrun.name') ?? '')}" placeholder="Cómo te verán los demás"></label>
     ${needsServer ? `<label class="field">Servidor<input id="f-server" name="server" inputmode="url" value="${esc(serverInput())}" placeholder="tu-tunel.trycloudflare.com"></label>` : ''}
+    ${adultDeclared() ? '' : `<label class="check"><input type="checkbox" id="f-adult"${ui.adult ? ' checked' : ''}><span>Tengo 18 años o más. THE OUTRUN es solo para adultos.</span></label>`}
     <button class="btn btn-primary" type="submit" data-act="create">Crear sala</button>
     ${ui.inviteCode ? `<p class="msg">Te han invitado a la sala <strong class="num">${esc(ui.inviteCode)}</strong>. Escribe tu nombre y pulsa «Unirme».</p>` : ''}
     <div class="join-row">
@@ -633,13 +635,23 @@ function overlays() {
 
 // ------------------------------------------------------------------ acciones
 
+// Declaración de edad (D-008, AC-A1): no es una verificación. Se pide una vez por móvil.
+function adultDeclared() {
+  return store.getItem('outrun.adult') === '1';
+}
+
 async function enter(kind) {
   const form = document.getElementById('home-form');
   const name = form.elements.name.value.trim();
+  if (!adultDeclared() && !ui.adult) {
+    ui.homeError = 'Para jugar tienes que confirmar que tienes 18 años o más.';
+    return render();
+  }
   if (name.length < 2) {
     ui.homeError = errorText('invalid_name');
     return render();
   }
+  store.setItem('outrun.adult', '1');
   store.setItem('outrun.name', name);
   if (form.elements.server) store.setItem('outrun.server', form.elements.server.value.trim());
   const conn = connect();
@@ -690,6 +702,7 @@ document.addEventListener('submit', (ev) => {
 document.addEventListener('change', (ev) => {
   const el = ev.target;
   if (el.dataset.assign !== undefined) return void cmd({ type: 'assign_team', targetId: el.dataset.assign, pref: el.value });
+  if (el.id === 'f-adult') return void (ui.adult = el.checked);
   if (el.dataset.cfg === undefined) return;
   const v = Number(el.value);
   if (el.id === 'c-radius') configure({ radiusM: v });
