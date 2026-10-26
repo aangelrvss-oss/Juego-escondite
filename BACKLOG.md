@@ -18,7 +18,10 @@ Estados:
 - [x] Alternativas y recomendaciones de las decisiones pendientes (`docs/product/DECISIONES_PENDIENTES.md`).
 - [x] Guía de criterio incorporada y contrastada (D-043 y D-045 ampliadas, D-053 y D-054).
 - [ ] **El propietario decide** D-043 (radio), D-044 (PWA), D-045 (siguiente modo), D-046 (número de jugadores), D-047 (pistas y capturados), D-053 (pausa), el procedimiento de D-035 (disputas) y PAUSED. También confirma o revierte las decisiones técnicas de las sesiones autónomas (D-054).
-- [ ] Revisar el contrato técnico (`docs/technical/GAME_STATE_MACHINE.md`) frente a lo que hacen hoy el servidor y el protocolo (H2).
+- [x] Revisar el contrato técnico frente al código (`GAME_STATE_MACHINE.md` §10, 26/10 noche). Pendientes que salen de ahí:
+  - actualizar el diseño (D-033, D-049, persistencia, `new_code` y versión de reglas);
+  - decidir si hace falta un registro de auditoría;
+  - guardar la sesión en el almacenamiento seguro del sistema y no en `localStorage` (AC-H4).
 - [ ] Decidir D-020 a D-023 (propuestas de la sesión 3). Revisión de los resultados de S0 por el propietario.
 - [ ] Preguntas de reglas pendientes, para decidir y no implementar todavía: «sin respuesta en 30 s = sin captura» (§11, pregunta 7), aviso al fugitivo cuando le escanean (§8.2), árbitro de disputas, y proporciones y parámetros definitivos.
 - [ ] El propietario fija los parámetros abiertos (`GAME_MODES_AND_RULES.md` §11; D-038).

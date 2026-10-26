@@ -253,3 +253,23 @@ Las reglas están en `docs/product/GAME_MODES_AND_RULES.md`. Esta sección descr
 - **D-033 aprobada:** los cazadores fuera de la zona no pueden confirmar capturas y no se exponen. **S0 no lo implementa.**
 - **Disputas (§9.6):** D-035 exige que la disputa quede pendiente y se resuelva antes del final con una autoridad explícita. Cambio técnico propuesto: `TagClaim` con estado `disputed` que **no** caduca a "sin captura" durante la partida. Se resuelve con `accept_tag` (fugitivo) o `withdraw_tag` (cazador). Un nuevo estado de cierre, `RESOLVING`, entre `ACTIVE` y `FINISHED`, solo si hay disputas abiertas al acabar el tiempo, con el plazo `T_resolución` y la regla predeterminada. **Si se aprueba, este estado amplía la máquina de §2.**
 - **Rondas (§9.3):** solo las políticas `redraw` y `first_captured` (D-037). `balanced` pospuesta. `swapRoles` de S0 no está aprobado.
+
+## 10. Estado frente al código (revisión del 26/10/2026, noche)
+
+Este documento es el **diseño** (versión del 24/10). El contrato que se ejecuta hoy está en `engine/src/types.ts` (comandos, eventos y errores), `engine/src/view.ts` (qué recibe cada jugador) y `server/protocol.ts` (mensajes). Esta revisión, hecha por la guía de criterio §10 («contrato técnico… sin definiciones contradictorias»), registra dónde ya no coinciden. **No cambia el diseño ni ninguna decisión.**
+
+| Punto | Este documento | Código actual | Qué hacer |
+|---|---|---|---|
+| Cazadores fuera de la zona (§9.7, §9.8) | «S0 no lo implementa» | **Implementado** (D-033): `claim_tag` devuelve `hunter_outside_zone` (`engine/test/capture.test.ts`) | Este documento está desactualizado |
+| Comprobaciones de `claim_tag` (§7) | Fase, frescura (15 s), precisión (30 m) y cercanía | Además: rechaza si la última lectura de alguno de los dos es un salto sin confirmar (D-049, 12 m/s experimental), si el cazador está fuera de la zona (D-033), y como mucho 1 reclamación cada 3 s por cazador (`server/hub.ts`) | Este documento está desactualizado |
+| Rechazo y falta de respuesta (§7) | Rechazo: se cierra; sin respuesta en 30 s: sin captura [P] | Igual. **No cumple D-035 (aprobada):** no hay estado «disputada» | Pendiente de aprobar el procedimiento (§9.8) |
+| Inicio forzado (§3, T1) | «O el anfitrión fuerza el inicio» [P] | No existe: todos conectados y listos (§7 bis) | Ya registrado en §7 bis |
+| Registro de auditoría global (§5.7) | «La sala mantiene aparte un registro de auditoría con numeración global» | **No existe.** Solo hay `seq` por destinatario y el registro de operaciones sin datos personales (`LOG=1`) | Decidir si hace falta (guía §8: evidencias) |
+| Dónde se guarda la sesión (§5.6) | «En el almacenamiento seguro del móvil» | `localStorage` de la página, también dentro de la app Android (`mobile/www/js/net.js`) | Pendiente (AC-H4). Afecta a la privacidad si alguien usa el mismo móvil |
+| Pausas (§5.8) | No hay pausa en el MVP [P] | Igual | Contradicción abierta con la guía y el Plan: D-053 |
+| Persistencia | No se trata | Opcional (`STATE_FILE`, D-050): sin coordenadas ni secretos; tras un reinicio, la numeración avanza y las respuestas guardadas se conservan | Añadir al diseño si se mantiene |
+| Código de sala renovable | No se trata | `new_code`: solo el anfitrión y en `LOBBY` (D-048); lo gestiona el servidor, no el motor | Añadir al diseño |
+| Versión de reglas | No se trata | Se fija al empezar y viaja en `game_finished` y en la instantánea (`rulesVersion`, Plan §8.3) | Añadir al diseño |
+| Revelación del rol y aviso de zona de salida | Parcial (T3) | `role_revealed` por jugador; `start_zone_warning` y `start_zone_returned` solo al cazador, sin sanción (D-042) | Ya recogido en D-042 |
+
+**Pruebas que respaldan la columna «código»:** `engine/test/*`, `server/test/*` (servidor real y clientes reales, con reloj y ubicaciones simulados) y `mobile/e2e/web-flow.e2e.mjs` (Chrome de escritorio). **Nada en dispositivos reales.**
