@@ -315,6 +315,8 @@ try {
   await late.waitFor(`!!document.querySelector('[data-act="leave-game"]')`, 'botón de abandonar en la cuenta atrás');
   await layout(late, 'cuenta atrás');
   check('durante la cuenta atrás se puede abandonar', true);
+  await late.waitFor(`document.querySelector('.sharing.on')?.textContent.includes('Compartiendo tu ubicación')`, 'indicador de ubicación compartida');
+  check('desde la cuenta atrás se indica que se está compartiendo la ubicación', true);
   await advance(5_000);
   for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
   await advance(2 * 60_000);

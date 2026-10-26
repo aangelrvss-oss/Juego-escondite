@@ -136,6 +136,11 @@ a { color: var(--brand); }
 .overlay.reveal.t-runner .role { color: var(--runner); }
 .overlay.sheet { align-content: end; padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 .overlay.sheet h2 { margin: 0; font-size: 24px; }
+/* Indicador de ubicación compartida (texto + punto: no solo color). */
+.sharing { margin: 8px 0 0; font-size: 13px; color: var(--muted); }
+.sharing::before { content: "○ "; }
+.sharing.on { color: var(--brand); font-weight: 700; }
+.sharing.on::before { content: "● "; }
 /* Reglas de la partida (briefing común en la sala de espera). */
 .rules summary { cursor: pointer; list-style: none; }
 .rules summary h2 { display: inline; }

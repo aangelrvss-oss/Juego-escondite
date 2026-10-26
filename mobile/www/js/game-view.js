@@ -263,6 +263,21 @@ export function startBlockers(snap, { forHost = true } = {}) {
 }
 
 /**
+ * Indicador de si este móvil está compartiendo su ubicación (Plan Maestro §4.5: «la app debe mostrar
+ * cuándo comparte la ubicación»). `tracking`: la ubicación está activa para la partida; `uploading`:
+ * el servicio nativo la envía también con la pantalla bloqueada.
+ */
+export function sharingStatus(tracking, uploading) {
+  if (!tracking) return { on: false, text: 'No se comparte tu ubicación' };
+  return {
+    on: true,
+    text: uploading
+      ? 'Compartiendo tu ubicación con el servidor de la partida (también con la pantalla bloqueada)'
+      : 'Compartiendo tu ubicación con el servidor de la partida',
+  };
+}
+
+/**
  * Aviso visible cuando se pierde la conexión con el servidor (Plan Maestro §7, incidencia: «qué ocurre
  * y cómo recuperarse»; no dejar al jugador sin contexto). null si no hay nada que avisar.
  */

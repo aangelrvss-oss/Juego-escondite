@@ -522,6 +522,18 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 
 **No comprobado:** el contraste a pleno sol, la barra de gestos, el tamaño real de fuente del sistema ni lectores de pantalla.
 
+### Indicador de ubicación compartida (Plan Maestro §4.5, 26/10/2026, 20:10-20:12)
+**Hueco:** el Plan exige mostrar **cuándo** se comparte la ubicación.
+- La partida solo mostraba la precisión del GPS, y «ubicación inactiva» cuando no se seguía.
+- La cuenta atrás, en la que ya empieza el seguimiento, no mostraba nada.
+
+**Corrección:** `sharingStatus(tracking, uploading)` y un indicador con texto y símbolo (● / ○, no solo color) en la cuenta atrás y en la partida: «Compartiendo tu ubicación con el servidor de la partida», añadiendo «también con la pantalla bloqueada» cuando lo envía el servicio nativo, o «No se comparte tu ubicación» (por ejemplo, para un capturado).
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/lobby-status.test.mjs` (nueva prueba) | **5 de 5** en el archivo | Automatizada |
+| `web-flow.e2e.mjs`: desde la cuenta atrás se ve «Compartiendo tu ubicación» | **29 de 29** en total | Chrome real, geolocalización emulada |
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { connectionNotice, startBlockers } from '../www/js/game-view.js';
+import { connectionNotice, sharingStatus, startBlockers } from '../www/js/game-view.js';
 
 // Plan Maestro §7: en la sala, indicar quién está desconectado y qué impide empezar; ante una
 // incidencia, explicar qué ocurre y cómo recuperarse. Funciones puras de la interfaz.
@@ -28,6 +28,13 @@ test('sin bloqueos cuando todos están conectados y listos; los invitados a la r
   const snap = { config: cfg, players: [player('Ana', { ready: true }), player('Beto', { ready: true }), player('Eva', { status: 'invited' })] };
   assert.deepEqual(startBlockers(snap), []);
   assert.deepEqual(startBlockers({ config: cfg, players: [player('Ana', { ready: true })] }), ['Hacen falta al menos 2 jugadores.']);
+});
+
+test('indicador de ubicación compartida (Plan §4.5): dice cuándo se comparte y cuándo no', () => {
+  assert.deepEqual(sharingStatus(false, false), { on: false, text: 'No se comparte tu ubicación' });
+  assert.equal(sharingStatus(false, true).on, false, 'sin seguimiento no se dice que se comparte aunque quede un envío');
+  assert.match(sharingStatus(true, false).text, /^Compartiendo tu ubicación/);
+  assert.match(sharingStatus(true, true).text, /pantalla bloqueada/);
 });
 
 test('aviso de conexión: nada si está abierta; en partida explica que la partida sigue', () => {

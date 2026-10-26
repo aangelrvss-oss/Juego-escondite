@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -466,7 +466,14 @@ function countdownScreen(snap) {
     <p class="label">La partida empieza en</p>
     <p class="big num">${Math.max(1, Math.ceil(left / 1000))}</p>
     <p class="lead">Tu rol aparecerá al terminar. Nadie lo sabe todavía.</p></section>
+    ${sharingPill()}
     ${leaveGameButton()}`;
+}
+
+/** Si este móvil comparte su ubicación ahora mismo (Plan Maestro §4.5). */
+function sharingPill() {
+  const s = sharingStatus(ui.tracking, Boolean(ui.location?.uploading));
+  return `<p class="sharing${s.on ? ' on' : ''}" role="status">${esc(s.text)}</p>`;
 }
 
 /**
@@ -496,7 +503,7 @@ function gameScreen(snap) {
     <p class="callout${captured ? ' muted' : ''}">${esc(call)}</p>
     ${ui.startZoneWarning ? '<p class="msg danger">Te has alejado de la zona de salida. Vuelve hasta que acabe la huida.</p>' : ''}
     ${ui.zoneWarning ? `<p class="msg danger">Estás fuera de la zona. Vuelve antes de ${clock(ui.zoneWarning.exposedAt - serverNow())} o los cazadores te verán.</p>` : ''}
-    <section class="card radar-card">${radar}<p class="gps tone-${gps.tone}">${esc(gps.text)}${ui.tracking ? '' : ' · ubicación inactiva'}${ui.location?.uploading ? ' · se envía también con la pantalla bloqueada' : ''}</p></section>
+    <section class="card radar-card">${radar}<p class="gps tone-${gps.tone}">${esc(gps.text)}</p>${sharingPill()}</section>
     ${!captured && snap.phase === 'ACTIVE' ? actions(snap, team) : ''}
     ${team === 'hunter' && ui.ping ? pingList(ui.ping) : ''}
     <p class="foot num">Capturas: ${snap.captures.length}</p>
