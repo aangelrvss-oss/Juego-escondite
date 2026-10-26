@@ -505,6 +505,23 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 
 **Fuera de alcance:** la fase BRIEFING del Plan, con las reglas fijadas en una fase propia (pendiente de decisión). Tampoco cambia la tarjeta privada de rol.
 
+### Experiencia en un móvil pequeño (Plan Maestro §7.1 y F8, 26/10/2026, 20:08-20:10)
+`web-flow.e2e.mjs` emula ahora una pantalla de **360×740** (escala 2, táctil) en los cuatro jugadores. En **11 pantallas** del flujo comprueba que no hay desbordamiento horizontal, ni controles táctiles de menos de 44 px de alto, ni texto visible de menos de 12 px:
+- inicio, inicio con invitación y QR;
+- sala de espera del anfitrión (sin configurar y configurada) y del invitado (con reglas);
+- cuenta atrás, partida como fugitivo y como cazador, y «declararse capturado»;
+- Mission Report.
+
+**Defectos encontrados y corregidos** (`mobile/www/css/game.css`):
+- el selector de rol junto a cada jugador (`.mini`) medía 40 px de alto: ahora mide 44 px;
+- la etiqueta «Anfitrión» (`.tag`) usaba 11 px: ahora usa 12 px.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `web-flow.e2e.mjs` con las comprobaciones de diseño | **28 de 28** (antes de corregir: 27 de 28, con 4 pantallas afectadas) | Chrome con **emulación** móvil. No es un móvil real |
+
+**No comprobado:** el contraste a pleno sol, la barra de gestos, el tamaño real de fuente del sistema ni lectores de pantalla.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

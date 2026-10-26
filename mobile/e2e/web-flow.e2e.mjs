@@ -86,6 +86,9 @@ try {
         ws.send(JSON.stringify({ id, method, params }));
       });
     await send('Runtime.enable');
+    // Pantalla de móvil pequeña (360×740, como la demo): el móvil es el objetivo prioritario (Plan §7.1).
+    await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 740, deviceScaleFactor: 2, mobile: true });
+    await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     // Geolocalización EMULADA en el punto de prueba de siempre (fixture de las pruebas del motor).
     if (geolocation) {
       await bsend('Browser.grantPermissions', { origin: server.url, permissions: ['geolocation'], browserContextId: ctx.browserContextId });
@@ -118,15 +121,42 @@ try {
     };
   }
 
+  // Problemas de uso en móvil en la pantalla actual: desbordamiento horizontal, controles táctiles de
+  // menos de 44 px de alto y texto visible de menos de 12 px. Devuelve una lista (vacía = bien).
+  const LAYOUT = `(() => {
+    const out = [];
+    if (document.documentElement.scrollWidth > window.innerWidth + 1) out.push('desborda en horizontal: ' + document.documentElement.scrollWidth + 'px');
+    const visible = (el) => { const r = el.getBoundingClientRect(); const s = getComputedStyle(el); return r.width > 0 && r.height > 0 && s.visibility !== 'hidden' && s.display !== 'none'; };
+    for (const el of document.querySelectorAll('button, select, input:not([type=checkbox]), a[href]')) {
+      if (!visible(el)) continue;
+      const h = el.getBoundingClientRect().height;
+      if (h < 44) out.push((el.dataset.act || el.id || el.tagName.toLowerCase()) + ': ' + Math.round(h) + 'px de alto');
+    }
+    for (const el of document.querySelectorAll('body *')) {
+      if (!visible(el) || ![...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())) continue;
+      const size = parseFloat(getComputedStyle(el).fontSize);
+      if (size < 12) out.push('texto de ' + size + 'px: ' + el.textContent.trim().slice(0, 30));
+    }
+    return out;
+  })()`;
+  const layoutReport = [];
+  const layout = async (page, screen) => {
+    const issues = await page.evaluate(LAYOUT);
+    layoutReport.push({ screen, issues });
+    return issues;
+  };
+
   const click = (sel) => `(document.querySelector(${JSON.stringify(sel)}).click(), true)`;
   const type = (sel, v) => `(() => { const el = document.querySelector(${JSON.stringify(sel)}); el.value = ${JSON.stringify(v)}; return true; })()`;
 
   // Anfitrión: crea la sala.
   const host = await newPage(`${server.url}/`);
   await host.waitFor(`!!document.querySelector('#home-form')`, 'inicio del anfitrión');
+  await layout(host, 'inicio');
   await host.evaluate(type('#f-name', 'Ana'));
   await host.evaluate(`(document.querySelector('[data-act="create"]').click(), true)`);
   await host.waitFor(`!!document.querySelector('.code-card .code')`, 'sala de espera');
+  await layout(host, 'sala de espera (anfitrión)');
   const code1 = await host.evaluate(`document.querySelector('.code-card .code').textContent.trim()`);
   check('el anfitrión crea la sala y ve un código válido', /^[A-HJKMNP-Z2-9]{6}$/.test(code1), code1);
   check('hay botones «Compartir enlace», «Mostrar QR» y «Cambiar el código»', await host.evaluate(`['share','qr','new-code'].every((a) => document.querySelector('[data-act="' + a + '"]'))`));
@@ -134,6 +164,7 @@ try {
   // QR: se lee la matriz del SVG y se decodifica (lector de prueba con las piezas exportadas).
   await host.evaluate(click('[data-act="qr"]'));
   await host.waitFor(`!!document.querySelector('.qr-sheet svg.qr')`, 'QR visible');
+  await layout(host, 'QR');
   const svg = await host.evaluate(`document.querySelector('.qr-sheet svg.qr').outerHTML`);
   const n = Number(/viewBox="0 0 (\d+)/.exec(svg)[1]);
   const size = n - 8;
@@ -164,6 +195,7 @@ try {
   // Invitado: abre el enlace (como al escanear el QR).
   const guest = await newPage(decoded);
   await guest.waitFor(`!!document.querySelector('#f-code')`, 'inicio del invitado');
+  await layout(guest, 'inicio con invitación');
   check('el enlace precarga el código en «Unirme»', (await guest.evaluate(`document.querySelector('#f-code').value`)) === code1);
   check('el aviso de invitación muestra la sala', await guest.evaluate(`document.body.textContent.includes('Te han invitado a la sala')`));
   check('el parámetro se quita de la barra de direcciones', !(await guest.evaluate(`location.search.includes('sala=')`)), await guest.evaluate('location.href'));
@@ -233,6 +265,8 @@ try {
   await host.evaluate(click('[data-act="center"]'));
   await host.waitFor(`document.querySelector('[data-act="center"]')?.textContent.includes('Volver')`, 'zona centrada (geolocalización emulada)');
   await guest.waitFor(`document.querySelector('.rules')?.textContent.includes('Toque suave')`, 'reglas visibles para el invitado');
+  await layout(guest, 'sala de espera (invitado, con reglas)');
+  await layout(host, 'sala de espera (anfitrión, configurada)');
   check('todos ven las reglas de la partida (captura, zona, pistas, seguridad) antes de empezar', await guest.evaluate(`['Captura', 'Zona', 'Pistas', 'Seguridad', 'Capturados'].every((t) => document.querySelector('.rules').textContent.includes(t))`));
   await host.evaluate(click('#c-safety'));
   await host.waitFor(`document.querySelector('#c-safety')?.checked`, 'lista de seguridad');
@@ -246,14 +280,18 @@ try {
   for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
   await advance(2 * 60_000);
   await guest.waitFor(`!!document.querySelector('[data-act="selftag"]')`, 'persecución');
+  await layout(guest, 'partida (fugitivo)');
+  await layout(host, 'partida (cazador)');
   await advance(75_000); // 1:15 de persecución
   await guest.evaluate(click('[data-act="selftag"]'));
   await guest.waitFor(`!!document.querySelector('[data-selftag]:not([data-selftag=""])')`, 'lista de cazadores');
+  await layout(guest, 'declararse capturado');
   await guest.evaluate(`(() => { [...document.querySelectorAll('[data-selftag]')].find((b) => b.textContent.trim() === 'Ana').click(); return true; })()`);
 
   // Mission Report en los tres, y de nuevo tras recargar la página (reconexión con la sesión guardada).
   const reportOk = `(() => { const r = document.querySelector('.result'); return !!r && r.textContent.includes('Mission Report') && r.textContent.includes('Ganan los cazadores') && r.textContent.includes('Captura decisiva: Beto por Ana a los 1:15'); })()`;
   for (const p of [host, guest, late]) await p.waitFor(reportOk, 'Mission Report');
+  await layout(host, 'Mission Report');
   const texts = await Promise.all([host, guest, late].map((p) => p.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`)));
   check('Mission Report igual en los tres móviles', texts.every((x) => x === texts[0]), texts[0].slice(0, 160));
   check('el informe incluye duración y capturas', texts[0].includes('Persecución') && texts[0].includes('1:15') && texts[0].includes('Capturas'));
@@ -275,6 +313,7 @@ try {
   await host.waitFor(`!!document.querySelector('[data-act="start"]:not([disabled])')`, 'empezar la revancha');
   await host.evaluate(click('[data-act="start"]'));
   await late.waitFor(`!!document.querySelector('[data-act="leave-game"]')`, 'botón de abandonar en la cuenta atrás');
+  await layout(late, 'cuenta atrás');
   check('durante la cuenta atrás se puede abandonar', true);
   await advance(5_000);
   for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
@@ -289,6 +328,10 @@ try {
   await late.waitFor(`!!document.querySelector('#home-form')`, 'Cris vuelve al inicio');
   check('al confirmar, sale de la partida y vuelve al inicio', cris()?.status === 'left' && cris()?.samples.length === 0, `estado ${cris()?.status}, lecturas ${cris()?.samples.length}`);
   check('la partida sigue para los demás', server.hub.roomStateByCode(code2)?.phase === 'ACTIVE');
+
+  const bad = layoutReport.filter((r) => r.issues.length);
+  for (const r of bad) console.log(`     · ${r.screen}: ${r.issues.join(' | ')}`);
+  check(`en un móvil de 360×740, ninguna de las ${layoutReport.length} pantallas desborda ni tiene botones de menos de 44 px ni texto de menos de 12 px`, bad.length === 0, bad.map((r) => r.screen).join(', '));
 
   const errs = [...host.errors, ...guest.errors, ...late.errors];
   check('sin errores de JavaScript en las tres páginas', errs.length === 0, errs.join(' | '));

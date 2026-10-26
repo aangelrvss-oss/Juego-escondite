@@ -78,10 +78,10 @@ a { color: var(--brand); }
 .player .dot.on { background: var(--runner); }
 .pname { flex: 1; font-weight: 700; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pname em { font-style: normal; color: var(--muted); font-weight: 600; }
-.tag { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); margin-left: 4px; }
+.tag { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--brand); margin-left: 4px; }
 .pstate { font-size: 13px; color: var(--muted); font-weight: 700; }
 .pstate.ready { color: var(--text); }
-.mini { min-height: 40px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line-strong); padding: 0 6px; font-size: 14px; }
+.mini { min-height: 44px; border-radius: var(--r-sm); background: var(--bg); border: 1px solid var(--line-strong); padding: 0 6px; font-size: 14px; }
 
 .countdown { text-align: center; padding: 40px 0; display: grid; gap: 8px; }
 .countdown .big { margin: 0; font-size: 140px; font-weight: 900; line-height: 1; color: var(--brand); }
