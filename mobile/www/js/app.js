@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { CAPTURE_NORMS, INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, nightNotice, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { CAPTURE_NORMS, INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, nightNotice, normalizeCode, screenNotice, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -51,6 +51,7 @@ const ui = {
   location: null,
   tracking: false,
   locationDenied: false, // el permiso de ubicación falta o se ha retirado durante la partida (AC-D9)
+  screenHeld: false, // el navegador mantiene la pantalla encendida (Screen Wake Lock)
   inviteCode: null, // código recibido por enlace de invitación (?sala=)
 };
 
@@ -162,6 +163,7 @@ function resetGame() {
   ui.startZoneWarning = false;
   ui.reveal = null;
   ui.sheet = null;
+  syncWakeLock(); // sin partida, la pantalla vuelve a apagarse sola
 }
 
 async function cmd(command) {
@@ -280,7 +282,40 @@ function wantsTracking() {
   return Boolean(self && self.status === 'active' && ['COUNTDOWN', 'HEAD_START', 'ACTIVE'].includes(ui.snap.phase));
 }
 
+// Pantalla encendida durante la partida, solo en el navegador. El sistema suelta el bloqueo al ocultar
+// la página; se vuelve a pedir al volver a ella.
+let wakeLock = null;
+let wakeLockPending = false;
+async function syncWakeLock() {
+  const want = wantsTracking() && !isApp() && document.visibilityState === 'visible';
+  if (want && !wakeLock && !wakeLockPending && navigator.wakeLock) {
+    wakeLockPending = true;
+    try {
+      const lock = await navigator.wakeLock.request('screen');
+      wakeLock = lock;
+      lock.addEventListener('release', () => {
+        if (wakeLock === lock) wakeLock = null;
+        ui.screenHeld = false;
+        render();
+      });
+      ui.screenHeld = true;
+    } catch {
+      ui.screenHeld = false; // sin permiso o batería baja: queda el aviso
+    } finally {
+      wakeLockPending = false;
+    }
+    render();
+    if (!wantsTracking()) syncWakeLock(); // la partida terminó mientras se pedía
+  } else if (!want && wakeLock) {
+    const lock = wakeLock;
+    wakeLock = null;
+    ui.screenHeld = false;
+    lock.release().catch(() => {});
+  }
+}
+
 async function syncTracking() {
+  syncWakeLock();
   // Sin permiso no se reintenta con cada instantánea (sería un aviso en bucle): solo con «Reintentar».
   if (wantsTracking() && !ui.tracking && !ui.locationDenied) {
     ui.tracking = true;
@@ -497,7 +532,10 @@ function countdownScreen(snap) {
 function sharingPill() {
   const s = sharingStatus(ui.tracking, Boolean(ui.location?.uploading), ui.locationDenied);
   const denied = wantsTracking() ? locationDeniedNotice(ui.locationDenied) : null;
+  const screen = wantsTracking() ? screenNotice({ app: isApp(), held: ui.screenHeld }) : null;
   return `<p class="sharing${s.on ? ' on' : ''}" role="status">${esc(s.text)}</p>${
+    screen ? `<p class="${screen.warn ? 'msg warn screen-notice' : 'hint screen-notice'}">${esc(screen.text)}</p>` : ''
+  }${
     denied ? `<div class="msg danger" role="alert"><p>${esc(denied)}</p><button class="btn btn-outline btn-small" data-act="retry-location">Reintentar</button></div>` : ''
   }`;
 }
@@ -888,6 +926,7 @@ setInterval(() => {
 // Al volver a primer plano se reconecta si hacía falta (el sistema puede cerrar la conexión).
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'visible' && ui.conn && ui.conn.status !== 'open' && ui.conn.status !== 'closed') ui.conn.start();
+  syncWakeLock();
 });
 
 // Sesión guardada: se reanuda la partida al abrir.

@@ -91,7 +91,7 @@ try {
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
     // Geolocalización EMULADA en el punto de prueba de siempre (fixture de las pruebas del motor).
     if (geolocation) {
-      await bsend('Browser.grantPermissions', { origin: server.url, permissions: ['geolocation'], browserContextId: ctx.browserContextId });
+      await bsend('Browser.grantPermissions', { origin: server.url, permissions: ['geolocation', 'wakeLockScreen'], browserContextId: ctx.browserContextId });
       await send('Emulation.setGeolocationOverride', { latitude: 40.4153, longitude: -3.6845, accuracy: 8 });
     } else {
       // Jugador que deniega el permiso de ubicación.
@@ -296,6 +296,9 @@ try {
   await advance(2 * 60_000);
   await guest.waitFor(`!!document.querySelector('[data-act="selftag"]')`, 'persecución');
   await layout(guest, 'partida (fugitivo)');
+  // En el navegador, la pantalla se mantiene encendida durante la partida (Screen Wake Lock).
+  const held = await guest.evaluate(`(async () => { const n = document.querySelector('.screen-notice'); return !!n && n.classList.contains('hint') && n.textContent.includes('se mantiene encendida'); })()`);
+  check('en el navegador, la pantalla se mantiene encendida durante la partida', held, await guest.evaluate(`document.querySelector('.screen-notice')?.textContent ?? 'sin aviso'`));
   await layout(host, 'partida (cazador)');
   await advance(75_000); // 1:15 de persecución
   // Recargar en plena partida (el navegador del móvil descarta pestañas en segundo plano): vuelve a la
@@ -325,6 +328,7 @@ try {
   await guest.waitFor(reportOk, 'Mission Report tras recargar', 10_000);
   const after = await guest.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`);
   check('tras recargar, el Mission Report se reconstruye igual', after === texts[0]);
+  check('al terminar, deja de pedirse la pantalla encendida', !(await host.evaluate(`!!document.querySelector('.screen-notice')`)));
 
   // Revancha y abandono a mitad de partida con el botón real (Plan Maestro §4.5).
   await host.evaluate(click('[data-act="rematch"]'));

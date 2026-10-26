@@ -327,6 +327,18 @@ export function sharingStatus(tracking, uploading, denied = false) {
 }
 
 /**
+ * Pantalla durante la partida en el navegador. Con la pantalla apagada, el navegador deja de dar y de
+ * enviar la ubicación (server/README.md, «Limitaciones»), así que se pide mantenerla encendida
+ * (Screen Wake Lock) y, si no se puede, se avisa. En la app no hace falta: el servicio nativo envía
+ * con la pantalla bloqueada. null si no hay nada que mostrar.
+ */
+export function screenNotice({ app, held }) {
+  if (app) return null;
+  if (held) return { warn: false, text: 'La pantalla se mantiene encendida durante la partida: con ella apagada, el navegador no envía tu ubicación.' };
+  return { warn: true, text: 'Mantén la pantalla encendida: con ella apagada, el navegador deja de enviar tu ubicación.' };
+}
+
+/**
  * Aviso fijo cuando falta el permiso de ubicación durante la partida (AC-D9; Plan Maestro §4.1: «si se
  * deniega, la app no debe fingir que puede validar ubicación»). null si no hay nada que avisar.
  */
