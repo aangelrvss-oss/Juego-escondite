@@ -280,6 +280,8 @@ Reglas completas en `docs/product/GAME_MODES_AND_RULES.md`. Las entradas "Aproba
 
 El propietario aportó `THE_OUTRUN_Plan_Maestro_de_Producto_y_Desarrollo.pdf` (v1.0, 26/10/2026; 22 páginas; fuera del repositorio), que se declara «fuente de verdad del diseño» (pág. 2). Contradice varias decisiones de este registro. **Ninguna decisión anterior se modifica ni se borra aquí**: cada contradicción queda abierta hasta que el propietario decida. Lo que sigue son propuestas.
 
+**Análisis de alternativas y recomendaciones (26/10/2026, sin decidir):** `docs/product/DECISIONES_PENDIENTES.md` (D-043 a D-047, el procedimiento pendiente de D-035 y los estados CHECKS, BRIEFING y PAUSED).
+
 ### Identificadores del Plan Maestro (`PM-D-xxx`)
 El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este registro pero con otro contenido. Para no confundirlas, en el repositorio se citan con el prefijo **`PM-`**:
 
