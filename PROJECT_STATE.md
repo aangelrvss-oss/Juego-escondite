@@ -1,15 +1,18 @@
 # Estado del proyecto
 
-**Última actualización:** 24/10/2026 (sesión 7: mejora visual y UX de la demo)
+**Última actualización:** 26/10/2026 (cierre documental de H1)
 **Rama:** `ccr-f1962362-hvwb9i`
-**Nombre del producto:** provisional, sin decidir.
+**Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
 
 ## Fase activa
 
-**S1 (ubicación en Android): prototipo escrito, APK sin compilar y pruebas en el dispositivo pendientes.**
+**H1 (app Android de diagnóstico GPS con Capacitor): corrección publicada y prueba física preliminar superada en el Xiaomi 14T.** Falta una segunda prueba física caminando. **H2 (multijugador real) está en pausa:** no se ha empezado a implementar.
+- Detalle en la sección «H1» de este archivo y en `QUALITY_STATE.md`.
+
+**Antecedente, S1 (ubicación en Android con la app Java de `android/`):** su APK compila (sesión 9), pero no se ha probado en el dispositivo. H1 reutiliza su núcleo (`android/core`).
 - ~~Bloqueo: la red del entorno deniega `dl.google.com` (D-040).~~ **Resuelto en la sesión 9:** el propietario habilitó el dominio y el APK debug compila. **Las pruebas en el dispositivo físico siguen pendientes.**
-- S0 completada **en simulación** (103 pruebas; `f0ca70e`). El diseño de la sesión 4 está guardado (`c846377`).
-- La primera versión jugable **solo** tendrá el modo Clásico (D-030). La app del juego **no ha comenzado**.
+- S0 completada **en simulación** (103 pruebas en `f0ca70e`; 112 tras D-042). El diseño de la sesión 4 está guardado (`c846377`).
+- La primera versión jugable **solo** tendrá el modo Clásico (D-030). La app del juego existe solo como diagnóstico GPS local (H1): **sin multijugador, servidor ni salas**.
 
 **Sesión 6:** hay una **demo visual SIMULADA** (`demo/`), un HTML autocontenido para enseñar cómo se vería una partida en el móvil. No usa GPS ni red y no es la app del juego. **No se ha probado en el Xiaomi 14T.**
 
@@ -70,6 +73,15 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 - **Demo:** cuenta atrás de 5 s en tiempo real, rol oculto hasta la revelación, tiempo de huida elegible (2, 3 o 5 min) y sorteo automático secreto al empezar. 62 pruebas y E2E en 412×915 y 360×740.
 - Detalles, interpretaciones y parámetros pendientes en `DECISION_LOG.md` (D-042).
 
+## H1: app Android de diagnóstico GPS (Capacitor)
+
+- **Qué es:** app Capacitor 8.5.3 en `mobile/`, con el plugin nativo `OutrunLocation`, un servicio en primer plano de tipo ubicación y una pantalla de diagnóstico. **Sin permiso de Internet.** El CSV que exporta no tiene coordenadas. Commit `dc05d46` (25/10/2026).
+- **Defecto de arranque:** en la primera APK ningún botón respondía. La causa era que `nativePlugin()` devolvía el proxy de `registerPlugin(...)` desde una función `async`. JavaScript lo trataba como una promesa (el proxy responde a «then») y el arranque se quedaba esperando sin fin, antes de registrar los botones.
+- **Corrección:** commit `7ac972e` (`fix(mobile): repair Capacitor diagnostic startup`, 26/10/2026), **publicado**. El plugin se entrega envuelto en `{ plugin }`, el arranque tiene un tiempo límite de 5 s y los errores se muestran en «Incidencias». Incluye pruebas de regresión. Rama sincronizada con `origin/ccr-f1962362-hvwb9i`.
+- **Prueba física (Xiaomi 14T):** con la APK corregida, los botones responden. En una sesión corta (unos 5 min) se registraron 58 lecturas del proveedor `fused`, también con la pantalla apagada y la app en segundo plano, con 0 huecos de más de 30 s. Detalle y límites en `QUALITY_STATE.md` y `mobile/PRUEBAS_XIAOMI_14T.md`.
+- **APK:** no está versionada. Se conserva solo en `mobile/apk-local/` (carpeta excluida en local con `.git/info/exclude`) en este contenedor efímero, junto a la APK anterior como respaldo.
+- **Sin validar todavía:** caminata larga, interiores o mala señal, batería en sesión larga, ajustes de ahorro de HyperOS, red y varios jugadores, e iPhone.
+
 ## Decisiones
 
 - **Aprobadas por el propietario:** D-002, D-003, D-004 (en parte), D-006, D-007, D-008, D-009, D-010, D-011, D-024 a D-029 (sesión 4), D-030 a D-038 (sesión 5) y D-042 (sesión 13: secuencia de inicio de partida).
@@ -79,17 +91,22 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 
 ## Riesgos y bloqueos
 
-- S0 (`f0ca70e`) y el diseño de la sesión 4 (`c846377`) están **guardados en Git**. El trabajo de las sesiones 5 y 6 está **sin confirmar** hasta que se autorice su commit.
+- ~~El trabajo de las sesiones 5 y 6 está sin confirmar.~~ **Todo el trabajo está guardado en Git:** HEAD `7ac972e`, publicado y sincronizado con `origin` (26/10/2026). Solo las APK de `mobile/apk-local/` quedan fuera de Git, a propósito.
 - La demo **no se puede instalar como app** sin autorización: la PWA necesita un despliegue HTTPS y el APK necesita el SDK (D-040). Hoy se abre como archivo en Chrome.
 - ~~**D-040:** sin `dl.google.com` no se puede compilar el APK en este entorno.~~ Resuelto (sesión 9). Si el contenedor se recrea, hay que volver a instalar los dos componentes del SDK.
-- El riesgo crítico sigue abierto: la ubicación con el móvil bloqueado. **S0 no lo reduce.**
+- El riesgo crítico sigue abierto: la ubicación con el móvil bloqueado. **S0 no lo reduce.** H1 aporta una primera evidencia positiva (sesión corta en el Xiaomi 14T con la pantalla apagada), pero no lo cierra: falta una sesión larga caminando.
 - El adaptador de servidor sigue sin decidir (D-014): no se ha probado ningún transporte real.
 - El coste de CPU del motor (clona el estado en cada comando) no se ha medido en un adaptador real.
 
 ## Siguiente acción concreta
 
-1. El propietario abre `demo/dist/rastro-demo.html` en el Xiaomi 14T, la prueba (lista en `demo/README.md`) y comenta lo que vea.
-2. El propietario revisa las sesiones 5 y 6 y autoriza (o no) su commit.
-3. ~~Desbloquear la compilación.~~ Hecho (sesión 9).
-4. Instalar el APK de la sesión 10 en el Xiaomi 14T y hacer la "Prueba 0" (pantalla encendida, de día, al aire libre: 5 min quieto y 5 min caminando). Después, ejecutar S1-T01 a S1-T14 en el Xiaomi 14T, exportar los CSV y analizarlos (`AnalyzeCli`).
-5. Según el resultado (criterios de §6 del protocolo): aprobar V2, o decidir V1 o un cambio de técnica.
+1. Revisar y confirmar este cierre documental de H1 (cambios sin commit hasta que se autorice).
+2. **Segunda prueba física de H1:** 15–20 min caminando con la pantalla bloqueada la mayor parte del tiempo, con un paso por un portal o garaje (pruebas 3, 4 y 6 de `mobile/PRUEBAS_XIAOMI_14T.md`). Antes de empezar, anotar los ajustes de batería de HyperOS. Exportar el CSV y analizarlo.
+3. **H2 sigue en pausa** hasta que el propietario lo autorice. Las decisiones pendientes para H2 están en la auditoría del 25/10/2026, que no está en el repositorio.
+
+Acciones anteriores:
+- El propietario abre `demo/dist/rastro-demo.html` en el Xiaomi 14T, la prueba (lista en `demo/README.md`) y comenta lo que vea. *Sin resultado registrado.*
+- ~~El propietario revisa las sesiones 5 y 6 y autoriza (o no) su commit.~~ Hecho: ese trabajo está en Git.
+- ~~Desbloquear la compilación.~~ Hecho (sesión 9).
+- ~~Instalar el APK de la sesión 10 y hacer la "Prueba 0".~~ Sustituido por las pruebas de H1 (`mobile/PRUEBAS_XIAOMI_14T.md`), que usan el mismo núcleo y el mismo CSV.
+- Según el resultado (criterios de §6 del protocolo de S1): aprobar V2, o decidir V1 o un cambio de técnica.

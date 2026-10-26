@@ -1,16 +1,16 @@
 # Estado de calidad
 
-**Última actualización:** 24/10/2026 (sesión 6: demo visual simulada)
+**Última actualización:** 26/10/2026 (cierre documental de H1)
 
 ## Resumen
 
 | Tipo de prueba | Estado |
 |---|---|
-| Pruebas automatizadas del motor y de la simulación | **103 de 103 superadas** (2 ejecuciones idénticas). Todas son **SIMULADAS** |
+| Pruebas automatizadas del motor y de la simulación | **103 de 103** el 24/10/2026 (2 ejecuciones idénticas); **112 de 112** tras D-042 (25/10/2026). Todas son **SIMULADAS** |
 | Verificación por mutación (3 invariantes de seguridad) | Las 3 mutaciones las detecta al menos una prueba |
-| Pruebas en dispositivos reales | **No realizadas** (S1–S3) |
+| Pruebas en dispositivos reales | **Una sesión corta de H1 en un Xiaomi 14T** (ver «H1» al final). El resto de pruebas físicas (S1–S3 y la lista de H1) siguen **pendientes** |
 | Transporte de red real (WebSocket), latencia y cobertura móvil | **No probado**: el adaptador depende de D-014, que sigue pendiente |
-| Ubicación en segundo plano, GPS real, notificaciones y batería | **No validados** en ninguna plataforma |
+| Ubicación en segundo plano, GPS real, notificaciones y batería | **Evidencia preliminar en Android:** en esa sesión corta se recibieron posiciones con la pantalla apagada. **No validados:** sesión larga, caminando, mala señal, batería ni iOS |
 
 **Qué demuestra S0:** que las reglas del modo Clásico, la autoridad del servidor, el filtrado de datos por equipo, la validación de capturas, la reanudación y la idempotencia funcionan según lo documentado **en un entorno simulado y determinista**.
 **Qué no demuestra:** nada sobre GPS real, móviles bloqueados, redes móviles, latencias reales, consumo de batería ni el rendimiento del servidor en producción.
@@ -153,3 +153,55 @@ La subida coincide con el modelo (720 posiciones por hora más comandos). La baj
 | `node demo/e2e/flow.e2e.cjs` a 412×915 y 360×740 | Recorrido completo superado. Comprueba 0 errores de consola, 0 desbordamientos horizontales, 0 botones < 44 px, 0 llamadas a la geolocalización y, desde esta sesión, **0 peticiones de red** | Chromium con emulación móvil |
 | Revisión visual selectiva (inicio, configuración, sala, partida, captura, disputa, final) | Corregidos dos solapes detectados: avisos sobre el panel abierto y sobre el pie de la sala | Manual |
 | **Xiaomi 14T real** | **NO PROBADO** | — |
+
+## H1: app Android de diagnóstico GPS (Capacitor)
+
+**Qué es:** la app de `mobile/` (Capacitor 8.5.3, plugin nativo `OutrunLocation`, servicio en primer plano de tipo ubicación con el proveedor `fused` de la plataforma). Es un **diagnóstico GPS local**: sin permiso de Internet, sin servidor ni multijugador. El CSV que exporta no tiene coordenadas.
+
+### Defecto de arranque y corrección
+
+- **Síntoma:** en la primera APK (commit `dc05d46`) ningún botón respondía en el Xiaomi 14T.
+- **Causa:** `nativePlugin()` devolvía el proxy de `registerPlugin(...)` desde una función `async`. El proxy responde a cualquier propiedad, también a «then», así que JavaScript lo trataba como una promesa que nunca se resolvía. El arranque se quedaba esperando antes de registrar los botones.
+- **Corrección:** commit `7ac972e` (`fix(mobile): repair Capacitor diagnostic startup`), publicado en `origin/ccr-f1962362-hvwb9i`. Incluye:
+  - el plugin entregado envuelto en `{ plugin }`;
+  - un tiempo límite de arranque de 5 s;
+  - errores de conexión y de suscripción visibles en «Incidencias», sin dejar los botones inutilizables;
+  - pruebas de regresión que fallan con el código anterior.
+
+### Pruebas automatizadas (25–26/10/2026)
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `npm test` en `mobile/` | **29 de 29** (24 previas + 5 de regresión) | Automatizada en Node. Las de regresión usan el runtime real de `@capacitor/core` con un puente Android **simulado** |
+| `node e2e/boot.e2e.cjs` sobre `www/` | **4 de 4** escenarios | Chromium con el `native-bridge.js` real de Capacitor y el lado nativo **simulado** |
+| La misma E2E sobre los archivos web extraídos de la APK corregida | **4 de 4** | Igual: comprueba el JavaScript empaquetado, **no** el código nativo |
+| Pruebas Java de la app (`:app:testDebugUnitTest`) | **8 de 8** | Unitarias Java del puente y de la privacidad del CSV, sin dispositivo |
+| Núcleo S1 (`:s1core:test`) | **20 de 20** | Unitarias Java con datos **simulados** |
+| Motor S0 (`npm test` en la raíz) | **112 de 112** | Automatizada, **SIMULADA** |
+| Demo (`npm run test:demo`) | **62 de 62** | Automatizada, **SIMULADA**; ajena a H1 |
+| `git diff --check` de la corrección | Sin errores | — |
+
+**Límite:** ninguna prueba automatizada ejecuta el código nativo en un móvil. Las E2E y las de regresión simulan el lado nativo; las pruebas Java no usan Android real. La prueba física es una evidencia aparte.
+
+### Prueba física en el Xiaomi 14T
+
+Datos del CSV exportado, **comunicados por el propietario**. El CSV no está en el repositorio y no se ha analizado con `AnalyzeCli`.
+
+| ID | Fecha | Dispositivo / SO | Variante | Red | REAL / SIMULADO | Medido | Resultado | Observaciones |
+|---|---|---|---|---|---|---|---|---|
+| H1-F1 | Comunicada el 26/10/2026 | Xiaomi 14T (HyperOS; versión no anotada) | H1, APK corregida (`7ac972e`), intervalo solicitado de 5 s | Sin red (la app no usa Internet) | **REAL** | Sesión de unos 5 min: 58 lecturas `fix`, proveedor `fused`, precisión estimada de unos 1,1 a 9,4 m, batería del 94 % al 93 % | Los botones responden. Siguieron llegando lecturas tras `SCREEN_OFF` y `APP_HIDDEN`. Se registraron `SCREEN_ON`, `APP_VISIBLE` y `SESSION_STOP`. 0 huecos de más de 30 s | Ver la interpretación siguiente |
+
+**Interpretación prudente:**
+- Hay evidencia positiva de recepción de posiciones durante esta sesión, también con la pantalla apagada y la app en segundo plano.
+- «0 huecos» significa que nunca pasaron más de 30 s sin lecturas (`GAP_THRESHOLD_MS`). No demuestra que el muestreo fuera exactamente cada 5 s.
+- La bajada de batería del 1 % en unos 5 min no se puede atribuir por completo a la app ni sirve para estimar el consumo.
+
+**Pendiente de validar:**
+- una sesión larga caminando;
+- portales, interiores, garajes o zonas con mala señal;
+- el consumo de batería en una sesión larga;
+- la estabilidad con los ajustes de ahorro de batería de HyperOS a largo plazo (no se anotaron en esta sesión);
+- varios jugadores, sincronización por red y salas reales (fuera del alcance de H1);
+- iPhone.
+
+**H1 no es una versión multijugador funcional.**

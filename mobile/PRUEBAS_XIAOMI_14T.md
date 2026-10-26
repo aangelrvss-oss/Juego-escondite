@@ -1,6 +1,6 @@
 # Pruebas físicas de H1 en el Xiaomi 14T
 
-Estas pruebas **no se han hecho todavía**. Hasta que se hagan, no se puede afirmar que el GPS funciona bien.
+**Estado (26/10/2026):** se ha hecho **una sesión corta** con la APK corregida (commit `7ac972e`). Solo la prueba 4 queda **parcialmente** cubierta y el resto sigue **pendiente**, así que todavía no se puede afirmar que el GPS funciona bien en una partida real. Resultados al final de este documento.
 
 **Antes de empezar**
 - Batería por encima del 80 % y sin cargar. Anota el porcentaje al empezar y al terminar cada prueba.
@@ -27,3 +27,42 @@ Estas pruebas **no se han hecho todavía**. Hasta que se hagan, no se puede afir
 **Qué enviar después**
 Los CSV exportados (no contienen coordenadas) y tus notas por prueba. Con ellos se calculan cobertura, huecos, precisión y batería con el analizador de S1:
 `gradle -p android :core:analyze -Pcsv=/ruta/al/archivo.csv` (desde la raíz del repositorio).
+
+## Resultados
+
+### Sesión 1 (comunicada el 26/10/2026)
+
+Datos del CSV exportado, comunicados por el propietario. No se ha analizado con el analizador y el CSV no está en el repositorio.
+
+- **APK:** corregida (`7ac972e`), intervalo solicitado de 5 s.
+- **Duración:** unos 5 min.
+- **Lecturas:** 58 de tipo `fix`, proveedor `fused`.
+- **Precisión estimada:** de unos 1,1 a 9,4 m.
+- **Huecos:** 0 de más de 30 s.
+- **Batería:** del 94 % al 93 %.
+- **Eventos:** hubo lecturas después de `SCREEN_OFF` y `APP_HIDDEN`; se registraron `SCREEN_ON`, `APP_VISIBLE` y `SESSION_STOP`.
+- **Ajustes de HyperOS:** no se anotaron.
+
+**Lo que no demuestra:** «0 huecos» no significa que el muestreo fuera exactamente cada 5 s. El 1 % de batería en 5 min no se puede atribuir por completo a la app.
+
+### Estado de cada prueba
+
+| # | Prueba | Estado | Evidencia o motivo |
+|---|---|---|---|
+| — | Arranque de la app | **Hecho** | Con la APK corregida los botones responden (la primera APK no respondía) |
+| 1 | Concesión y denegación de permisos | Pendiente | Se concedió el permiso necesario para iniciar la sesión; no se han probado la denegación, la aproximada ni la denegación permanente |
+| 2 | Primera posición al aire libre | Pendiente | No se anotó el tiempo hasta la primera lectura |
+| 3 | Caminata y carrera | Pendiente | La sesión no fue caminando |
+| 4 | Bloqueo de pantalla | **Parcial** | Hubo lecturas con la pantalla apagada y 0 huecos de más de 30 s, pero en una sesión corta y sin caminar 10 min. No se anotó si la notificación seguía visible |
+| 5 | Cambio a otra aplicación | Pendiente | `APP_HIDDEN` no indica que se abriera otra app durante 5 min |
+| 6 | Pérdida de señal | Pendiente | Sin portal, garaje ni metro |
+| 7 | Revocación de permisos | Pendiente | — |
+| 8 | Consumo de batería | Pendiente | Hace falta la sesión de 60 min |
+| — | Pruebas complementarias | Pendientes | — |
+
+**Siguiente sesión recomendada:**
+1. Anota antes los ajustes de batería de HyperOS.
+2. Camina 15–20 min con la pantalla bloqueada la mayor parte del tiempo y pasa por un portal o garaje (pruebas 3, 4 y 6).
+3. Exporta el CSV.
+
+Las pruebas 1, 2, 5, 7 y 8 siguen pendientes y no las cubre esta sesión.

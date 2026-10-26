@@ -2,7 +2,9 @@
 
 Primer hito de la app real: una app **Android** instalable, con la identidad de THE OUTRUN, un **módulo nativo de ubicación** propio y una pantalla de **diagnóstico GPS**. No hay multijugador, servidor, cuentas ni mapas, y la app **no tiene permiso de Internet**.
 
-> El GPS **no está validado** hasta hacer las pruebas físicas de [`PRUEBAS_XIAOMI_14T.md`](PRUEBAS_XIAOMI_14T.md). Las pruebas automatizadas no sustituyen a un móvil real.
+> **Estado (26/10/2026):** la APK corregida (commit `7ac972e`) funciona en el Xiaomi 14T y ha superado una **sesión corta** de prueba, con lecturas también con la pantalla apagada. El GPS **no está validado** para una partida real: faltan la caminata larga, la mala señal, la batería y el resto de [`PRUEBAS_XIAOMI_14T.md`](PRUEBAS_XIAOMI_14T.md). Las pruebas automatizadas no sustituyen a un móvil real.
+>
+> **Qué no cubre H1:** multijugador, servidor, salas, red ni iOS.
 
 ## Arquitectura
 
@@ -45,6 +47,18 @@ ANDROID_HOME=/ruta/al/sdk gradle -p android :s1core:test :app:testDebugUnitTest 
 ```
 
 Requisitos de Capacitor 8.5.3 comprobados en su plantilla: AGP 8.13.0, Gradle 8.14.3, compileSdk y targetSdk 36. La app usa `minSdk 31` (Android 12) por el proveedor fusionado de la plataforma.
+
+## Pruebas automatizadas y sus límites
+
+| Prueba | Comando | Qué comprueba | Límite |
+|---|---|---|---|
+| JS (`test/*.test.mjs`, 29) | `npm test` | Puente, modelo de vista, estados de lectura, marca y privacidad. `native-plugin.test.mjs` reproduce el defecto de arranque con el runtime real de `@capacitor/core` | El puente Android está **simulado** |
+| E2E de arranque (4 escenarios) | `npm run vendor` y después `node e2e/boot.e2e.cjs` | Que la pantalla arranca y «Comprobar de nuevo» llega al módulo nativo. Que los fallos (plugin sin registrar, Capacitor que no carga o no responde) se ven en «Incidencias» sin bloquear los botones | Usa el `native-bridge.js` real de `node_modules/@capacitor/android` (requiere `npm install`) y el Playwright y Chromium del entorno, que **no** son dependencias del proyecto. El lado nativo está **simulado** |
+| Java de la app (8) | `:app:testDebugUnitTest` (comando Gradle de arriba) | Contrato del puente y exportación del CSV sin coordenadas | Sin dispositivo |
+
+Para comprobar el JavaScript empaquetado en una APK, la E2E acepta la carpeta web y el `native-bridge.js` extraídos: `node e2e/boot.e2e.cjs <assets/public> <assets/native-bridge.js>`.
+
+**Defecto corregido en `7ac972e`:** `nativePlugin()` devolvía el proxy de `registerPlugin(...)` desde una función `async`. Como el proxy responde a «then», el arranque se quedaba esperando sin fin y ningún botón respondía. Ahora devuelve `{ plugin }`, el arranque tiene un tiempo límite de 5 s y los errores se muestran en «Incidencias».
 
 ## Instalar en el Xiaomi 14T
 
