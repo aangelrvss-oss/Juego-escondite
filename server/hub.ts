@@ -26,6 +26,7 @@ export interface HubOptions {
   now?: () => number;
   positionsIntervalMs?: number;
   maxRooms?: number;
+  maxRoomsPerIp?: number; // salas activas creadas desde una misma dirección
   outboxLimit?: number; // eventos guardados por jugador para reanudar; más antiguos → instantánea
   replyLimit?: number; // respuestas guardadas por jugador para la idempotencia
   closedRoomGraceMs?: number; // tiempo que se conserva una sala cerrada antes de borrarla
@@ -41,6 +42,7 @@ export const RATE = {
   locMinIntervalMs: 900, // como mucho una lectura por segundo y jugador
   claimMinIntervalMs: 3_000, // reclamaciones de captura: evita sondear distancias a ráfagas
   attemptsPerMinute: 10, // create/join/resume por conexión
+  // Salas activas por dirección: HubOptions.maxRoomsPerIp (por defecto 5).
   failuresPerMinutePerIp: 20, // códigos o sesiones incorrectos por dirección
 } as const;
 
@@ -70,6 +72,9 @@ interface Room {
   lastClaimAt: Map<string, number>;
   lastLocAt: Map<string, number>; // por jugador, compartido por WebSocket y HTTP
   deleteAt: number | null;
+  // Dirección desde la que se creó (solo en memoria, para el límite de salas por dirección; no se
+  // guarda en el archivo de estado).
+  creatorIp: string | null;
 }
 
 interface Client {
@@ -144,6 +149,7 @@ export class Hub {
     this.opts = {
       positionsIntervalMs: options.positionsIntervalMs ?? 5_000,
       maxRooms: options.maxRooms ?? 100,
+      maxRoomsPerIp: options.maxRoomsPerIp ?? 5,
       outboxLimit: options.outboxLimit ?? 300,
       replyLimit: options.replyLimit ?? 64,
       closedRoomGraceMs: options.closedRoomGraceMs ?? 60_000,
@@ -237,6 +243,7 @@ export class Hub {
         lastClaimAt: new Map(),
         lastLocAt: new Map(),
         deleteAt: typeof r.deleteAt === 'number' ? r.deleteAt : null,
+        creatorIp: null,
       };
       this.rooms.set(room.id, room);
       if (room.deleteAt === null) this.codes.set(room.code, room.id);
@@ -354,6 +361,11 @@ export class Hub {
   private create(client: Client, msg: Extract<ClientMessage, { t: 'create' }>): void {
     if (client.playerId) return this.send(client, { t: 'error', error: 'already_in_room' });
     if (this.rooms.size >= this.opts.maxRooms) return this.send(client, { t: 'error', error: 'server_full' });
+    // Una sola dirección no puede acaparar la capacidad del servidor abriendo conexiones nuevas: cada
+    // conexión puede crear una sala, así que el límite va por dirección (las salas cerradas no cuentan).
+    let fromIp = 0;
+    for (const r of this.rooms.values()) if (r.creatorIp === client.ip && r.deleteAt === null) fromIp++;
+    if (fromIp >= this.opts.maxRoomsPerIp) return this.send(client, { t: 'error', error: 'too_many_rooms' });
     const roomId = randomId('room');
     const playerId = randomId('p');
     const step = createRoom({
@@ -375,6 +387,7 @@ export class Hub {
       lastClaimAt: new Map(),
       lastLocAt: new Map(),
       deleteAt: null,
+      creatorIp: client.ip,
     };
     this.rooms.set(roomId, room);
     this.codes.set(code, roomId);

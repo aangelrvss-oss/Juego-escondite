@@ -34,6 +34,7 @@ Servidor **autoritativo**: las reglas viven solo en el motor (`engine/`), y el s
 | Reclamación de captura | 1 cada 3 s por cazador (evita sondear distancias) |
 | Entrar o reanudar | 10 intentos/min por conexión y 20 fallos/min por dirección (los fallos de `POST /api/loc` también cuentan) |
 | Capacidad | 100 salas y 1.000 conexiones |
+| Salas por dirección | 5 salas activas creadas desde la misma dirección (`MAX_ROOMS_PER_IP`). Así nadie acapara la capacidad abriendo conexiones nuevas. **Detrás de un túnel, usa `TRUST_PROXY=1`**: sin él, todos los móviles comparten la dirección del túnel y el límite sería para todos |
 | Borrado | La sala cerrada se borra a los 60 s (sesiones incluidas) |
 
 ## Arrancar
@@ -109,7 +110,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 ## Pruebas
 
 ```bash
-npm run test:server        # 38 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida y persistencia
+npm run test:server        # 42 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida, persistencia y capacidad por dirección
 npm test                   # motor y simulación (130)
 cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report, comprobación de GPS y estado de la sala (79)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)

@@ -22,6 +22,7 @@ export const ERROR_TEXT = Object.freeze({
   replaced: 'Has abierto esta partida en otro sitio: esta pantalla se ha desconectado.',
   room_closed: 'La sala está cerrada.',
   server_full: 'El servidor está lleno ahora mismo.',
+  too_many_rooms: 'Desde esta conexión ya hay demasiadas salas abiertas. Cierra alguna o únete a una existente.',
   already_in_room: 'Ya estás en una sala.',
   bad_message: 'El servidor no entendió el mensaje.',
   no_session: 'No estás en ninguna sala.',

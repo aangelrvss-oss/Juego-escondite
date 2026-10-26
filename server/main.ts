@@ -7,6 +7,8 @@
 //   TRUST_PROXY=1       usar CF-Connecting-IP / X-Forwarded-For como dirección del cliente (solo
 //                       detrás de un túnel o proxy de confianza).
 //   LOG=1               registro de operaciones (sin nombres, coordenadas ni secretos).
+//   MAX_ROOMS_PER_IP    salas activas por dirección (por defecto 5). Detrás de un túnel, sin
+//                       TRUST_PROXY=1 todos los móviles comparten dirección.
 //   STATE_FILE          (opcional) archivo donde guardar las salas para sobrevivir a un reinicio del
 //                       servidor. Sin coordenadas de jugadores ni secretos (solo sus hashes). Sin esta
 //                       variable, las salas viven solo en memoria, como antes.
@@ -271,7 +273,10 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     host: process.env.HOST ?? '127.0.0.1',
     allowedOrigins: (process.env.ALLOWED_ORIGINS ?? '').split(',').filter(Boolean),
     trustProxy: process.env.TRUST_PROXY === '1',
-    hub: { log: process.env.LOG === '1' ? (line) => console.log(new Date().toISOString(), line) : undefined },
+    hub: {
+      log: process.env.LOG === '1' ? (line) => console.log(new Date().toISOString(), line) : undefined,
+      ...(process.env.MAX_ROOMS_PER_IP ? { maxRoomsPerIp: Math.max(1, Number(process.env.MAX_ROOMS_PER_IP) || 5) } : {}),
+    },
     stateFile: process.env.STATE_FILE || null,
   });
   console.log(`THE OUTRUN escuchando en ${running.url} (WebSocket en /ws, estado en /health)`);

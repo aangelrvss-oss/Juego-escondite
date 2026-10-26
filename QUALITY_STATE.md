@@ -481,6 +481,19 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 
 **No probado en navegador:** el aviso de reconexión en mitad de una partida. Reproducirlo exige esperar a que el cliente detecte una conexión muerta (unos 30 s); está cubierto por pruebas unitarias. Tampoco se ha probado en un móvil.
 
+### Capacidad de salas por dirección (26/10/2026, 20:03-20:05)
+**Riesgo encontrado (demostrable):**
+- Crear una sala no contaba como fallo, y los límites eran por conexión.
+- Una sola dirección que abriera conexiones nuevas podía crear las 100 salas y dejar a todos los demás con `server_full`. La segunda prueba lo reproduce sin el límite.
+
+**Corrección:** como mucho 5 salas activas creadas desde la misma dirección (`HubOptions.maxRoomsPerIp`, `MAX_ROOMS_PER_IP`). Las salas cerradas no cuentan. La dirección solo se guarda en memoria, nunca en el archivo de estado. Error `too_many_rooms`, con un texto para el jugador.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `server/test/capacity.test.mjs`: 5 salas sí y la 6.ª no desde la misma dirección; otra dirección no se ve afectada; sin el límite, una dirección llena el servidor; al cerrar una sala se puede volver a crear; el límite es configurable | **4 de 4** | Hub con transportes de prueba (direcciones simuladas) |
+
+**Límite:** detrás de un túnel sin `TRUST_PROXY=1`, todos los móviles comparten dirección y el límite pasa a ser global (documentado en `server/README.md`).
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|
