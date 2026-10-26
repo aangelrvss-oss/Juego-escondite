@@ -42,6 +42,7 @@ a { color: var(--brand); }
 .muted { color: var(--muted); }
 .msg { margin: 0; padding: 10px 12px; border-radius: var(--r-md); background: var(--surface-2); font-size: 14px; }
 .msg.danger { background: var(--danger-soft); color: var(--danger); font-weight: 600; }
+.msg.warn { border-left: 3px solid var(--brand); }
 
 .field { display: grid; gap: 6px; font-size: 13px; font-weight: 700; color: var(--muted); }
 .field input, .field select, .join-row input {

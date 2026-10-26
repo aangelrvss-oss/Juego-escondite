@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { CAPTURE_NORMS, INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, nightNotice, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -416,6 +416,7 @@ function lobbyScreen(snap) {
   const isHost = snap.hostId === ui.conn.playerId;
   const code = ui.conn.code ?? '';
   const players = snap.players.filter((p) => p.status === 'lobby' || p.status === 'invited');
+  const night = nightNotice(new Date()); // hora local de este móvil (AC-B3)
   const invited = self?.status === 'invited';
   const cfg = snap.config;
   const summary = cfg
@@ -440,6 +441,7 @@ function lobbyScreen(snap) {
       ${!invited && !self?.ready && !ui.gpsChecked ? '<p class="hint">Al pulsar «Estoy listo» se comprueba tu GPS. La ubicación solo se usa durante la partida y se borra al terminar.</p>' : ''}
     </section>
     ${isHost ? hostConfig(snap) : `<section class="card"><h2>Partida</h2><p class="line">${esc(summary)}</p>${blockers.length ? `<div class="blockers" aria-live="polite"><p class="label">Para empezar falta</p>${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}</div>` : '<p class="msg">Todo listo: el anfitrión puede empezar.</p>'}</section>`}
+    ${night ? `<p class="msg warn" role="note">${esc(night)}</p>` : ''}
     ${rulesCard(snap)}
     ${isHost ? `<section class="card stack">${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}
       <button class="btn btn-primary btn-big" data-act="start"${blockers.length ? ' disabled' : ''}>Empezar partida</button></section>` : ''}
@@ -612,6 +614,7 @@ function overlays() {
     out += `<div class="overlay reveal t-${ui.reveal.team}" data-act="dismiss-reveal" role="dialog" aria-label="Tu rol">
       <p class="label">Tu rol</p><p class="role">${TEAM_TEXT[ui.reveal.team]}</p>
       <p class="lead">${ui.reveal.team === 'hunter' ? 'Espera en la zona de salida durante la huida.' : 'Corre: tienes ventaja.'}</p>
+      <p class="lead">${esc(CAPTURE_NORMS)}</p>
       <p class="hint">Solo lo ves tú. Toca para continuar.</p></div>`;
   }
   const pending = snap?.pendingClaimForMe;

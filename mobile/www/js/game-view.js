@@ -79,6 +79,20 @@ export const RULES = Object.freeze({
   spectatorDelayMs: 60_000, // TIMING.spectatorDelayMs
 });
 
+// Juego nocturno (AC-B3, USER_FLOWS F5.6): de 21:00 a 7:00, hora local del móvil. HIPÓTESIS (D-038):
+// el horario no está aprobado; la alternativa prevista es la puesta y la salida del sol.
+export const NIGHT = Object.freeze({ fromHour: 21, toHour: 7 });
+
+/** Aviso de juego nocturno para la sala de espera, o null de día. Solo avisa: no impide empezar. */
+export function nightNotice(date) {
+  const h = date.getHours();
+  if (h < NIGHT.fromHour && h >= NIGHT.toHour) return null;
+  return 'Es de noche. Si jugáis ahora: zona bien iluminada y conocida, ropa visible, nada de calzadas ni atajos oscuros, el móvil con batería y alguien que sepa dónde estáis.';
+}
+
+/** Normas de captura de la tarjeta del rol (AC-B4, USER_FLOWS F6.2: tres líneas como mucho). */
+export const CAPTURE_NORMS = 'Captura: toque suave, nunca en la calzada.';
+
 const minutes = (ms) => `${Math.round(ms / 60_000)} min`;
 const seconds = (ms) => `${Math.round(ms / 1_000)} s`;
 

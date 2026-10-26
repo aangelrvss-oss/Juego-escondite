@@ -278,6 +278,9 @@ try {
   await guest.waitFor(`document.querySelector('.rules')?.textContent.includes('Toque suave')`, 'reglas visibles para el invitado');
   await layout(guest, 'sala de espera (invitado, con reglas)');
   await layout(host, 'sala de espera (anfitrión, configurada)');
+  // AC-B3: el aviso nocturno aparece exactamente cuando en este navegador es de noche (21:00-7:00).
+  const nightOk = await guest.evaluate(`(() => { const h = new Date().getHours(); const night = h >= 21 || h < 7; return night === !!document.querySelector('.msg.warn')?.textContent.includes('Es de noche'); })()`);
+  check(`aviso de juego nocturno según la hora local (ahora ${new Date().getHours()} h)`, nightOk);
   check('todos ven las reglas de la partida (captura, zona, pistas, seguridad) antes de empezar', await guest.evaluate(`['Captura', 'Zona', 'Pistas', 'Seguridad', 'Capturados'].every((t) => document.querySelector('.rules').textContent.includes(t))`));
   await host.evaluate(click('#c-safety'));
   await host.waitFor(`document.querySelector('#c-safety')?.checked`, 'lista de seguridad');
@@ -288,6 +291,7 @@ try {
   await advance(5_000);
   await guest.waitFor(`document.querySelector('.overlay.reveal')?.textContent.includes('FUGITIVO')`, 'Beto descubre que es fugitivo');
   check('cuenta atrás y revelación privada del rol', true);
+  check('la tarjeta del rol recuerda las normas de captura (AC-B4)', await guest.evaluate(`document.querySelector('.overlay.reveal').textContent.includes('toque suave, nunca en la calzada')`));
   for (const p of [host, guest, late]) await p.evaluate(`(document.querySelector('[data-act="dismiss-reveal"]')?.click(), true)`);
   await advance(2 * 60_000);
   await guest.waitFor(`!!document.querySelector('[data-act="selftag"]')`, 'persecución');
