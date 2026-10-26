@@ -108,6 +108,44 @@ describe('persistencia opcional del servidor (STATE_FILE)', () => {
     assert.deepEqual(t.server.hub.roomStateByCode(code).outcome, { winner: 'hunter', cause: 'all_captured' });
   });
 
+  it('un comando aplicado justo antes del reinicio y reenviado después con el mismo id no se aplica dos veces', async () => {
+    // Plan Maestro, Fase 1 (puerta de salida): «una reconexión no duplica eventos ni cambia el
+    // resultado». El móvil reenvía un comando sin respuesta con el mismo id; si el servidor se ha
+    // reiniciado entre medias, la respuesta guardada también tiene que sobrevivir.
+    const file = stateFile();
+    t = await persistentServer(file);
+    const { code, players } = await room(t, ['Ana', 'Beto', 'Caro']);
+    t.players = players;
+    const [ana, beto, caro] = players;
+    for (const [p, pref] of [[ana, 'hunter'], [beto, 'runner'], [caro, 'runner']]) await p.conn.command({ type: 'set_team_pref', pref });
+    assert.equal((await ana.conn.command({ type: 'configure', config: gameConfig() })).ok, true);
+    for (const p of players) await p.conn.command({ type: 'set_ready', ready: true });
+    assert.equal((await ana.conn.command({ type: 'start' })).ok, true);
+    await t.advance(5_000);
+    await t.advance(2 * 60_000);
+    await waitFor(() => players.every((p) => p.snap?.phase === 'ACTIVE'), 'persecución');
+    const resultsFor = (id) => beto.raw.filter((m) => m.t === 'result' && m.id === id).map((m) => m.result);
+    beto.conn.socket.send(JSON.stringify({ t: 'cmd', id: 'autodeclaracion-1', cmd: { type: 'self_tag' } }));
+    await waitFor(() => resultsFor('autodeclaracion-1').length === 1, 'respuesta antes del reinicio');
+    assert.equal(t.server.hub.roomStateByCode(code).captures.length, 1);
+
+    const welcomes = beto.raw.filter((m) => m.t === 'welcome').length;
+    await restart(file);
+    await waitFor(() => beto.raw.filter((m) => m.t === 'welcome').length > welcomes && beto.conn.status === 'open', 'Beto reconectado al servidor nuevo', 15_000);
+    beto.conn.socket.send(JSON.stringify({ t: 'cmd', id: 'autodeclaracion-1', cmd: { type: 'self_tag' } }));
+    await waitFor(() => resultsFor('autodeclaracion-1').length === 2, 'respuesta al reenvío');
+    const [first, again] = resultsFor('autodeclaracion-1');
+    assert.deepEqual(again, first, 'la misma respuesta que la primera vez');
+    assert.equal(first.ok, true);
+    const state = t.server.hub.roomStateByCode(code);
+    assert.equal(state.captures.length, 1, 'una sola captura');
+    assert.equal(state.phase, 'ACTIVE', 'el resultado no cambia: Caro sigue libre');
+    // Con otro id, el mismo comando sí se evalúa de nuevo (y se rechaza: ya está capturado).
+    beto.conn.socket.send(JSON.stringify({ t: 'cmd', id: 'autodeclaracion-2', cmd: { type: 'self_tag' } }));
+    await waitFor(() => resultsFor('autodeclaracion-2').length === 1, 'respuesta a un comando nuevo');
+    assert.equal(resultsFor('autodeclaracion-2')[0].ok, false);
+  });
+
   it('en la sala de espera: el código sigue sirviendo, la sesión del anfitrión vale y una sesión falsa no', async () => {
     const file = stateFile();
     t = await persistentServer(file);
