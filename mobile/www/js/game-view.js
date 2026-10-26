@@ -112,7 +112,8 @@ export function briefing(config) {
     { title: 'Pistas', text: `Cada ${minutes(config.pingIntervalMs)}, los cazadores reciben la última posición conocida de cada fugitivo, con su antigüedad.` },
     { title: 'Captura', text: `Toque suave. El cazador la reclama en la app: el servidor exige lecturas de los dos de hace ${seconds(RULES.tagMaxAgeMs)} o menos, con ±${RULES.tagMaxAccuracyM} m o mejor, cerca y sin saltos del GPS. El fugitivo confirma en ${seconds(RULES.tagConfirmMs)}; sin respuesta no hay captura. También puede declararse capturado.` },
     { title: 'Capturados', text: `Quien es capturado deja de jugar y ve a los demás con ${seconds(RULES.spectatorDelayMs)} de retraso.` },
-    { title: 'Seguridad', text: 'Nada de calzadas, vías ni propiedades privadas. No mires el móvil mientras corres. Mayores de 18. Puedes abandonar la partida cuando quieras.' },
+    // Prohibiciones explícitas del Plan Maestro §4.5.
+    { title: 'Seguridad', text: 'Nada de calzadas, vías, propiedades privadas, zonas restringidas ni edificios abandonados. Cruza solo por pasos seguros y no saltes vallas ni barreras. No mires el móvil mientras corres. Mayores de 18. Puedes abandonar la partida cuando quieras.' },
   ];
 }
 

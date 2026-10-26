@@ -132,6 +132,8 @@ function connect() {
     // La última pista viene también en la vista (solo para un cazador activo): así no se pierde al
     // recargar, y desaparece de la pantalla en cuanto la partida termina.
     ui.ping = snap.lastPing ?? null;
+    // Fuera de la huida y la persecución no se guarda ninguna posición de otros jugadores.
+    if (snap.phase !== 'HEAD_START' && snap.phase !== 'ACTIVE') ui.positions = [];
     syncTracking();
     render();
   });

@@ -41,5 +41,7 @@ test('usa la configuración de la sala y cubre todo lo que cambia la estrategia'
   assert.match(text.Capturados, /60 s de retraso/);
   assert.match(text.Seguridad, /calzadas/);
   assert.match(text.Seguridad, /abandonar la partida/);
+  // Plan Maestro §4.5: prohibiciones explícitas.
+  for (const rule of [/pasos seguros/, /zonas restringidas/, /edificios abandonados/, /vallas ni barreras/, /propiedades privadas/]) assert.match(text.Seguridad, rule);
   assert.doesNotMatch(JSON.stringify(rules), /lat|lng/, 'sin coordenadas');
 });
