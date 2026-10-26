@@ -1,6 +1,6 @@
 import { TIMING } from './constants.ts';
 import { availabilityOf, latestSample, sampleAsOf } from './location.ts';
-import type { Audience, Availability, Phase, Player, RoomState, StoredSample, Team } from './types.ts';
+import type { Audience, Availability, Phase, Player, RoomState, StoredSample, Team, TeamPref } from './types.ts';
 
 // Filtrado en el servidor ANTES de enviar: lo que esta función no devuelve,
 // el cliente no lo recibe nunca (GAME_STATE_MACHINE.md §6.4).
@@ -92,8 +92,9 @@ export function visiblePositions(state: RoomState, viewerId: string, now: number
 export interface PlayerView {
   id: string;
   name: string;
+  // null si este destinatario no está autorizado a conocerlo (no significa «sin equipo»).
   team: Team | null;
-  teamPref: string;
+  teamPref: TeamPref | null;
   status: string;
   ready: boolean;
   connected: boolean;
@@ -118,6 +119,15 @@ export interface Snapshot {
   closeReason: string | null;
 }
 
+// Equipo de `p` tal como puede verlo `viewer`: el propio y el de sus compañeros (que ya comparten
+// posiciones, §6.4), nunca el del otro equipo. Durante la cuenta atrás, ninguno (D-042).
+function teamVisibleTo(state: RoomState, viewer: Player | undefined, p: Player): Team | null {
+  if (state.phase === 'COUNTDOWN' || !viewer || !viewer.team || !p.team) return null;
+  if (p.id === viewer.id) return p.team;
+  const inGame = (x: Player) => x.status === 'active' || x.status === 'captured';
+  return inGame(viewer) && inGame(p) && p.team === viewer.team ? p.team : null;
+}
+
 export function snapshotFor(state: RoomState, viewerId: string, now: number): Snapshot {
   const viewer = state.players[viewerId];
   const isHunter = viewer?.team === 'hunter' && viewer.status === 'active';
@@ -138,9 +148,9 @@ export function snapshotFor(state: RoomState, viewerId: string, now: number): Sn
       .map((p) => ({
         id: p.id,
         name: p.name,
-        // D-042: durante la cuenta atrás no se revela ningún equipo, tampoco el propio.
-        team: state.phase === 'COUNTDOWN' ? null : p.team,
-        teamPref: p.teamPref,
+        team: teamVisibleTo(state, viewer, p),
+        // La preferencia solo la ve quien la fijó: el propio jugador o el anfitrión que la asignó.
+        teamPref: p.teamPrefSetBy === viewerId ? p.teamPref : null,
         status: p.status,
         ready: p.ready,
         connected: p.connected,

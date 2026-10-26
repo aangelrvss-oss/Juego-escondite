@@ -27,7 +27,7 @@ public class BridgeContractTest {
     @Test
     public void payloadsHaveExactlyTheContractFields() throws Exception {
         assertEquals(Contract.typeKeys("Reading"), sampleReading(5f, 1f).keySet());
-        assertEquals(Contract.typeKeys("Status"), Payloads.status(false, null, 5000, 0, 0, false, null, null, null).keySet());
+        assertEquals(Contract.typeKeys("Status"), Payloads.status(false, null, 5000, 0, 0, false, null, null, null, false, 0, null).keySet());
         assertEquals(Contract.typeKeys("ProviderStatus"), Payloads.provider(true, "fused", true, true).keySet());
         assertEquals(Contract.typeKeys("Permissions"), Payloads.permissions("prompt", "prompt").keySet());
     }

@@ -24,6 +24,8 @@ export function validateConfig(config: GameConfig): string | null {
 }
 
 export function validateName(name: string): string | null {
+  // También protege createRoom, que recibe el nombre del anfitrión sin pasar por applyCommand.
+  if (typeof name !== 'string') return null;
   const trimmed = name.trim();
   if (trimmed.length < LIMITS.nameLength.min || trimmed.length > LIMITS.nameLength.max) return null;
   return trimmed;

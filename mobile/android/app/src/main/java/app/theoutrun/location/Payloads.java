@@ -34,7 +34,8 @@ public final class Payloads {
     }
 
     public static Map<String, Object> status(boolean running, String sessionId, long intervalMs, int fixes, int gaps,
-                                             boolean gapOpen, String provider, String lastError, String message) {
+                                             boolean gapOpen, String provider, String lastError, String message,
+                                             boolean uploading, int uploaded, String uploadError) {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("running", running);
         m.put("sessionId", sessionId);
@@ -45,6 +46,9 @@ public final class Payloads {
         m.put("provider", provider);
         m.put("lastError", lastError);
         m.put("message", message);
+        m.put("uploading", uploading);
+        m.put("uploaded", uploaded);
+        m.put("uploadError", uploadError);
         return m;
     }
 

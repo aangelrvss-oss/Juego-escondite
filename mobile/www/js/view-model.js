@@ -32,6 +32,7 @@ export const ERROR_TEXT = Object.freeze({
   export_failed: 'No se pudo exportar el registro.',
   service_destroyed: 'Android detuvo el servicio de ubicación sin que lo pidieras.',
   abnormal_end: 'La sesión anterior terminó sin detenerse (proceso cerrado, permiso retirado o reinicio).',
+  invalid_upload: 'Destino de envío no válido: la ubicación solo se envía a un servidor HTTPS.',
   native_error: 'Error del módulo nativo.',
 });
 

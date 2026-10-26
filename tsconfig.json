@@ -14,5 +14,5 @@
     "types": ["node"],
     "skipLibCheck": true
   },
-  "include": ["engine/**/*.ts", "sim/**/*.ts"]
+  "include": ["engine/**/*.ts", "sim/**/*.ts", "server/**/*.ts"]
 }

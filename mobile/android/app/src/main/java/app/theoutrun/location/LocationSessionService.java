@@ -43,7 +43,9 @@ import java.util.UUID;
  *   Services); si el dispositivo no lo tiene, GPS_PROVIDER.
  * - Notificación persistente mientras recopila, con botón «Detener».
  * - Registra calidad, antigüedad y huecos con el núcleo de S1 (CSV SIN coordenadas). Las
- *   coordenadas solo viajan a la pantalla, en memoria.
+ *   coordenadas viajan a la pantalla, en memoria, y SOLO en partida (si se inicia con destino de
+ *   envío) al servidor de la partida por HTTPS desde este servicio, para que sigan llegando con la
+ *   pantalla bloqueada aunque la interfaz web esté dormida. La notificación dice si se envían.
  * No promete continuidad: Android puede limitar o detener el servicio; la sesión lo registra.
  */
 public final class LocationSessionService extends Service {
@@ -51,6 +53,9 @@ public final class LocationSessionService extends Service {
     public static final String ACTION_START = "app.theoutrun.location.START";
     public static final String ACTION_STOP = "app.theoutrun.location.STOP";
     public static final String EXTRA_INTERVAL_MS = "interval_ms";
+    public static final String EXTRA_UPLOAD_URL = "upload_url";
+    public static final String EXTRA_UPLOAD_PLAYER = "upload_player";
+    public static final String EXTRA_UPLOAD_SECRET = "upload_secret";
 
     static final String CHANNEL = "outrun_location";
     private static final int NOTIFICATION_ID = 41;
@@ -73,6 +78,9 @@ public final class LocationSessionService extends Service {
     private static volatile int fixes;
     private static volatile int gaps;
     private static volatile boolean gapOpen;
+    private static volatile boolean uploading;
+    private static volatile int uploaded;
+    private static volatile String uploadError;
     static volatile boolean appVisible;
 
     private final Handler handler = new Handler(Looper.getMainLooper());
@@ -81,6 +89,7 @@ public final class LocationSessionService extends Service {
     private BufferedWriter writer;
     private long lastHeartbeatElapsed;
     private boolean lastAppVisible;
+    private Uploader uploader;
 
     public static void setListener(Listener l) {
         listener = l;
@@ -91,7 +100,8 @@ public final class LocationSessionService extends Service {
     }
 
     public static Map<String, Object> status(String message) {
-        return Payloads.status(running, sessionId, intervalMs, fixes, gaps, gapOpen, activeProvider, lastError, message);
+        return Payloads.status(running, sessionId, intervalMs, fixes, gaps, gapOpen, activeProvider, lastError, message,
+                uploading, uploaded, uploadError);
     }
 
     /** Proveedor que usará la sesión: el fusionado de la plataforma si existe; si no, el GPS. */
@@ -156,7 +166,7 @@ public final class LocationSessionService extends Service {
             if (now - lastHeartbeatElapsed >= ExperimentalParams.HEARTBEAT_MS) {
                 lastHeartbeatElapsed = now;
                 SessionStore.heartbeat(LocationSessionService.this);
-                event(EventType.HEARTBEAT, "fixes=" + recorder.fixes() + " gaps=" + recorder.gaps());
+                event(EventType.HEARTBEAT, "fixes=" + recorder.fixes() + " gaps=" + recorder.gaps() + uploadDetail());
             }
             refreshCounters();
             publishStatus();
@@ -169,7 +179,9 @@ public final class LocationSessionService extends Service {
         String action = intent == null ? null : intent.getAction();
         if (ACTION_START.equals(action)) {
             long requested = intent.getLongExtra(EXTRA_INTERVAL_MS, SessionConfig.DEFAULT_INTERVAL_MS);
-            start(SessionConfig.isValidInterval(requested) ? requested : SessionConfig.DEFAULT_INTERVAL_MS);
+            UploadConfig upload = UploadConfig.parse(intent.getStringExtra(EXTRA_UPLOAD_URL),
+                    intent.getStringExtra(EXTRA_UPLOAD_PLAYER), intent.getStringExtra(EXTRA_UPLOAD_SECRET));
+            start(SessionConfig.isValidInterval(requested) ? requested : SessionConfig.DEFAULT_INTERVAL_MS, upload);
         } else if (ACTION_STOP.equals(action)) {
             stop();
         }
@@ -181,16 +193,20 @@ public final class LocationSessionService extends Service {
     private void fail(String code) {
         lastError = code;
         running = false;
+        uploading = false;
         publishStatus();
         stopSelf();
     }
 
-    private void start(long requestedIntervalMs) {
+    private void start(long requestedIntervalMs, UploadConfig upload) {
         if (running) {
             publishStatus(); // evita servicios o sesiones duplicados
             return;
         }
         lastError = null;
+        uploadError = null;
+        uploaded = 0;
+        uploading = upload != null;
         boolean fine = checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         boolean coarse = checkSelfPermission(Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED;
         if (!fine && !coarse) {
@@ -199,7 +215,7 @@ public final class LocationSessionService extends Service {
         }
         createChannel();
         try {
-            startForeground(NOTIFICATION_ID, serviceNotification(), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
+            startForeground(NOTIFICATION_ID, serviceNotification(upload != null), ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION);
         } catch (RuntimeException e) {
             // SecurityException o ForegroundServiceStartNotAllowedException.
             fail(BridgeErrors.SERVICE_START_DENIED);
@@ -222,7 +238,9 @@ public final class LocationSessionService extends Service {
         lastAppVisible = appVisible;
         String detail = String.format(Locale.ROOT, "app=outrun-h1 provider=%s interval_ms=%d sdk=%d device=%s_%s precise=%s",
                 activeProvider, intervalMs, Build.VERSION.SDK_INT, Build.MANUFACTURER, Build.MODEL, fine).replace(' ', ';');
-        recorder = new SessionRecorder(this::writeLine, now, System.currentTimeMillis(), detail, state());
+        recorder = new SessionRecorder(this::writeLine, now, System.currentTimeMillis(), detail + ";upload=" + (upload != null),
+                state());
+        if (upload != null) uploader = new Uploader(upload, SystemClock::elapsedRealtime, this::onUploadResult);
         running = true;
         fixes = 0;
         gaps = 0;
@@ -256,7 +274,7 @@ public final class LocationSessionService extends Service {
 
     private void stop() {
         if (running) {
-            event(EventType.SESSION_STOP, "fixes=" + recorder.fixes() + " gaps=" + recorder.gaps());
+            event(EventType.SESSION_STOP, "fixes=" + recorder.fixes() + " gaps=" + recorder.gaps() + uploadDetail());
             shutdown();
         }
         stopForeground(STOP_FOREGROUND_REMOVE);
@@ -267,6 +285,9 @@ public final class LocationSessionService extends Service {
     private void shutdown() {
         refreshCounters();
         running = false;
+        uploading = false;
+        if (uploader != null) uploader.close(); // el secreto se descarta con él
+        uploader = null;
         handler.removeCallbacks(tick);
         if (locationManager != null) locationManager.removeUpdates(locationListener);
         try {
@@ -293,12 +314,34 @@ public final class LocationSessionService extends Service {
         recorder.fix(new FixSample(receivedElapsed, fixElapsed, System.currentTimeMillis(), provider, accuracy, speed,
                 location.isMock(), null, state()));
         refreshCounters();
+        if (uploader != null) {
+            uploader.offer(location.getLatitude(), location.getLongitude(), accuracy, fixElapsed, location.isMock());
+        }
         Listener l = listener;
         if (l != null) {
             l.onReading(Payloads.reading(sessionId, location.getLatitude(), location.getLongitude(), accuracy,
                     receivedElapsed - fixElapsed, System.currentTimeMillis(), location.getTime(), provider,
                     location.isMock(), speed));
         }
+    }
+
+    /** Contadores del envío para el registro (sin destino, sesión ni coordenadas). */
+    private String uploadDetail() {
+        return uploader == null ? "" : " uploaded=" + uploaded + " upload_error=" + uploadError;
+    }
+
+    /** Resultado de un envío (llega desde el hilo del envío; se procesa en el principal). */
+    private void onUploadResult(int httpCode) {
+        handler.post(() -> {
+            if (!running || uploader == null) return;
+            uploadError = UploadConfig.errorFor(httpCode);
+            if (uploadError == null) uploaded++;
+            if (UploadConfig.endsSession(httpCode)) {
+                // Sesión no válida o el jugador ya no comparte ubicación (capturado, partida terminada):
+                // se deja de enviar y se termina la sesión, aunque la interfaz esté dormida o cerrada.
+                stop(); // el motivo queda en el registro (SESSION_STOP … upload_error=…)
+            }
+        });
     }
 
     private void refreshCounters() {
@@ -336,12 +379,19 @@ public final class LocationSessionService extends Service {
     }
 
     private void createChannel() {
-        NotificationChannel channel = new NotificationChannel(CHANNEL, "Ubicación en uso (diagnóstico GPS)", NotificationManager.IMPORTANCE_LOW);
+        NotificationChannel channel = new NotificationChannel(CHANNEL, "Ubicación en uso", NotificationManager.IMPORTANCE_LOW);
         channel.setShowBadge(false);
         getSystemService(NotificationManager.class).createNotificationChannel(channel);
     }
 
-    private Notification serviceNotification() {
+    /** Texto honesto: en partida, la ubicación SÍ se envía al servidor de la partida. */
+    static String notificationText(boolean uploading) {
+        return uploading
+                ? "Partida en curso: tu ubicación se envía al servidor de la partida. Pulsa Detener para dejar de compartirla."
+                : "Ubicación activa en este móvil. Esta sesión no envía nada al servidor; el registro no guarda coordenadas.";
+    }
+
+    private Notification serviceNotification(boolean uploading) {
         Intent launch = getPackageManager().getLaunchIntentForPackage(getPackageName());
         PendingIntent open = launch == null ? null : PendingIntent.getActivity(this, 0, launch, PendingIntent.FLAG_IMMUTABLE);
         PendingIntent stop = PendingIntent.getService(this, 1,
@@ -349,7 +399,8 @@ public final class LocationSessionService extends Service {
         return new Notification.Builder(this, CHANNEL)
                 .setSmallIcon(android.R.drawable.ic_menu_mylocation)
                 .setContentTitle("THE OUTRUN está usando tu ubicación")
-                .setContentText("Sesión de diagnóstico GPS en curso. No se envía ni se guardan coordenadas.")
+                .setContentText(notificationText(uploading))
+                .setStyle(new Notification.BigTextStyle().bigText(notificationText(uploading)))
                 .setOngoing(true)
                 .setContentIntent(open)
                 .addAction(new Notification.Action.Builder(null, "Detener", stop).build())

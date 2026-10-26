@@ -8,6 +8,10 @@ export const PLUGIN_NAME = 'OutrunLocation';
 // Intervalo solicitado al sistema: parámetro EXPERIMENTAL (D-038), ajustable para las pruebas.
 export const INTERVAL = Object.freeze({ minMs: 1_000, maxMs: 60_000, defaultMs: 5_000 });
 
+// Envío nativo al servidor de la partida (opcional, solo en partida): límites del contrato.
+export const UPLOAD = Object.freeze({ scheme: 'https', maxUrlLength: 512, maxPlayerIdLength: 64, maxSecretLength: 128 });
+export const UPLOAD_ERRORS = Object.freeze(['network', 'rejected', 'unauthorized', 'ended']);
+
 export const PERMISSION_LOCATION = Object.freeze(['precise', 'approximate', 'denied', 'denied_permanently', 'prompt']);
 export const PERMISSION_NOTIFICATIONS = Object.freeze(['granted', 'denied', 'prompt', 'not_required']);
 
@@ -56,6 +60,9 @@ export function normalizeStatus(raw) {
     provider: strOrNull(r.provider),
     lastError: strOrNull(r.lastError),
     message: strOrNull(r.message),
+    uploading: r.uploading === true,
+    uploaded: isNum(r.uploaded) ? r.uploaded : 0,
+    uploadError: UPLOAD_ERRORS.includes(r.uploadError) ? r.uploadError : null,
   };
 }
 
@@ -79,6 +86,21 @@ export function normalizeProvider(raw) {
 
 export function validInterval(ms) {
   return Number.isInteger(ms) && ms >= INTERVAL.minMs && ms <= INTERVAL.maxMs;
+}
+
+const textUpTo = (v, max) => typeof v === 'string' && v.length > 0 && v.length <= max;
+
+/** Destino del envío nativo: solo HTTPS, sin credenciales en la URL, y una sesión con forma válida. */
+export function validUpload(upload) {
+  if (!upload || typeof upload !== 'object') return false;
+  const { url, playerId, secret } = upload;
+  if (!textUpTo(url, UPLOAD.maxUrlLength) || !textUpTo(playerId, UPLOAD.maxPlayerIdLength) || !textUpTo(secret, UPLOAD.maxSecretLength)) return false;
+  try {
+    const u = new URL(url);
+    return u.protocol === `${UPLOAD.scheme}:` && u.hostname.length > 0 && !u.username && !u.password;
+  } catch {
+    return false;
+  }
 }
 
 const errorCodeOf = (e) => (e && typeof e.code === 'string' ? e.code : 'native_error');
@@ -107,9 +129,12 @@ export function createLocationBridge(plugin) {
     async providerStatus() {
       return normalizeProvider(await call('getProviderStatus'));
     },
-    async start(intervalMs = INTERVAL.defaultMs) {
+    /** Sin `upload`, la sesión no envía nada a la red (diagnóstico). Con `upload`, envía al servidor. */
+    async start(intervalMs = INTERVAL.defaultMs, upload = null) {
       if (!validInterval(intervalMs)) throw new BridgeError('invalid_interval', `Intervalo fuera de ${INTERVAL.minMs}–${INTERVAL.maxMs} ms`);
-      return normalizeStatus(await call('startSession', { intervalMs }));
+      if (upload !== null && !validUpload(upload)) throw new BridgeError('invalid_upload', 'Destino de envío no válido (solo HTTPS)');
+      const args = upload === null ? { intervalMs } : { intervalMs, upload: { url: upload.url, playerId: upload.playerId, secret: upload.secret } };
+      return normalizeStatus(await call('startSession', args));
     },
     async stop() {
       return normalizeStatus(await call('stopSession'));

@@ -54,6 +54,9 @@ export interface Player {
   name: string;
   joinedAt: number;
   teamPref: TeamPref;
+  // Quién fijó teamPref: el propio jugador, el anfitrión (asignación manual) o nadie (valor por
+  // defecto o arrastre de la revancha). Solo quien la fijó puede verla.
+  teamPrefSetBy: string | null;
   team: Team | null;
   ready: boolean;
   status: PlayerStatus;
@@ -174,6 +177,7 @@ export type Command =
   | { type: 'join_rematch' };
 
 export type ErrorCode =
+  | 'invalid_command'
   | 'forbidden'
   | 'wrong_phase'
   | 'unknown_player'
@@ -199,6 +203,7 @@ export type ErrorCode =
   | 'your_location_stale'
   | 'target_location_stale'
   | 'accuracy_too_low'
+  | 'hunter_outside_zone'
   | 'not_close_enough'
   | 'claim_not_found'
   | 'rematch_window_closed';

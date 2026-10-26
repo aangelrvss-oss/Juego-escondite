@@ -7,6 +7,7 @@ import { validateConfig, validateName } from './config.ts';
 import { distanceM, isOutsideZone, zoneAt } from './geo.ts';
 import { availabilityOf, isValidSample, latestSample, recordSample, toStoredSample } from './location.ts';
 import { resolveTeams } from './teams.ts';
+import { invalidCommandField } from './validate.ts';
 import type {
   Audience,
   Command,
@@ -54,6 +55,7 @@ function newPlayer(id: string, deviceId: string, name: string, now: number): Pla
     name,
     joinedAt: now,
     teamPref: 'random',
+    teamPrefSetBy: null,
     team: null,
     ready: false,
     status: 'lobby',
@@ -470,7 +472,9 @@ export function applyCommand(state: RoomState, actorId: string, cmd: Command, no
   runDue(ctx, now);
   const before = ctx.events.length;
   const snapshot = structuredClone(ctx.s);
-  const result = handle(ctx, actorId, cmd);
+  // La forma del comando se valida antes de tocar nada: un comando mal formado nunca llega a handle.
+  const invalid = invalidCommandField(cmd);
+  const result = invalid === null ? handle(ctx, actorId, cmd) : err('invalid_command', invalid);
   if (result.ok) {
     ctx.s.lastActivityAt = now;
   } else {
@@ -502,7 +506,9 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       if (p.status !== 'lobby') return err('forbidden');
       if (!isTeamPref(cmd.pref)) return err('invalid_config', 'pref');
       p.teamPref = cmd.pref;
-      emit(ctx, 'player_updated', ALL, { playerId: p.id, teamPref: p.teamPref });
+      p.teamPrefSetBy = p.id;
+      // La preferencia es privada: solo la recibe quien la ha fijado.
+      emit(ctx, 'player_updated', toPlayers(p.id), { playerId: p.id, teamPref: p.teamPref });
       return ok();
 
     case 'assign_team': {
@@ -512,7 +518,10 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       if (!target || target.status !== 'lobby') return err('unknown_player');
       if (!isTeamPref(cmd.pref)) return err('invalid_config', 'pref');
       target.teamPref = cmd.pref;
-      emit(ctx, 'player_updated', ALL, { playerId: target.id, teamPref: target.teamPref });
+      target.teamPrefSetBy = actorId;
+      // Asignación manual: solo el anfitrión que la hace la conoce; el asignado la descubre al
+      // terminar la cuenta atrás (role_revealed).
+      emit(ctx, 'player_updated', toPlayers(actorId), { playerId: target.id, teamPref: target.teamPref });
       return ok();
     }
 
@@ -725,6 +734,11 @@ function claimTag(ctx: Ctx, hunter: Player, runnerId: string): CommandResult {
   if (!hs || hs.clockSuspect || now - hs.effectiveAt > TAG.maxAgeMs) return err('your_location_stale');
   if (!rs || rs.clockSuspect || now - rs.effectiveAt > TAG.maxAgeMs) return err('target_location_stale');
   if (hs.accuracyM > TAG.maxAccuracyM || rs.accuracyM > TAG.maxAccuracyM) return err('accuracy_too_low');
+  // D-033: un cazador fuera de la zona no puede reclamar capturas mientras siga fuera. Mismo criterio
+  // que para los fugitivos (fuera solo si lo está incluso descontando la precisión). No se le expone.
+  if (s.config && isOutsideZone(hs, hs.accuracyM, zoneAt(s.config.zone, now - (s.activeStart ?? now)))) {
+    return err('hunter_outside_zone');
+  }
   const threshold = Math.min(TAG.baseRadiusM + hs.accuracyM + rs.accuracyM, TAG.maxRadiusM);
   // El motivo del rechazo no incluye la distancia ni la posición del fugitivo.
   if (distanceM(hs, rs) > threshold) return err('not_close_enough');
@@ -804,6 +818,8 @@ function rematch(ctx: Ctx, isHost: boolean, swapRoles: boolean): CommandResult {
     }
     const previous = p.team;
     p.teamPref = previous === null ? 'random' : swapRoles ? (previous === 'hunter' ? 'runner' : 'hunter') : previous;
+    // El arrastre de equipos de la revancha no lo ve nadie (ni el propio jugador ni el anfitrión).
+    p.teamPrefSetBy = null;
     p.team = null;
     p.ready = false;
     clearLocationState(p);

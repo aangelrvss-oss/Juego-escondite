@@ -66,7 +66,7 @@ async function scenario(browser, base, name, { headers = [HEADER], vendor = 'ok'
   await page.addInitScript({ content: nativeSide(headers) });
   if (vendor === 'missing') await page.route('**/vendor/capacitor-core.js', (r) => r.fulfill({ status: 404, body: '' }));
   if (vendor === 'hang') await page.route('**/vendor/capacitor-core.js', () => {}); // no responde nunca
-  await page.goto(base);
+  await page.goto(`${base}diagnostic.html`); // index.html es el juego desde H2
   await check(page, pageErrors);
   await page.close();
   console.log(`ok · ${name}`);

@@ -2,8 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import {
-  BridgeError, INTERVAL, PERMISSION_LOCATION, PERMISSION_NOTIFICATIONS, PLUGIN_NAME,
-  createLocationBridge, normalizePermissions, normalizeReading, normalizeStatus,
+  BridgeError, INTERVAL, PERMISSION_LOCATION, PERMISSION_NOTIFICATIONS, PLUGIN_NAME, UPLOAD, UPLOAD_ERRORS,
+  createLocationBridge, normalizePermissions, normalizeReading, normalizeStatus, validUpload,
 } from '../www/js/location-bridge.js';
 
 const contract = JSON.parse(readFileSync(new URL('../contract/location-bridge.json', import.meta.url), 'utf8'));
@@ -122,4 +122,31 @@ test('permisos, proveedor y exportación pasan por el puente normalizados', asyn
   assert.deepEqual(await bridge.requestPermissions(), { location: 'approximate', notifications: 'denied' });
   assert.equal((await bridge.providerStatus()).provider, 'fused');
   assert.deepEqual(await bridge.exportSession(), { saved: true, name: 'outrun-1.csv' });
+});
+
+test('envío nativo: límites y errores del contrato; solo HTTPS y sin credenciales en la URL', async () => {
+  assert.deepEqual({ ...UPLOAD }, { scheme: contract.upload.scheme, maxUrlLength: contract.upload.maxUrlLength, maxPlayerIdLength: contract.upload.maxPlayerIdLength, maxSecretLength: contract.upload.maxSecretLength });
+  assert.deepEqual([...UPLOAD_ERRORS], contract.enums.uploadErrors);
+  assert.deepEqual(Object.keys(contract.types.Upload).sort(), ['playerId', 'secret', 'url']);
+  const ok = { url: 'https://partida.example/api/loc', playerId: 'p_1', secret: 'x'.repeat(43) };
+  assert.equal(validUpload(ok), true);
+  for (const bad of [
+    null, {}, { ...ok, url: 'http://partida.example/api/loc' }, { ...ok, url: 'wss://partida.example/ws' },
+    { ...ok, url: 'https://user:pw@partida.example/api/loc' }, { ...ok, url: `https://h.example/${'a'.repeat(600)}` },
+    { ...ok, url: 'no es una url' }, { ...ok, playerId: '' }, { ...ok, secret: 'x'.repeat(129) }, { ...ok, secret: 7 },
+  ]) assert.equal(validUpload(bad), false, JSON.stringify(bad)?.slice(0, 80));
+  const plugin = fakePlugin();
+  const bridge = createLocationBridge(plugin);
+  await assert.rejects(bridge.start(5_000, { ...ok, url: 'http://x/api/loc' }), (e) => e.code === 'invalid_upload');
+  assert.equal(plugin.calls.length, 0, 'un destino no válido nunca llega al módulo nativo');
+  await bridge.start(5_000, { ...ok, extra: 'no se reenvía' });
+  assert.deepEqual(plugin.calls, [['startSession', { intervalMs: 5_000, upload: ok }]]);
+  assert.ok(contract.enums.errors.includes('invalid_upload'));
+});
+
+test('estado del envío nativo: valores desconocidos se normalizan a «sin envío»', () => {
+  const s = normalizeStatus({ running: true, uploading: 'sí', uploaded: -Infinity, uploadError: 'raro' });
+  assert.deepEqual([s.uploading, s.uploaded, s.uploadError], [false, 0, null]);
+  const t = normalizeStatus({ running: true, uploading: true, uploaded: 12, uploadError: 'network' });
+  assert.deepEqual([t.uploading, t.uploaded, t.uploadError], [true, 12, 'network']);
 });

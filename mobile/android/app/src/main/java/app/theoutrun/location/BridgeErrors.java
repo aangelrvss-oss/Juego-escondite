@@ -19,9 +19,13 @@ public final class BridgeErrors {
     public static final String EXPORT_FAILED = "export_failed";
     public static final String SERVICE_DESTROYED = "service_destroyed";
     public static final String ABNORMAL_END = "abnormal_end";
+    public static final String INVALID_UPLOAD = "invalid_upload";
 
     public static final List<String> ALL = List.of(
             PERMISSION_MISSING, PROVIDER_DISABLED, SERVICE_START_DENIED, SESSION_FILE_ERROR,
             REQUEST_UPDATES_DENIED, ALREADY_RUNNING, NOT_RUNNING, INVALID_INTERVAL, NO_SESSION,
-            EXPORT_CANCELLED, EXPORT_FAILED, SERVICE_DESTROYED, ABNORMAL_END);
+            EXPORT_CANCELLED, EXPORT_FAILED, SERVICE_DESTROYED, ABNORMAL_END, INVALID_UPLOAD);
+
+    /** Errores del envío nativo («uploadErrors» del contrato), que se ven en Status.uploadError. */
+    public static final List<String> UPLOAD = List.of("network", "rejected", "unauthorized", "ended");
 }

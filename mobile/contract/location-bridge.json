@@ -5,7 +5,7 @@
     "checkPermissions": "() -> Permissions",
     "requestPermissions": "() -> Permissions",
     "getProviderStatus": "() -> ProviderStatus",
-    "startSession": "({ intervalMs }) -> Status",
+    "startSession": "({ intervalMs, upload? }) -> Status",
     "stopSession": "() -> Status",
     "getStatus": "() -> Status",
     "exportSession": "() -> { saved: boolean, name: string | null }"
@@ -46,7 +46,15 @@
       "gapOpen": "boolean",
       "provider": "string|null",
       "lastError": "string|null",
-      "message": "string|null"
+      "message": "string|null",
+      "uploading": "boolean",
+      "uploaded": "number",
+      "uploadError": "string|null"
+    },
+    "Upload": {
+      "url": "string",
+      "playerId": "string",
+      "secret": "string"
     }
   },
   "enums": {
@@ -65,8 +73,10 @@
       "export_cancelled",
       "export_failed",
       "service_destroyed",
-      "abnormal_end"
-    ]
+      "abnormal_end",
+      "invalid_upload"
+    ],
+    "uploadErrors": ["network", "rejected", "unauthorized", "ended"]
   },
   "interval": {
     "note": "Intervalo solicitado al sistema: parámetro EXPERIMENTAL (D-038), ajustable para las pruebas. El sistema puede entregar lecturas más espaciadas.",
@@ -74,9 +84,16 @@
     "maxMs": 60000,
     "defaultMs": 5000
   },
+  "upload": {
+    "note": "Opcional, solo en partida (H2). Con `upload`, el servicio envía cada lectura nueva al servidor de la partida por HTTPS (POST, cuerpo JSON { playerId, secret, lat, lng, acc, age, mock }; protocolo en server/protocol.ts), también con la pantalla bloqueada. `age` se mide con el reloj monótono del sistema al enviar. Solo se envía la última lectura pendiente. El secreto solo vive en la memoria del servicio. Respuestas: 2xx sigue; 401 → uploadError unauthorized y fin de la sesión; 410 → uploadError ended y fin de la sesión; otro 4xx → rejected; red o 5xx → network (se reintenta con la siguiente lectura).",
+    "scheme": "https",
+    "maxUrlLength": 512,
+    "maxPlayerIdLength": 64,
+    "maxSecretLength": 128
+  },
   "privacy": {
     "storesCoordinates": false,
-    "sendsToNetwork": false,
-    "note": "lat/lng solo viajan del módulo nativo a la pantalla, en memoria. El CSV de sesión no tiene columnas de coordenadas."
+    "sendsToNetwork": true,
+    "note": "lat/lng viajan del módulo nativo a la pantalla, en memoria, y solo con `upload` (en partida) al servidor de la partida por HTTPS. Nunca se guardan: el CSV de sesión no tiene columnas de coordenadas. La notificación del servicio dice si se están enviando."
   }
 }

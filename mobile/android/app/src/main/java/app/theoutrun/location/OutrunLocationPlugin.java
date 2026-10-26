@@ -28,7 +28,7 @@ import java.util.Map;
 /**
  * Puente «OutrunLocation» entre la interfaz y el servicio de ubicación (contrato:
  * mobile/contract/location-bridge.json). No contiene reglas del juego: solo permisos, sesión de
- * diagnóstico, estado y exportación del registro.
+ * ubicación (con envío opcional al servidor de la partida), estado y exportación del registro.
  */
 @CapacitorPlugin(
     name = "OutrunLocation",
@@ -170,6 +170,15 @@ public class OutrunLocationPlugin extends Plugin {
             call.reject("La ubicación del sistema está desactivada", BridgeErrors.PROVIDER_DISABLED);
             return;
         }
+        UploadConfig upload = null;
+        JSObject up = call.getObject("upload", null);
+        if (up != null) {
+            upload = UploadConfig.parse(up.getString("url"), up.getString("playerId"), up.getString("secret"));
+            if (upload == null) {
+                call.reject("Destino de envío no válido (solo HTTPS)", BridgeErrors.INVALID_UPLOAD);
+                return;
+            }
+        }
         if (LocationSessionService.isRunning()) {
             call.reject("Ya hay una sesión en curso", BridgeErrors.ALREADY_RUNNING);
             return;
@@ -177,6 +186,13 @@ public class OutrunLocationPlugin extends Plugin {
         Intent intent = new Intent(getContext(), LocationSessionService.class)
                 .setAction(LocationSessionService.ACTION_START)
                 .putExtra(LocationSessionService.EXTRA_INTERVAL_MS, intervalMs);
+        if (upload != null) {
+            // Intent explícito a un servicio propio no exportado: la sesión no sale de la app ni se
+            // guarda (START_NOT_STICKY: Android no vuelve a entregar este intent).
+            intent.putExtra(LocationSessionService.EXTRA_UPLOAD_URL, upload.url)
+                    .putExtra(LocationSessionService.EXTRA_UPLOAD_PLAYER, upload.playerId)
+                    .putExtra(LocationSessionService.EXTRA_UPLOAD_SECRET, upload.secret);
+        }
         try {
             // Solo desde la app visible (requisito de Android 14 sin ubicación en segundo plano).
             ContextCompat.startForegroundService(getContext(), intent);
@@ -189,6 +205,9 @@ public class OutrunLocationPlugin extends Plugin {
         status.put("running", true);
         status.put("intervalMs", intervalMs);
         status.put("lastError", null);
+        status.put("uploading", upload != null);
+        status.put("uploaded", 0);
+        status.put("uploadError", null);
         call.resolve(toJs(status));
     }
 

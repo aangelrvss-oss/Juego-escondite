@@ -1,15 +1,17 @@
 # Estado de calidad
 
-**Última actualización:** 26/10/2026 (cierre documental de H1)
+**Última actualización:** 26/10/2026 (F1 motor seguro, H2 multijugador y preparación de la prueba real en Android; sin commit)
 
 ## Resumen
 
 | Tipo de prueba | Estado |
 |---|---|
-| Pruebas automatizadas del motor y de la simulación | **103 de 103** el 24/10/2026 (2 ejecuciones idénticas); **112 de 112** tras D-042 (25/10/2026). Todas son **SIMULADAS** |
+| Pruebas automatizadas del motor y de la simulación | **103 de 103** el 24/10/2026 (2 ejecuciones idénticas); **112 de 112** tras D-042 (25/10/2026); **130 de 130** con F1 (26/10/2026). Todas son **SIMULADAS** |
+| Servidor multijugador real (H2) | **19 de 19** (`npm run test:server`), incluido el envío de ubicación por HTTP y el ping de protocolo. Clientes reales por WebSocket y HTTP en un ordenador; reloj y ubicaciones **SIMULADOS** |
+| Interfaz de partida con 5 navegadores (H2) | **8 de 8 etapas** (`mobile/e2e/game.e2e.mjs`). Chromium con geolocalización **emulada**; **no son móviles** |
 | Verificación por mutación (3 invariantes de seguridad) | Las 3 mutaciones las detecta al menos una prueba |
-| Pruebas en dispositivos reales | **Una sesión corta de H1 en un Xiaomi 14T** (ver «H1» al final). El resto de pruebas físicas (S1–S3 y la lista de H1) siguen **pendientes** |
-| Transporte de red real (WebSocket), latencia y cobertura móvil | **No probado**: el adaptador depende de D-014, que sigue pendiente |
+| Pruebas en dispositivos reales | **Una sesión corta de H1 en un Xiaomi 14T** (ver «H1» al final). El resto de pruebas físicas siguen **pendientes**: S1–S3, la lista de H1 y la partida con dos móviles (`mobile/PRUEBA_PARTIDA_ANDROID.md`, preparada y **no realizada**) |
+| Transporte de red real (WebSocket), latencia y cobertura móvil | WebSocket real **probado en local** (mismo ordenador). **No probado** desde redes distintas, ni con latencia o cobertura móvil reales |
 | Ubicación en segundo plano, GPS real, notificaciones y batería | **Evidencia preliminar en Android:** en esa sesión corta se recibieron posiciones con la pantalla apagada. **No validados:** sesión larga, caminando, mala señal, batería ni iOS |
 
 **Qué demuestra S0:** que las reglas del modo Clásico, la autoridad del servidor, el filtrado de datos por equipo, la validación de capturas, la reanudación y la idempotencia funcionan según lo documentado **en un entorno simulado y determinista**.
@@ -205,3 +207,128 @@ Datos del CSV exportado, **comunicados por el propietario**. El CSV no está en 
 - iPhone.
 
 **H1 no es una versión multijugador funcional.**
+
+## F1: motor seguro (26/10/2026, sin commit)
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| Privacidad de roles y preferencias (`sim/test/privacy.test.ts`): asignación automática y manual, cuenta atrás, revelación, cambio de anfitrión y revancha | **4 de 4**. Se inspecciona todo lo que recibe cada cliente | Automatizada, SIMULADA |
+| Validación de comandos (`engine/test/validation.test.ts`), incluidas **4.000 entradas inválidas generadas** con semilla fija | **9 de 9**: sin excepciones, sin estado alterado | Automatizada |
+| D-033: cazador fuera de la zona (`engine/test/capture.test.ts`) | **5 de 5** | Automatizada, SIMULADA |
+| Verificación por mutación | Reintroducir cada filtración, quitar el validador o quitar D-033 hace fallar las pruebas correspondientes | Automatizada |
+
+**D-035 no implementada.** La autoridad de resolución, la regla predeterminada, el plazo de resolución y el estado `RESOLVING` solo existen como **propuestas** (`GAME_MODES_AND_RULES.md` §9.3). Hoy, un rechazo cierra la reclamación sin capturar al fugitivo.
+
+**D-033, casos sin definir:**
+- Una reclamación aceptada cuando el cazador ya ha salido de la zona.
+- Una autodeclaración que nombra a un cazador que está fuera.
+
+## H2: servidor y cliente multijugador (26/10/2026, sin commit)
+
+**Qué hay:**
+- `server/`: WebSocket propio sin dependencias, protocolo validado, autoridad reutilizando el motor, sesiones, reanudación, idempotencia, límites y limpieza.
+- `mobile/www/`: interfaz de partida y `net.js`.
+- APK de depuración `0.2.0-h2`, con permiso `INTERNET`.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| Partida completa con **5 clientes reales** (`net.js`) por WebSocket: sala, cuenta atrás, revelación individual, huida de 2 min, persecución, capturas (lectura antigua, imprecisa y a ráfagas rechazadas; válida aceptada), corte y reconexión con recuperación del evento perdido, final y revancha. Revisión de todo el tráfico recibido | Superada | Clientes y servidor reales en un ordenador; tiempo y ubicaciones SIMULADOS |
+| Cliente con el reloj desfasado una hora | Su lectura cuenta como actual: el servidor mide la antigüedad con su propio reloj | Igual |
+| Clientes hostiles: JSON inválido, mensajes de más de 4 KB, binarios, comandos de sistema, cambiarse el rol, comandos duplicados, sesiones falsas, adivinar códigos, avalanchas de mensajes, orígenes ajenos, URL mal formadas, salir de la carpeta pública, sesión abierta en dos sitios | Rechazados o cortados de forma controlada; el servidor sigue vivo | Automatizada |
+| Limpieza: sala cancelada o abandonada (30 min) | Se borran la sala y las sesiones | Automatizada, reloj SIMULADO |
+| E2E de la interfaz con 5 navegadores (412×915) | 8 de 8 etapas, 0 errores de página, ningún dato ajeno en las tramas recibidas | Chromium, geolocalización emulada |
+| `mobile/` `npm test` | **41 de 41** | Automatizada |
+| E2E de arranque del diagnóstico (ahora en `diagnostic.html`) | 4 de 4 | Chromium, lado nativo simulado |
+| Java de la app y núcleo S1 (Gradle) | 8 de 8 (forzadas a ejecutarse) y 20 de 20 (sin cambios en su código) | Automatizada |
+| APK `the-outrun-h2-multijugador-debug.apk` | Compila y está firmada. Sus 16 archivos web son idénticos a `www/`. Permisos: ubicación, servicio en primer plano, notificaciones e Internet | Compilación. **No instalada en ningún móvil** |
+
+**Fallos encontrados y corregidos durante H2:**
+- **Apagado colgado:** el servidor no podía apagarse con sockets WebSocket abiertos.
+- **Expulsión silenciosa:** el expulsado no se enteraba y se quedaba en una sala congelada.
+- **Conexiones muertas:** no se detectaban las que mueren sin cerrarse. Ahora hay un latido en el cliente.
+- **Pings acumulados:** las cadenas de ping se acumulaban con cada reconexión.
+- **Sesión duplicada:** abrir la misma sesión en dos sitios provocaba un bucle de reconexiones.
+- **Caídas del servidor:** una URL mal formada, o una excepción al procesar un mensaje, podían tumbar el proceso.
+- **Interfaz:** avisos que tapaban el botón «Empezar partida», temporizadores sin corregir si fallaban los ping, texto que se perdía al teclear, e Intro en el campo del código que creaba una sala.
+- **Pruebas:** una carrera en la prueba de reconexión (la condición leía una instantánea antigua) y una espera insuficiente en la e2e.
+
+**Pendiente de validar con móviles reales:**
+- Una partida con 5 personas en la calle.
+- Acceso desde redes distintas mediante un túnel HTTPS.
+- Que la app Android **envíe** las lecturas con la pantalla bloqueada.
+- Batería durante una partida.
+- iPhone: solo navegador por ahora, y la app iOS no existe.
+
+## H2: prueba real en Android, preparación (26/10/2026, sin commit)
+
+**Objetivo:** que varias personas puedan jugar desde sus propios móviles. **No se ha hecho ninguna prueba física** en esta sesión: no había móviles disponibles. El procedimiento para hacerla está en `mobile/PRUEBA_PARTIDA_ANDROID.md`.
+
+### Problemas encontrados y corregidos
+
+| # | Problema | Causa | Corrección | Prueba de regresión |
+|---|---|---|---|---|
+| 1 | **Con la pantalla bloqueada, la ubicación podía dejar de llegar al servidor** aunque el GPS siguiera midiendo | Las lecturas se enviaban desde la página (WebView). Android y Chromium pueden ralentizar o detener una página oculta. H1 solo comprobó la medición, no el envío | En partida, el servicio en primer plano envía cada lectura por HTTPS (`POST /api/loc`), con el mismo límite por jugador que el WebSocket. La página deja de enviar mientras el envío nativo funciona, y vuelve a enviar si falla | `server/test/upload.test.mjs` (6): fases, límite compartido, sesiones falsas, peticiones hostiles y captura validada solo con lecturas por HTTP. `UploaderTest` (4) y `UploadContractTest` (7) en Java. Comprobación cruzada única: el emisor Java real contra el servidor Node real (204, antigüedad bien convertida) |
+| 2 | **El anfitrión que centraba la zona no enviaba nunca su ubicación en la partida** (solo en la app) | El receptor de lecturas nativas se quedaba con la función del primer `start()` (la de centrar la zona) | Un único receptor que entrega al último `start()`. Las operaciones con el módulo nativo van en fila, y se espera a que una sesión pare antes de abrir otra | `mobile/test/lockscreen.test.mjs`: falla con el código anterior y pasa con el corregido (comprobado) |
+| 3 | **Falsos cortes de conexión** al volver de la pantalla bloqueada | El latido daba la conexión por muerta en cuanto un temporizador retrasado veía más de 25 s de silencio | Antes de cortar, se envía una sonda (ping) y solo se corta si no responde en 5 s | `lockscreen.test.mjs` (relojes simulados): falla con el código anterior. La detección de conexiones muertas de verdad sigue probada, también en la e2e |
+| 4 | **Una página dormida perdía la conexión a los 75 s**, y con ella el anfitrión su papel a los 120 s; un túnel también puede cerrar por inactividad | El servidor solo esperaba los ping del cliente, que no llegan si la página está dormida | Ping de protocolo del servidor cada 20 s. Lo contesta la pila de red del cliente sin JavaScript | `server/test/keepalive.test.mjs`: con ping, un cliente callado sigue conectado; sin él, se corta |
+| 5 | **La notificación decía «No se envía ni se guardan coordenadas»** durante una partida en la que sí se envían | Texto heredado del diagnóstico de H1 | Texto según la sesión: en partida, «tu ubicación se envía al servidor de la partida». El contrato del módulo ya no dice `sendsToNetwork: false` | `UploadContractTest` |
+| 6 | El servicio podía seguir midiendo tras ser capturado o al acabar la partida si la página estaba dormida o cerrada | Solo la página paraba el servicio | El servidor responde 410 (o 401 si la sesión ya no vale) y el servicio termina solo | `upload.test.mjs` y `UploadContractTest` |
+
+**Ayudas para la prueba física:**
+- `/health` cuenta las lecturas por canal, y `server/health-watch.mjs` las registra cada 10 s.
+- El CSV de cada móvil anota los envíos cada 30 s (`uploaded=`, `upload_error=`).
+- El radar muestra la antigüedad de la posición de cada compañero.
+- La APK es `0.3.0-h2-bloqueo`.
+
+### Revisión de seguridad (fase 2)
+
+Sin fallos demostrables nuevos aparte de los de la tabla.
+
+**Comprobado:**
+- Acceso a salas y sesiones ajenas: secreto de 32 bytes comparado como hash en tiempo constante, y 20 fallos/min por dirección.
+- Fugas de rol y ubicación: pruebas de privacidad del motor, del servidor y de la e2e.
+- Validación de mensajes y límites de frecuencia.
+- Expiración de salas: el motor cierra las salas inactivas y la vida máxima de una sala; el servidor borra las cerradas.
+- Errores aislados por conexión.
+- Coordenadas fuera de rango: las rechaza el motor.
+
+**Del nuevo `POST /api/loc`:**
+- Exige `Content-Type: application/json`, así que un navegador no puede usarlo desde otra web sin una comprobación previa que el servidor no admite.
+- Comprueba el origen y limita el cuerpo a 1 KB.
+- La sesión va en el cuerpo, nunca en la URL.
+- No sigue redirecciones desde el móvil.
+
+**Limitaciones que siguen abiertas:**
+- Ubicación falsificada: solo se marca.
+- Expulsión basada en el identificador de instalación.
+- Salas en memoria.
+- Detrás del túnel sin `TRUST_PROXY=1`, todos los móviles comparten la dirección del túnel en los límites por dirección.
+
+### Pruebas ejecutadas (26/10/2026)
+
+| Suite | Resultado | Tipo |
+|---|---|---|
+| Motor y simulación (`npm test`) | 130 de 130 | Automatizada, simulada |
+| `npm run typecheck` | Sin errores | Estática |
+| Servidor (`npm run test:server`) | 19 de 19 | Automatizada; clientes reales en un ordenador |
+| Cliente (`mobile/` `npm test`) | 49 de 49 | Automatizada; módulo nativo y WebSocket simulados |
+| E2E de la partida (5 navegadores) | 8 de 8 etapas, 0 errores de página, sin datos ajenos | **Navegador** (Chromium, geolocalización emulada) |
+| E2E de arranque del diagnóstico | 4 de 4 | **Navegador**, lado nativo simulado |
+| Java de la app y núcleo S1 (Gradle) | 19 de 19 y 20 de 20 | Automatizada, sin dispositivo |
+| APK `the-outrun-h2-pantalla-bloqueada-debug.apk` | Compila, con la misma firma de depuración que las anteriores. Su web es idéntica a `www/`. Mismos permisos que la APK H2, sin ubicación en segundo plano | Compilación. **No instalada en ningún móvil** |
+
+### Escenarios y cómo se han validado
+
+| Escenario | Automatizado | Navegador | Físico |
+|---|---|---|---|
+| Crear sala, unirse, sincronizar fases y tiempos | Sí | Sí | **No** |
+| Ubicación con la pantalla bloqueada (envío nativo) | Sí: servidor, cuerpo Java, emisor Java contra un servidor local y contra el servidor Node | No aplica (es nativo) | **No** |
+| Conexión viva con la página dormida (ping del servidor) | Sí, con el WebSocket de Node | No | **No** |
+| Corte de red y recuperación | Sí | Sí (modo sin conexión de Playwright) | **No** |
+| Captura con GPS real | No (lecturas simuladas) | No (geolocalización emulada) | **No** |
+| Acceso por túnel HTTPS desde datos móviles | No | No | **No** |
+| HyperOS con la pantalla bloqueada durante una partida | No | No | **No** |
+| Camino completo de la app con envío nativo (`app.js`) | En parte: adaptador y puente simulados | **No** (necesita HTTPS) | **No** |
+
+**Sin validar:** todo lo de la columna «Físico», la batería en partida, iOS (no existe la app), y D-035 (pendiente de decisión, sin implementar).
+

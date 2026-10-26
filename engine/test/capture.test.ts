@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { SECOND, TIMING } from '../src/constants.ts';
+import { visiblePositions } from '../src/view.ts';
 import { activeGame } from './helpers.ts';
 import type { Harness } from './helpers.ts';
 
@@ -151,5 +152,59 @@ describe('validación de capturas (AC-E1 a AC-E7)', () => {
     g.ok('h2', { type: 'leave' });
     assert.deepEqual(g.state.claims, {});
     assert.equal(g.eventsOf('tag_claim_resolved').at(-1)?.data.result, 'cancelled');
+  });
+});
+
+describe('cazador fuera de la zona (D-033)', () => {
+  // Zona de las pruebas: radio de 400 m alrededor de CENTER. Fuera = distancia − precisión > radio.
+  it('no puede reclamar una captura mientras está fuera, y el rechazo no crea reclamación ni avisa al fugitivo', () => {
+    const g = activeGame();
+    g.at('h', 410); // 410 − 8 = 402 m > 400 m: fuera
+    g.at('r1', 414); // a 4 m del cazador: la cercanía no es el problema
+    const before = g.events.length;
+    const r = g.cmd('h', { type: 'claim_tag', runnerId: 'r1' });
+    assert.equal(err(r), 'hunter_outside_zone');
+    assert.deepEqual(Object.keys(r).sort(), ['error', 'ok'], 'sin distancias ni posiciones');
+    assert.deepEqual(g.state.claims, {});
+    assert.equal(g.events.length, before, 'ningún evento: el fugitivo no recibe aviso');
+    assert.equal(g.state.players.r1?.status, 'active');
+  });
+
+  it('con el beneficio de la duda: justo en el límite descontando la precisión sigue dentro', () => {
+    const g = activeGame();
+    g.at('h', 407); // 407 − 8 = 399 m ≤ 400 m: dentro
+    g.at('r1', 411);
+    assert.equal(g.cmd('h', { type: 'claim_tag', runnerId: 'r1' }).ok, true);
+  });
+
+  it('al volver a la zona puede reclamar de nuevo («mientras sigan fuera»)', () => {
+    const g = activeGame();
+    g.at('h', 410);
+    g.at('r1', 405);
+    assert.equal(err(g.cmd('h', { type: 'claim_tag', runnerId: 'r1' })), 'hunter_outside_zone');
+    g.now += SECOND;
+    g.at('h', 395);
+    g.at('r1', 400);
+    assert.equal(g.cmd('h', { type: 'claim_tag', runnerId: 'r1' }).ok, true);
+  });
+
+  it('estar fuera no expone al cazador: ni avisos ni posición para los fugitivos', () => {
+    const g = activeGame();
+    g.at('r1', 0);
+    const before = g.events.length;
+    g.at('h', 900);
+    g.advance(TIMING.outOfZoneGraceMs + SECOND);
+    g.at('h', 900);
+    const after = g.events.slice(before);
+    assert.ok(!after.some((e) => /zone|exposed/.test(e.type)), JSON.stringify(after.map((e) => e.type)));
+    assert.equal(g.state.players.h?.exposed, false);
+    assert.ok(!visiblePositions(g.state, 'r1', g.now).some((p) => p.playerId === 'h'));
+  });
+
+  it('las demás comprobaciones siguen antes: con su posición antigua, el error es el de siempre', () => {
+    const g = activeGame();
+    g.at('h', 410, 8, g.now - TIMING.sampleHistoryMs);
+    g.at('r1', 414);
+    assert.equal(err(g.cmd('h', { type: 'claim_tag', runnerId: 'r1' })), 'your_location_stale');
   });
 });

@@ -1,13 +1,15 @@
 # Estado del proyecto
 
-**Última actualización:** 26/10/2026 (cierre documental de H1)
+**Última actualización:** 26/10/2026 (F1 motor seguro, H2 multijugador y preparación de la prueba real en Android; **sin commit**)
 **Rama:** `ccr-f1962362-hvwb9i`
 **Nombre del producto:** provisional. La demo y H1 usan la identidad visual THE OUTRUN; no hay ninguna decisión de nombre registrada en `DECISION_LOG.md`.
 
 ## Fase activa
 
-**H1 (app Android de diagnóstico GPS con Capacitor): corrección publicada y prueba física preliminar superada en el Xiaomi 14T.** Falta una segunda prueba física caminando. **H2 (multijugador real) está en pausa:** no se ha empezado a implementar.
-- Detalle en la sección «H1» de este archivo y en `QUALITY_STATE.md`.
+**H2 (multijugador real): servidor y cliente implementados y probados en un ordenador (5 clientes reales por WebSocket y 5 navegadores). Falta la primera partida con móviles reales.** Los cambios de F1 y H2 están **sin commit**.
+- **Prueba con dos móviles Android: preparada y no realizada.** Procedimiento en `mobile/PRUEBA_PARTIDA_ANDROID.md`, con la APK `0.3.0-h2-bloqueo`. En partida, el servicio nativo envía la ubicación al servidor por HTTPS, para que llegue con la pantalla bloqueada.
+- Cómo jugar y arrancar el servidor: `server/README.md`. Resultados y límites: `QUALITY_STATE.md` (secciones F1, H2 y «H2: prueba real en Android»).
+- H1 (diagnóstico GPS): corrección publicada y prueba física preliminar superada. Sigue disponible en la app (`diagnostic.html`).
 
 **Antecedente, S1 (ubicación en Android con la app Java de `android/`):** su APK compila (sesión 9), pero no se ha probado en el dispositivo. H1 reutiliza su núcleo (`android/core`).
 - ~~Bloqueo: la red del entorno deniega `dl.google.com` (D-040).~~ **Resuelto en la sesión 9:** el propietario habilitó el dominio y el APK debug compila. **Las pruebas en el dispositivo físico siguen pendientes.**
@@ -82,6 +84,43 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 - **APK:** no está versionada. Se conserva solo en `mobile/apk-local/` (carpeta excluida en local con `.git/info/exclude`) en este contenedor efímero, junto a la APK anterior como respaldo.
 - **Sin validar todavía:** caminata larga, interiores o mala señal, batería en sesión larga, ajustes de ahorro de HyperOS, red y varios jugadores, e iPhone.
 
+## F1 y H2: motor seguro y partida multijugador (26/10/2026, sin commit)
+
+- **F1 (motor):**
+  - Privacidad de roles y preferencias: solo las ve quien las fijó, y en la asignación manual solo el anfitrión.
+  - Validación estricta de comandos.
+  - D-033: un cazador fuera de la zona no puede reclamar capturas.
+  - **D-035 sin implementar:** su procedimiento solo existe como propuesta.
+- **Servidor (`server/`):** Node 22 sin dependencias nuevas. Incluye:
+  - WebSocket propio y protocolo JSON validado;
+  - sesiones con secreto, códigos de 6 caracteres, reanudación con `seq` e idempotencia;
+  - hora de las lecturas calculada con el reloj del servidor;
+  - límites de abuso, limpieza de salas y comprobación de origen;
+  - la interfaz web servida por el mismo servidor.
+- **Cliente (`mobile/www/`):**
+  - inicio, sala, configuración del anfitrión, cuenta atrás, rol privado, huida, persecución con radar, capturas, avisos de zona, reconexión, final y revancha;
+  - ubicación nativa en Android, del navegador en web e iPhone, y el mismo contrato para el futuro iOS;
+  - APK `0.2.0-h2` con permiso de Internet.
+- **Decisiones técnicas** (reversibles; no cambian reglas):
+  - WebSocket escrito a mano, para no añadir dependencias;
+  - interfaz sin mapas externos (radar SVG);
+  - la preferencia de equipo propia no aparece en la interfaz, porque si el sorteo respeta preferencias sigue abierto;
+  - el servidor solo escucha en este ordenador salvo que se indique `HOST`;
+  - límites técnicos de frecuencia, incluida una reclamación cada 3 s por cazador.
+
+**Preparación de la prueba real en Android (26/10/2026, sin commit):**
+- **Envío nativo:** en partida, el servicio en primer plano envía la ubicación por HTTPS (`POST /api/loc`), con el mismo límite por jugador que el WebSocket.
+- **Conexión:**
+  - ping de protocolo del servidor cada 20 s;
+  - el latido del cliente envía una sonda antes de dar la conexión por muerta.
+- **Correcciones:**
+  - el anfitrión que centraba la zona no enviaba su ubicación en la app;
+  - la notificación decía que no se enviaban coordenadas;
+  - el servicio no se paraba solo al ser capturado o al terminar la partida.
+- **Ayudas para la prueba:** contadores por canal en `/health`, `server/health-watch.mjs` y la antigüedad de los compañeros en el radar.
+- **APK:** `the-outrun-h2-pantalla-bloqueada-debug.apk`. Las APK anteriores se conservan.
+- **Detalle y pruebas:** `QUALITY_STATE.md`.
+
 ## Decisiones
 
 - **Aprobadas por el propietario:** D-002, D-003, D-004 (en parte), D-006, D-007, D-008, D-009, D-010, D-011, D-024 a D-029 (sesión 4), D-030 a D-038 (sesión 5) y D-042 (sesión 13: secuencia de inicio de partida).
@@ -94,15 +133,24 @@ No hay cuentas creadas, ni servicios contratados, ni despliegues, ni conexiones 
 - ~~El trabajo de las sesiones 5 y 6 está sin confirmar.~~ **Todo el trabajo está guardado en Git:** HEAD `7ac972e`, publicado y sincronizado con `origin` (26/10/2026). Solo las APK de `mobile/apk-local/` quedan fuera de Git, a propósito.
 - La demo **no se puede instalar como app** sin autorización: la PWA necesita un despliegue HTTPS y el APK necesita el SDK (D-040). Hoy se abre como archivo en Chrome.
 - ~~**D-040:** sin `dl.google.com` no se puede compilar el APK en este entorno.~~ Resuelto (sesión 9). Si el contenedor se recrea, hay que volver a instalar los dos componentes del SDK.
-- El riesgo crítico sigue abierto: la ubicación con el móvil bloqueado. **S0 no lo reduce.** H1 aporta una primera evidencia positiva (sesión corta en el Xiaomi 14T con la pantalla apagada), pero no lo cierra: falta una sesión larga caminando.
+- El riesgo crítico sigue abierto: la ubicación con el móvil bloqueado. **S0 no lo reduce.**
+  - H1 aporta una primera evidencia positiva (sesión corta en el Xiaomi 14T con la pantalla apagada), pero no lo cierra: falta una sesión larga caminando.
+  - En la partida, el envío nativo por HTTPS está implementado y probado sin dispositivo. **Que HyperOS lo deje enviar con la pantalla bloqueada está sin comprobar.**
 - El adaptador de servidor sigue sin decidir (D-014): no se ha probado ningún transporte real.
 - El coste de CPU del motor (clona el estado en cada comando) no se ha medido en un adaptador real.
 
 ## Siguiente acción concreta
 
-1. Revisar y confirmar este cierre documental de H1 (cambios sin commit hasta que se autorice).
-2. **Segunda prueba física de H1:** 15–20 min caminando con la pantalla bloqueada la mayor parte del tiempo, con un paso por un portal o garaje (pruebas 3, 4 y 6 de `mobile/PRUEBAS_XIAOMI_14T.md`). Antes de empezar, anotar los ajustes de batería de HyperOS. Exportar el CSV y analizarlo.
-3. **H2 sigue en pausa** hasta que el propietario lo autorice. Las decisiones pendientes para H2 están en la auditoría del 25/10/2026, que no está en el repositorio.
+1. Revisar F1 y H2 y autorizar (o no) su commit.
+2. **Prueba con dos móviles:** seguir `mobile/PRUEBA_PARTIDA_ANDROID.md`.
+   - Servidor y túnel HTTPS en tu ordenador.
+   - APK `0.3.0-h2-bloqueo` en los dos Android.
+   - Comprobar con `server/health-watch.mjs` que las lecturas siguen llegando con la pantalla **bloqueada**, y devolver los contadores y los CSV.
+3. Si lo anterior funciona, la **primera partida con 5 personas**. Antes, decidir D-035 (disputas) y si los equipos se revelan al final.
+4. La segunda prueba física de H1 (caminata de 15–20 min) sigue siendo útil para calibrar la precisión.
+
+Acciones anteriores a H2:
+- Revisar y confirmar el cierre documental de H1. *Hecho (`4c190a0`).*
 
 Acciones anteriores:
 - El propietario abre `demo/dist/rastro-demo.html` en el Xiaomi 14T, la prueba (lista en `demo/README.md`) y comenta lo que vea. *Sin resultado registrado.*

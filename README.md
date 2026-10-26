@@ -2,7 +2,13 @@
 
 Proyecto de juego social de escondite y persecución en la vida real con geolocalización, pensado para España y con Madrid como primer mercado.
 
-**Estado:** S0 completada en simulación. **H1** (app Android de diagnóstico GPS con Capacitor, con la identidad visual THE OUTRUN) compila, se ha instalado en un Xiaomi 14T y ha superado una **prueba física preliminar** (sesión corta). H1 es un diagnóstico local: **todavía no hay multijugador, servidor ni salas reales**, y H2 sigue pendiente. Hay una **demo visual simulada** para el móvil (sin GPS ni red).
+**Estado:**
+- **H2:** partida multijugador con servidor autoritativo (`server/`) y cliente (`mobile/`, app Android y web).
+  - Probada con 5 clientes reales y 5 navegadores en un ordenador; **todavía no se ha jugado con móviles reales**.
+  - La prueba con dos Android está preparada en [`mobile/PRUEBA_PARTIDA_ANDROID.md`](./mobile/PRUEBA_PARTIDA_ANDROID.md).
+- **H1:** el diagnóstico GPS superó una prueba física preliminar en un Xiaomi 14T.
+- **S0:** completada en simulación.
+- Hay una **demo visual simulada**, sin GPS ni red.
 
 ## Documentación
 
@@ -18,7 +24,8 @@ Proyecto de juego social de escondite y persecución en la vida real con geoloca
 - [docs/product/GAME_MODES_AND_RULES.md](./docs/product/GAME_MODES_AND_RULES.md): reglas de juego (fuente única)
 - [docs/technical/S1_ANDROID_PROTOCOL.md](./docs/technical/S1_ANDROID_PROTOCOL.md): protocolo de S1 en Android
 - [android/](./android/README.md): prototipo de S1 (núcleo Java y app)
-- [mobile/](./mobile/README.md): app H1 de diagnóstico GPS (Capacitor) y sus [pruebas físicas en el Xiaomi 14T](./mobile/PRUEBAS_XIAOMI_14T.md)
+- [server/](./server/README.md): servidor de partida y **guía para jugar**
+- [mobile/](./mobile/README.md): app de la partida y del diagnóstico GPS (Capacitor) y sus [pruebas físicas en el Xiaomi 14T](./mobile/PRUEBAS_XIAOMI_14T.md)
 - [demo/](./demo/README.md): demo visual **simulada** de una partida (un solo HTML; cómo abrirla en el móvil)
 
 ## Etapa S0: motor de reglas y simulación
@@ -43,6 +50,15 @@ npm run test:demo
 
 Es un HTML autocontenido: se abre directamente en el navegador. Todo es ficticio (posiciones, jugadores y cercanía). Ver [demo/README.md](./demo/README.md).
 
-## H1: app Android de diagnóstico GPS
+## Jugar (H2)
 
-App Capacitor con un módulo nativo de ubicación propio y una pantalla de diagnóstico, sin red. Comandos, pruebas y límites en [mobile/README.md](./mobile/README.md); resultados en [QUALITY_STATE.md](./QUALITY_STATE.md).
+```
+node server/main.ts          # servidor (Node ≥ 22.18, sin dependencias) en http://127.0.0.1:8787
+npm run test:server          # pruebas del servidor con clientes reales por WebSocket
+```
+
+Guía completa (túnel HTTPS, APK, crear y compartir sala, permisos, registros y limitaciones): [server/README.md](./server/README.md).
+
+## App móvil (H1 y H2)
+
+App Capacitor con módulo nativo de ubicación propio. Incluye la partida (`index.html`) y el diagnóstico GPS (`diagnostic.html`). Comandos, pruebas y pasos para iOS en [mobile/README.md](./mobile/README.md); resultados en [QUALITY_STATE.md](./QUALITY_STATE.md).
