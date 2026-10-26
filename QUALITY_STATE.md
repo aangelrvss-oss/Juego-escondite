@@ -642,4 +642,3 @@ Ver D-052 y la tabla de trazabilidad de arriba.
 | E2E en Chrome | 41 de 41 (tres veces) |
 
 **Fallo intermitente sin identificar:** una prueba del servidor falló una vez en 13 ejecuciones de la suite completa. De esa ejecución solo se guardó el resumen, así que no se sabe cuál fue. No se ha reproducido ni aislada ni con carga. Las sospechosas son las que dependen del reloj real (`crash.test.mjs` y `keepalive.test.mjs`): en `crash.test.mjs` hay una carrera conocida de probabilidad baja, si el guardado periódico cae entre la entrada de un jugador y la caída. **No se ha corregido** (está en el backlog). La próxima ejecución completa debe guardar la salida entera.
-
