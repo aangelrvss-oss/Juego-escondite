@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, clock, codeFromLink, errorText, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, clock, codeFromLink, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -46,6 +46,7 @@ const ui = {
   confirmEnd: false,
   confirmNewCode: false,
   confirmLeave: false,
+  gpsChecked: false, // este móvil ya ha dado una posición válida (se comprueba al pulsar «Estoy listo»)
   location: null,
   tracking: false,
   inviteCode: null, // código recibido por enlace de invitación (?sala=)
@@ -318,6 +319,7 @@ async function locateOnce() {
     });
     if (!ui.tracking) await src.stop();
     ui.reading = reading;
+    ui.gpsChecked = true;
     return reading;
   } finally {
     ui.locating = false;
@@ -411,7 +413,8 @@ function lobbyScreen(snap) {
       <h2>Jugadores <span class="count">${players.length}/20</span></h2>
       <ul class="players">${players.map((p) => playerRow(p, snap, isHost)).join('')}</ul>
       ${isHost ? '<p class="hint">Roles: «Sorteo» los reparte el servidor en secreto al empezar. Si asignas uno, solo tú lo ves; cada jugador descubre el suyo al terminar la cuenta atrás.</p>' : ''}
-      ${!invited ? `<button class="btn ${self?.ready ? 'btn-outline' : 'btn-primary'}" data-act="ready">${self?.ready ? 'No estoy listo' : 'Estoy listo'}</button>` : ''}
+      ${!invited ? `<button class="btn ${self?.ready ? 'btn-outline' : 'btn-primary'}" data-act="ready"${ui.locating ? ' disabled' : ''}>${ui.locating ? 'Comprobando tu GPS…' : self?.ready ? 'No estoy listo' : 'Estoy listo'}</button>` : ''}
+      ${!invited && !self?.ready && !ui.gpsChecked ? '<p class="hint">Al pulsar «Estoy listo» se comprueba tu GPS. La ubicación solo se usa durante la partida y se borra al terminar.</p>' : ''}
     </section>
     ${isHost ? hostConfig(snap) : `<section class="card"><h2>Partida</h2><p class="line">${esc(summary)}</p></section>`}
     ${isHost ? `<section class="card stack">${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}
@@ -724,8 +727,20 @@ document.addEventListener('click', async (ev) => {
       ui.confirmNewCode = false;
       if (ui.sheet === 'qr') ui.sheet = null;
       return void cmd({ type: 'new_code' });
-    case 'ready':
-      return void cmd({ type: 'set_ready', ready: !self?.ready });
+    case 'ready': {
+      const ready = !self?.ready;
+      // Antes de declararse listo, este móvil tiene que dar una posición: así el permiso se pide en la
+      // sala (con su explicación) y no en mitad de la cuenta atrás, y nadie empieza sin GPS.
+      if (ready && !ui.gpsChecked) {
+        try {
+          await locateOnce();
+        } catch (e) {
+          toast(gpsCheckError(e.message), 'danger');
+          return;
+        }
+      }
+      return void cmd({ type: 'set_ready', ready });
+    }
     case 'center':
       try {
         const r = await locateOnce();

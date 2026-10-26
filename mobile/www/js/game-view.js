@@ -196,6 +196,19 @@ export function codeFromLink(href) {
   }
 }
 
+/**
+ * Motivo, en palabras del jugador, por el que la comprobación de GPS al pulsar «Estoy listo» no ha
+ * salido bien (Plan Maestro §2.1 paso 4 y §4.1: explicar por qué se pide la ubicación y no fingir que
+ * se puede validar sin ella).
+ */
+export function gpsCheckError(code) {
+  if (code === 'permission_missing') {
+    return 'Para jugar hace falta permitir la ubicación: el servidor la usa para validar capturas y la zona, y solo durante la partida. Actívala y vuelve a pulsar «Estoy listo».';
+  }
+  if (code === 'timeout') return 'Todavía no hay una posición GPS fiable. Sal al aire libre, espera unos segundos y vuelve a pulsar «Estoy listo».';
+  return 'No se pudo activar la ubicación de este móvil. Revisa que esté encendida y vuelve a intentarlo.';
+}
+
 /** Comprobaciones previas al inicio, en el orden en que las exige el motor (para el anfitrión). */
 export function startBlockers(snap) {
   const out = [];

@@ -92,7 +92,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
    - se coloca en el punto de encuentro y pulsa **Centrar la zona aquí**;
    - elige el radio, la duración, la huida (2 min como mínimo) y la frecuencia de las pistas;
    - marca la lista de seguridad.
-4. **Los demás:** nombre, código y **Unirme**. Todos pulsan **Estoy listo**.
+4. **Los demás:** nombre, código y **Unirme**. Todos pulsan **Estoy listo**. Antes de quedar listo, cada móvil comprueba que da una posición GPS: así el permiso se pide en la sala, con su explicación, y no en la cuenta atrás.
 5. **Roles:** por defecto el servidor los sortea en secreto. El anfitrión puede asignarlos a mano, y solo él ve esas asignaciones.
 6. **Empezar partida:**
    - cuenta atrás de 5 s, igual para todos;
@@ -110,7 +110,7 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 ```bash
 npm run test:server        # 33 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report y abandono en partida
 npm test                   # motor y simulación (130)
-cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR y Mission Report (72)
+cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report y comprobación de GPS (75)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)
 node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, QR, cambio de código y partida corta hasta el Mission Report en un navegador real (sin Playwright)
 ```

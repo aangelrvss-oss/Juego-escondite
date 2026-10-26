@@ -59,7 +59,7 @@ try {
   });
   const bsend = (method, params = {}) => new Promise((r) => (bwait.set(++bid, r), bws.send(JSON.stringify({ id: bid, method, params }))));
 
-  async function newPage(url) {
+  async function newPage(url, { geolocation = true } = {}) {
     const { result: ctx } = await bsend('Target.createBrowserContext', { disposeOnDetach: true });
     const { result: created } = await bsend('Target.createTarget', { url, browserContextId: ctx.browserContextId });
     let target;
@@ -87,8 +87,13 @@ try {
       });
     await send('Runtime.enable');
     // Geolocalización EMULADA en el punto de prueba de siempre (fixture de las pruebas del motor).
-    await bsend('Browser.grantPermissions', { origin: server.url, permissions: ['geolocation'], browserContextId: ctx.browserContextId });
-    await send('Emulation.setGeolocationOverride', { latitude: 40.4153, longitude: -3.6845, accuracy: 8 });
+    if (geolocation) {
+      await bsend('Browser.grantPermissions', { origin: server.url, permissions: ['geolocation'], browserContextId: ctx.browserContextId });
+      await send('Emulation.setGeolocationOverride', { latitude: 40.4153, longitude: -3.6845, accuracy: 8 });
+    } else {
+      // Jugador que deniega el permiso de ubicación.
+      await bsend('Browser.setPermission', { origin: server.url, permission: { name: 'geolocation' }, setting: 'denied', browserContextId: ctx.browserContextId });
+    }
     const evaluate = async (expr) => {
       const r = await send('Runtime.evaluate', { expression: expr, awaitPromise: true, returnByValue: true });
       if (r.result?.exceptionDetails) throw new Error(r.result.exceptionDetails.exception?.description ?? 'evaluate');
@@ -188,6 +193,21 @@ try {
   await late.evaluate(click('[data-act="join"]'));
   await host.waitFor(`document.querySelectorAll('.players li').length === 3`, 'tres jugadores');
   check('con el código nuevo entra el tercero', true);
+
+  // Un cuarto jugador deniega la ubicación: no puede declararse listo y ve por qué (Plan §2.1 paso 4).
+  const dani = await newPage(`${server.url}/?sala=${code2}`, { geolocation: false });
+  await dani.waitFor(`!!document.querySelector('#f-code')`, 'inicio de Dani');
+  await dani.evaluate(type('#f-name', 'Dani'));
+  await dani.evaluate(click('[data-act="join"]'));
+  await dani.waitFor(`!!document.querySelector('[data-act="ready"]')`, 'Dani en la sala');
+  check('antes de estar listo se explica que se comprobará el GPS', await dani.evaluate(`document.body.textContent.includes('se comprueba tu GPS')`));
+  await dani.evaluate(click('[data-act="ready"]'));
+  await dani.waitFor(`document.body.textContent.includes('Para jugar hace falta permitir la ubicación')`, 'aviso de permiso denegado', 10_000);
+  const daniReady = Object.values(server.hub.roomStateByCode(code2).players).find((p) => p.name === 'Dani')?.ready;
+  check('sin permiso de ubicación no puede declararse listo', daniReady === false);
+  await dani.evaluate(click('[data-act="leave"]'));
+  await host.waitFor(`document.querySelectorAll('.players li').length === 3`, 'Dani sale de la sala');
+  dani.close();
 
   // Partida corta: Ana y Cris cazadores, Beto fugitivo (asignación manual del anfitrión).
   const assign = (name, pref) =>

@@ -434,6 +434,23 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 
 **No validado:** que el servicio nativo de Android se detenga de verdad al recibir el 410 en un móvil. Está probado el contrato (`UploadContractTest`), no el dispositivo.
 
+### Comprobación de GPS al pulsar «Estoy listo» (Plan Maestro §2.1 paso 4 y §4.1, 26/10/2026, 19:53-19:55)
+**Defecto encontrado:**
+- El permiso de ubicación se pedía al **empezar la cuenta atrás**, en mitad de la partida.
+- Un jugador que lo negaba entraba igualmente sin GPS: nadie podía capturarlo (`target_location_stale`) y él no podía capturar.
+
+**Corrección (solo en el cliente, reversible):**
+- Antes de marcarse como listo, el móvil tiene que dar una posición con una precisión de 100 m o mejor (`locateOnce`, con un tiempo límite de 30 s).
+- Un texto en la sala explica que se comprobará el GPS y para qué se usa la ubicación. Si falla, se explica el motivo (`gpsCheckError`) y el jugador no queda listo.
+- No crea la fase CHECKS (su mapeo sigue pendiente de decisión), ni avisa a los demás de «GPS pendiente»: eso necesitaría un estado en el servidor.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/gps-check.test.mjs`: textos para permiso denegado, sin posición y otros fallos | **3 de 3** | Automatizada |
+| `web-flow.e2e.mjs`: un cuarto jugador con la ubicación **denegada** ve la explicación, pulsa «Estoy listo», ve el motivo y **no** queda listo en el servidor; los jugadores con permiso siguen el flujo normal | **23 de 23** en total | Chrome real, permisos y geolocalización emulados |
+
+**No validado:** el diálogo de permisos real de Android y de iOS en un móvil.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|
