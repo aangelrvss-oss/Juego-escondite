@@ -14,7 +14,7 @@ import { createLocationBridge, nativePlugin } from './location-bridge.js';
 // en un navegador ni se intenta, así la web no depende de www/vendor.
 const inNativeApp = () => Boolean(globalThis.Capacitor?.isNativePlatform?.());
 
-export async function createLocationSource({ geolocation = globalThis.navigator?.geolocation, loadNative = inNativeApp() ? nativePlugin : null, nativeOptions } = {}) {
+export async function createLocationSource({ geolocation = globalThis.navigator?.geolocation, loadNative = inNativeApp() ? nativePlugin : null, nativeOptions, webOptions } = {}) {
   let native = null;
   try {
     if (loadNative) ({ plugin: native } = await loadNative());
@@ -22,7 +22,7 @@ export async function createLocationSource({ geolocation = globalThis.navigator?
     native = null; // sin runtime de Capacitor: se usa la geolocalización web
   }
   if (native) return nativeSource(createLocationBridge(native), nativeOptions);
-  if (geolocation) return webSource(geolocation);
+  if (geolocation) return webSource(geolocation, webOptions);
   return { kind: 'none', async start() { throw new Error('unavailable'); }, async stop() {} };
 }
 
@@ -94,29 +94,55 @@ function nativeSource(bridge, { pollMs = 100, stopTimeoutMs = 3_000 } = {}) {
   };
 }
 
-function webSource(geolocation) {
+// Con el móvil quieto (un fugitivo escondido), muchos navegadores apenas entregan lecturas nuevas por
+// watchPosition, sobre todo en iPhone. Su posición caducaría para el servidor (> 15 s) y nadie podría
+// reclamar su captura. Si pasan `refreshAfterMs` sin lectura, se pide una nueva con getCurrentPosition.
+function webSource(geolocation, { refreshAfterMs = 8_000, checkMs = 2_000 } = {}) {
   let watch = null;
+  let refresh = null;
+  const stopRefresh = () => {
+    if (refresh !== null) clearInterval(refresh);
+    refresh = null;
+  };
   return {
     kind: 'web',
     start(onReading, onError = () => {}) {
       if (watch !== null) geolocation.clearWatch(watch); // nunca dos seguimientos a la vez
+      stopRefresh();
+      let lastAt = performance.now();
+      let asking = false;
+      const emit = (pos) => {
+        lastAt = performance.now();
+        onReading({
+          lat: pos.coords.latitude,
+          lng: pos.coords.longitude,
+          accuracyM: pos.coords.accuracy,
+          ageMs: Math.max(0, Date.now() - pos.timestamp), // mismo reloj del dispositivo
+          at: lastAt,
+        });
+      };
+      refresh = setInterval(() => {
+        if (asking || performance.now() - lastAt < refreshAfterMs || !geolocation.getCurrentPosition) return;
+        asking = true;
+        geolocation.getCurrentPosition(
+          (pos) => ((asking = false), watch !== null && emit(pos)),
+          () => (asking = false), // los fallos de permiso los avisa el seguimiento
+          { enableHighAccuracy: true, maximumAge: 0, timeout: 10_000 },
+        );
+      }, checkMs);
       return new Promise((resolve, reject) => {
         let first = true;
         watch = geolocation.watchPosition(
           (pos) => {
-            onReading({
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-              accuracyM: pos.coords.accuracy,
-              ageMs: Math.max(0, Date.now() - pos.timestamp), // mismo reloj del dispositivo
-              at: performance.now(),
-            });
+            emit(pos);
             if (first) resolve((first = false));
           },
           (err) => {
             const code = err.code === 1 ? 'permission_missing' : 'position_unavailable';
-            if (first) reject(new Error(code));
-            else onError(code);
+            if (first) {
+              stopRefresh();
+              reject(new Error(code));
+            } else onError(code);
           },
           { enableHighAccuracy: true, maximumAge: 5_000, timeout: 30_000 },
         );
@@ -125,6 +151,7 @@ function webSource(geolocation) {
     async stop() {
       if (watch !== null) geolocation.clearWatch(watch);
       watch = null;
+      stopRefresh();
     },
   };
 }

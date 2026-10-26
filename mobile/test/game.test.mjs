@@ -130,10 +130,45 @@ test('ubicación web (navegador, también iPhone): antigüedad con el reloj del 
   ok({ coords: { latitude: CENTER.lat, longitude: CENTER.lng, accuracy: 12 }, timestamp: Date.now() - 3_000 });
   await started;
   assert.ok(got[0].ageMs >= 3_000 && got[0].ageMs < 4_000);
+  await src.stop();
   const denied = await createLocationSource({ geolocation, loadNative: async () => ({ plugin: null }) });
   const p = denied.start(() => {});
   fail({ code: 1 });
   await assert.rejects(p, /permission_missing/);
+});
+
+test('ubicación web con el móvil quieto: si el seguimiento no da lecturas, se pide una nueva (la posición no caduca)', async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let ok;
+  const asked = [];
+  const geolocation = {
+    watchPosition: (s) => ((ok = s), 7),
+    clearWatch: () => {},
+    getCurrentPosition: (s, e, opts) => asked.push({ s, opts }),
+  };
+  const fix = (ageMs = 0) => ({ coords: { latitude: CENTER.lat, longitude: CENTER.lng, accuracy: 9 }, timestamp: Date.now() - ageMs });
+  const src = await createLocationSource({ geolocation, loadNative: async () => ({ plugin: null }), webOptions: { refreshAfterMs: 60, checkMs: 10 } });
+  const got = [];
+  const started = src.start((r) => got.push(r));
+  ok(fix());
+  await started;
+  // Mientras el seguimiento entrega lecturas, no se pide nada más.
+  for (let i = 0; i < 5; i++) {
+    await sleep(20);
+    ok(fix());
+  }
+  assert.equal(asked.length, 0);
+  // Quieto: sin lecturas durante más de refreshAfterMs se pide una, sin caché y sin duplicar peticiones.
+  await sleep(120);
+  assert.equal(asked.length, 1, 'una sola petición pendiente');
+  assert.equal(asked[0].opts.maximumAge, 0);
+  asked[0].s(fix(200));
+  assert.equal(got.length, 7);
+  assert.ok(got.at(-1).ageMs >= 200 && got.at(-1).ageMs < 1_000, 'con su antigüedad real');
+  await src.stop();
+  const before = asked.length;
+  await sleep(120);
+  assert.equal(asked.length, before, 'al parar no se piden más');
 });
 
 test('conexión: tras varias reconexiones solo hay una cadena de ping', async () => {
