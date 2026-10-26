@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, clock, codeFromLink, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -342,7 +342,9 @@ function draw() {
   // Redibujar no puede borrar lo que el jugador está escribiendo ni quitarle el foco.
   const typed = new Map([...$app.querySelectorAll('input[id]:not([type=checkbox])')].map((i) => [i.id, i.value]));
   const keepFocus = document.activeElement?.id;
-  $app.innerHTML = `<header class="top">${lockup()}${statusDot()}</header>${body}${toasts}${overlays()}`;
+  const notice = snap && ui.conn?.playerId ? connectionNotice(ui.conn.status, snap.phase) : null;
+  const banner = notice ? `<p class="msg danger conn-notice" role="alert">${esc(notice)}</p>` : '';
+  $app.innerHTML = `<header class="top">${lockup()}${statusDot()}</header>${banner}${body}${toasts}${overlays()}`;
   for (const [id, value] of typed) {
     const el = document.getElementById(id);
     if (el) el.value = value;
@@ -398,7 +400,7 @@ function lobbyScreen(snap) {
   const summary = cfg
     ? `${cfg.durationMs / 60_000} min de persecución · ${cfg.headStartMs / 60_000} min de huida · zona de ${cfg.zone[0].radiusM} m · pistas cada ${cfg.pingIntervalMs / 60_000} min`
     : 'El anfitrión aún no ha fijado la zona.';
-  const blockers = isHost ? startBlockers(snap) : [];
+  const blockers = startBlockers(snap, { forHost: isHost });
   return `<section class="card code-card">
       <p class="label">Código de la sala</p>
       <p class="code num">${esc(code)}</p>
@@ -416,7 +418,7 @@ function lobbyScreen(snap) {
       ${!invited ? `<button class="btn ${self?.ready ? 'btn-outline' : 'btn-primary'}" data-act="ready"${ui.locating ? ' disabled' : ''}>${ui.locating ? 'Comprobando tu GPS…' : self?.ready ? 'No estoy listo' : 'Estoy listo'}</button>` : ''}
       ${!invited && !self?.ready && !ui.gpsChecked ? '<p class="hint">Al pulsar «Estoy listo» se comprueba tu GPS. La ubicación solo se usa durante la partida y se borra al terminar.</p>' : ''}
     </section>
-    ${isHost ? hostConfig(snap) : `<section class="card"><h2>Partida</h2><p class="line">${esc(summary)}</p></section>`}
+    ${isHost ? hostConfig(snap) : `<section class="card"><h2>Partida</h2><p class="line">${esc(summary)}</p>${blockers.length ? `<div class="blockers" aria-live="polite"><p class="label">Para empezar falta</p>${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}</div>` : '<p class="msg">Todo listo: el anfitrión puede empezar.</p>'}</section>`}
     ${isHost ? `<section class="card stack">${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}
       <button class="btn btn-primary btn-big" data-act="start"${blockers.length ? ' disabled' : ''}>Empezar partida</button></section>` : ''}
     <button class="btn btn-ghost" data-act="leave">Salir de la sala</button>`;

@@ -209,14 +209,33 @@ export function gpsCheckError(code) {
   return 'No se pudo activar la ubicación de este móvil. Revisa que esté encendida y vuelve a intentarlo.';
 }
 
-/** Comprobaciones previas al inicio, en el orden en que las exige el motor (para el anfitrión). */
-export function startBlockers(snap) {
+/**
+ * Qué impide empezar, en el orden en que lo exige el motor. Lo ven todos (Plan Maestro §7, sala de
+ * espera: es un error «no indicar quién está desconectado o qué impide empezar»). Al anfitrión se le
+ * dice qué hacer; a los demás, qué falta. Los desconectados se nombran aparte de los que no están listos.
+ */
+export function startBlockers(snap, { forHost = true } = {}) {
   const out = [];
-  if (!snap.config) out.push('Fija la zona de juego.');
-  else if (!snap.config.safetyChecklistConfirmed) out.push('Confirma la lista de seguridad.');
+  if (!snap.config) out.push(forHost ? 'Fija la zona de juego.' : 'El anfitrión aún no ha fijado la zona de juego.');
+  else if (!snap.config.safetyChecklistConfirmed) out.push(forHost ? 'Confirma la lista de seguridad.' : 'El anfitrión aún no ha confirmado la lista de seguridad.');
   const lobby = snap.players.filter((p) => p.status === 'lobby');
   if (lobby.length < 2) out.push('Hacen falta al menos 2 jugadores.');
-  const waiting = lobby.filter((p) => !p.ready || !p.connected);
-  if (waiting.length > 0) out.push(`Esperando a: ${waiting.map((p) => p.name).join(', ')}.`);
+  const offline = lobby.filter((p) => !p.connected);
+  if (offline.length > 0) out.push(`Sin conexión: ${offline.map((p) => p.name).join(', ')}.`);
+  const notReady = lobby.filter((p) => p.connected && !p.ready);
+  if (notReady.length > 0) out.push(`Falta que estén listos: ${notReady.map((p) => p.name).join(', ')}.`);
   return out;
+}
+
+/**
+ * Aviso visible cuando se pierde la conexión con el servidor (Plan Maestro §7, incidencia: «qué ocurre
+ * y cómo recuperarse»; no dejar al jugador sin contexto). null si no hay nada que avisar.
+ */
+export function connectionNotice(status, phase) {
+  if (status === 'closed') return 'Desconectado del servidor. Vuelve al inicio y entra otra vez en la sala.';
+  if (status !== 'reconnecting' && status !== 'connecting') return null;
+  if (phase === 'COUNTDOWN' || phase === 'HEAD_START' || phase === 'ACTIVE') {
+    return 'Sin conexión con el servidor. La partida sigue: el servidor manda en el tiempo y en las capturas. Reconectando…';
+  }
+  return phase ? 'Sin conexión con el servidor. Reconectando…' : null;
 }

@@ -107,7 +107,15 @@ try {
       }
       throw new Error(`timeout: ${what}`);
     };
-    return { evaluate, waitFor, errors, reload: () => send('Page.reload', {}), close: () => ws.close() };
+    return {
+      evaluate,
+      waitFor,
+      errors,
+      reload: () => send('Page.reload', {}),
+      close: () => ws.close(),
+      /** Cierra la pestaña (como cerrar la app): su WebSocket se corta de verdad. */
+      closeTab: () => (ws.close(), bsend('Target.closeTarget', { targetId: created.targetId })),
+    };
   }
 
   const click = (sel) => `(document.querySelector(${JSON.stringify(sel)}).click(), true)`;
@@ -205,9 +213,16 @@ try {
   await dani.waitFor(`document.body.textContent.includes('Para jugar hace falta permitir la ubicación')`, 'aviso de permiso denegado', 10_000);
   const daniReady = Object.values(server.hub.roomStateByCode(code2).players).find((p) => p.name === 'Dani')?.ready;
   check('sin permiso de ubicación no puede declararse listo', daniReady === false);
-  await dani.evaluate(click('[data-act="leave"]'));
-  await host.waitFor(`document.querySelectorAll('.players li').length === 3`, 'Dani sale de la sala');
-  dani.close();
+  check('quien no es anfitrión ve qué falta para empezar', await guest.evaluate(`document.querySelector('.blockers')?.textContent.includes('Falta que estén listos') && document.querySelector('.blockers').textContent.includes('Dani')`));
+
+  // Dani cierra la app: todos ven que está sin conexión y el anfitrión la expulsa con el botón real.
+  await dani.closeTab();
+  await guest.waitFor(`document.querySelector('.blockers')?.textContent.includes('Sin conexión: Dani')`, 'los demás ven a Dani sin conexión');
+  await host.waitFor(`[...document.querySelectorAll('.msg')].some((m) => m.textContent.includes('Sin conexión: Dani'))`, 'el anfitrión ve a Dani sin conexión');
+  check('cuando alguien se desconecta, todos ven quién es', true);
+  await host.evaluate(click('button[aria-label="Expulsar a Dani"]'));
+  await host.waitFor(`document.querySelectorAll('.players li').length === 3`, 'Dani expulsada');
+  check('el anfitrión puede expulsar a quien se ha quedado sin conexión', !Object.values(server.hub.roomStateByCode(code2).players).some((p) => p.name === 'Dani' && p.status === 'lobby'));
 
   // Partida corta: Ana y Cris cazadores, Beto fugitivo (asignación manual del anfitrión).
   const assign = (name, pref) =>

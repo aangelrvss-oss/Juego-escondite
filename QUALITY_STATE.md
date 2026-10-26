@@ -463,6 +463,24 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 - el comportamiento del túnel ante el reinicio;
 - un apagado brusco del proceso: la prueba simula la caída con un archivo anterior, no matando el proceso.
 
+### Sala de espera e incidencias de conexión (Plan Maestro §7, 26/10/2026, 20:00-20:03)
+**Defectos encontrados:**
+- Solo el anfitrión veía qué impedía empezar. Además, los desconectados se mezclaban con los que no estaban listos («Esperando a: …»).
+- Al perder la conexión, solo cambiaba una etiqueta pequeña en la cabecera, sin explicar qué pasaba con la partida.
+
+El Plan considera errores, en la sala, «no indicar quién está desconectado o qué impide empezar» y, en las incidencias, «dejar al jugador sin contexto».
+
+**Corrección:**
+- `startBlockers(snap, { forHost })`: lo ven todos. Al anfitrión le dice qué hacer y a los demás, qué falta. Separa «Sin conexión: …» de «Falta que estén listos: …».
+- `connectionNotice(status, phase)`: aviso visible (`role="alert"`) mientras se reconecta. En partida explica que la partida sigue y que el servidor manda en el tiempo y en las capturas.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/lobby-status.test.mjs`: textos para el anfitrión y para los demás, desconectados separados, sin bloqueos, invitados que no cuentan, aviso de conexión por estado y fase | **4 de 4** | Automatizada |
+| `web-flow.e2e.mjs`: el jugador que no es anfitrión ve «Para empezar falta» con el nombre del que no está listo; Dani **cierra la pestaña** (corte real del WebSocket) y todos ven «Sin conexión: Dani»; el anfitrión la expulsa con el botón real | **26 de 26** en total | Chrome real |
+
+**No probado en navegador:** el aviso de reconexión en mitad de una partida. Reproducirlo exige esperar a que el cliente detecte una conexión muerta (unos 30 s); está cubierto por pruebas unitarias. Tampoco se ha probado en un móvil.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|
