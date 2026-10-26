@@ -734,6 +734,10 @@ function claimTag(ctx: Ctx, hunter: Player, runnerId: string): CommandResult {
   if (!hs || hs.clockSuspect || now - hs.effectiveAt > TAG.maxAgeMs) return err('your_location_stale');
   if (!rs || rs.clockSuspect || now - rs.effectiveAt > TAG.maxAgeMs) return err('target_location_stale');
   if (hs.accuracyM > TAG.maxAccuracyM || rs.accuracyM > TAG.maxAccuracyM) return err('accuracy_too_low');
+  // Plan Maestro §4.1 y §10: un salto aislado del GPS nunca valida una captura. Hay que esperar a la
+  // siguiente lectura, que lo confirma o lo descarta.
+  if (hs.jump) return err('your_location_unstable');
+  if (rs.jump) return err('target_location_unstable');
   // D-033: un cazador fuera de la zona no puede reclamar capturas mientras siga fuera. Mismo criterio
   // que para los fugitivos (fuera solo si lo está incluso descontando la precisión). No se le expone.
   if (s.config && isOutsideZone(hs, hs.accuracyM, zoneAt(s.config.zone, now - (s.activeStart ?? now)))) {

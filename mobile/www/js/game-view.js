@@ -49,6 +49,8 @@ export const ERROR_TEXT = Object.freeze({
   your_location_stale: 'Tu ubicación es antigua. Espera a tener señal.',
   target_location_stale: 'No hay una ubicación reciente del fugitivo: no se puede validar.',
   accuracy_too_low: 'La precisión del GPS no es suficiente para validar la captura.',
+  your_location_unstable: 'Tu GPS acaba de dar un salto. Espera a la siguiente lectura y vuelve a intentarlo.',
+  target_location_unstable: 'La ubicación del fugitivo aún no es estable. Inténtalo en unos segundos.',
   hunter_outside_zone: 'Estás fuera de la zona: no puedes reclamar capturas.',
   not_close_enough: 'No estáis lo bastante cerca para validar la captura.',
   claim_not_found: 'Esa reclamación ya no está activa.',

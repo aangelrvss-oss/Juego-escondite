@@ -414,6 +414,15 @@ Sin fallos demostrables nuevos aparte de los de la tabla.
 
 **Flujo completo en un navegador real:** `web-flow.e2e.mjs` comprueba ahora también que un código mal escrito muestra el aviso sin entrar. **17 de 17.** Su lector de QR reutiliza piezas del codificador; la verificación independiente es la de `qr.test.mjs`.
 
+### Saltos del GPS en las capturas (D-049, 26/10/2026, 19:45-19:50)
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `engine/test/gps-jump.test.ts`: un fugitivo «aparece» junto al cazador en un salto aislado → `target_location_unstable` y no se crea la reclamación; la siguiente lectura coherente lo confirma y la captura vuelve a ser posible; un atípico aislado se descarta al volver a la posición real; el salto del cazador → `your_location_unstable`; el ruido dentro de la precisión no es un salto; correr a 8 m/s no es un salto; dos lecturas casi simultáneas muy separadas sí lo son; el campo no aparece en ningún evento | **8 de 8** | Automatizada, lecturas **SIMULADAS** |
+| Mutación: quitar la comprobación del fugitivo | 2 pruebas fallan (revertida) | Automatizada |
+| Regresión: motor y simulación (incluidos los bots de 15 partidas completas), servidor, cliente y E2E | 138/138, 29/29, 72/72, 17/17 | Automatizada y navegador real |
+
+**No validado:** con GPS real. El umbral (12 m/s más la precisión) es experimental (D-038).
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

@@ -331,3 +331,16 @@ El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este r
 - **QR:** se genera en el móvil del anfitrión con un codificador propio, sin dependencias (`mobile/www/js/qr.js`), con el mismo enlace.
 - **Cambiar el código:** comando del anfitrión `new_code`, solo en la sala de espera y con doble toque para confirmar. El código anterior deja de servir y los jugadores que ya están dentro conservan su sesión.
 **Límites:** el enlace abre la **web** (navegador), no la app Android. Abrir la app desde un enlace (App Links) necesita dominio propio y está pendiente (M4). El QR no se ha escaneado todavía con la cámara de un móvil.
+
+### D-049 · Decisión técnica reversible (26/10/2026) · Un salto aislado del GPS no valida una captura
+**Motivo:** el Plan Maestro pide «filtrar saltos imposibles… si hay duda, pedir que espere o confirme» (§4.1, pág. 7). Además, considera **fallo** que «un salto GPS aislado valide captura o llegada» (§10, pág. 18). Hasta ahora `claim_tag` usaba solo la última lectura de cada jugador. La velocidad imposible únicamente se **marcaba** tras 3 saltos seguidos (`implausible_speed`).
+**Decisión:**
+- Cada lectura guardada indica si es un **salto sin confirmar**. Lo es si, desde la lectura anterior, implica una velocidad mayor que `LOCATION.maxPlausibleSpeedMps` (12 m/s). La distancia se cuenta descontando la precisión de las dos lecturas, y el intervalo mínimo es 1 s.
+- **No es un salto** si es alcanzable desde la lectura anterior, porque confirma un movimiento real. Tampoco lo es si, cuando la anterior era un salto, es alcanzable desde la última lectura sana: así se descarta un valor atípico aislado.
+- `claim_tag` se rechaza con `your_location_unstable` o `target_location_unstable` mientras la última lectura del cazador o del fugitivo sea un salto. El texto pide esperar a la siguiente lectura.
+**Qué no cambia:**
+- solo se añade un motivo de rechazo;
+- no cambian las reglas aprobadas, la autodeclaración, la zona ni la exposición;
+- el campo es interno y no se envía a ningún cliente.
+**Parámetros:** 12 m/s y el intervalo mínimo de 1 s son **experimentales** (D-038) y hay que calibrarlos en campo. Con lecturas cada 5 s, un salto real retrasa la captura unos 5 s.
+**Pruebas:** `engine/test/gps-jump.test.ts` (8, con lecturas simuladas). No se ha probado con GPS real.

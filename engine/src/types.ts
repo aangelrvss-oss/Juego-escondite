@@ -46,6 +46,9 @@ export interface StoredSample extends LocationSample {
   clockSuspect: boolean;
   // Momento que se usa para calcular la antigüedad.
   effectiveAt: number;
+  // Salto sin confirmar respecto a las lecturas anteriores (velocidad imposible más allá de la
+  // precisión). No sirve para validar una captura hasta que otra lectura lo confirme (Plan §4.1, §10).
+  jump?: boolean;
 }
 
 export interface Player {
@@ -203,6 +206,8 @@ export type ErrorCode =
   | 'your_location_stale'
   | 'target_location_stale'
   | 'accuracy_too_low'
+  | 'your_location_unstable'
+  | 'target_location_unstable'
   | 'hunter_outside_zone'
   | 'not_close_enough'
   | 'claim_not_found'
