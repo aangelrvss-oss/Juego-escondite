@@ -176,6 +176,21 @@ export function ago(ms) {
   return s < 60 ? `hace ${s} s` : `hace ${Math.round(s / 60)} min`;
 }
 
+/** Antigüedad (hora del servidor) desde la que un evento repetido al reanudar ya no se anuncia. */
+export const STALE_EVENT_MS = 15_000;
+
+/**
+ * ¿Es un evento repetido de hace rato (p. ej. al recargar la página en mitad de la partida)? Entonces
+ * solo actualiza el estado, sin tarjetas, mensajes ni vibraciones. Lo que sigue vigente sí se anuncia:
+ * la reclamación de captura que aún espera respuesta y la revelación del rol durante la huida.
+ */
+export function isStaleEvent(e, snap) {
+  if (!(e?.ageMs > STALE_EVENT_MS)) return false;
+  if (e.type === 'tag_claimed') return snap?.pendingClaimForMe?.claimId !== e.data?.claimId;
+  if (e.type === 'role_revealed') return snap?.phase !== 'HEAD_START';
+  return true;
+}
+
 /** Fin de la fase en curso (hora del servidor) o null. */
 export function phaseDeadline(snap) {
   if (!snap) return null;

@@ -96,6 +96,10 @@ export class GameConnection {
     this.lastHeardAt = 0;
     this.pingTimer = undefined;
     this.probeSentAt = null; // sonda pendiente tras un silencio largo
+    // Al reanudar, el servidor repite los eventos perdidos y luego manda la instantánea. Se retienen
+    // hasta entonces para entregarlos con su antigüedad según la hora del servidor (`ageMs`): así la
+    // interfaz distingue lo que acaba de pasar de lo que pasó hace minutos (p. ej. tras recargar).
+    this.replay = null;
   }
 
   get installId() {
@@ -270,6 +274,8 @@ export class GameConnection {
           this.#saveSession({ playerId: msg.playerId, secret: msg.secret, code: msg.code });
           this.lastSeq = 0;
         }
+        // Sin secreto es una reanudación: lo que llegue antes de la instantánea es repetido.
+        if (!msg.secret) this.replay ??= [];
         this.waiting?.resolve({ playerId: msg.playerId, code: msg.code });
         this.waiting = null;
         // Comandos enviados durante el corte: mismo id, el servidor devuelve la respuesta guardada.
@@ -285,6 +291,9 @@ export class GameConnection {
         this.lastSeq = msg.seq;
         this.snapshot = msg.snapshot;
         this.#emit('snapshot', msg.snapshot);
+        const replayed = this.replay ?? [];
+        this.replay = null;
+        for (const e of replayed) this.#emit('event', { ...e, ageMs: Math.max(0, msg.snapshot.serverNow - e.at) });
         return;
       }
       case 'event':
@@ -295,7 +304,8 @@ export class GameConnection {
           return;
         }
         this.lastSeq = msg.seq;
-        this.#emit('event', { type: msg.type, at: msg.at, data: msg.data });
+        if (this.replay) this.replay.push({ type: msg.type, at: msg.at, data: msg.data });
+        else this.#emit('event', { type: msg.type, at: msg.at, data: msg.data, ageMs: 0 });
         return;
       case 'positions':
         this.#emit('positions', msg);
@@ -319,6 +329,7 @@ export class GameConnection {
           this.#saveSession(null);
           this.snapshot = null;
           this.lastSeq = 0;
+          this.replay = null;
           this.#emit('session_lost', msg.error);
         }
         if (this.waiting) {
@@ -366,6 +377,7 @@ export class GameConnection {
     this.#saveSession(null);
     this.snapshot = null;
     this.lastSeq = 0;
+    this.replay = null;
     this.code = null;
     this.close();
   }

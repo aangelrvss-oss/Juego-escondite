@@ -283,6 +283,16 @@ try {
   await layout(guest, 'partida (fugitivo)');
   await layout(host, 'partida (cazador)');
   await advance(75_000); // 1:15 de persecución
+  // Recargar en plena partida (el navegador del móvil descarta pestañas en segundo plano): vuelve a la
+  // partida, y lo que pasó antes (rol, inicio, entradas) no se anuncia otra vez.
+  await host.reload();
+  await host.waitFor(`!!document.querySelector('[data-claim]')`, 'cazadora de vuelta en la partida tras recargar', 10_000);
+  await new Promise((r) => setTimeout(r, 400));
+  check(
+    'al recargar en plena partida no se repiten la tarjeta del rol ni los avisos antiguos',
+    await host.evaluate(`!document.querySelector('.overlay.reveal') && !['Empieza la persecución', 'ha entrado'].some((t) => document.body.textContent.includes(t))`),
+    await host.evaluate(`document.body.textContent.replace(/\s+/g, ' ').slice(0, 200)`),
+  );
   await guest.evaluate(click('[data-act="selftag"]'));
   await guest.waitFor(`!!document.querySelector('[data-selftag]:not([data-selftag=""])')`, 'lista de cazadores');
   await layout(guest, 'declararse capturado');

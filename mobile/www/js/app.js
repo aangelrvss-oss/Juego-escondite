@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, isStaleEvent, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -126,6 +126,9 @@ function connect() {
   conn.on('status', render);
   conn.on('snapshot', (snap) => {
     ui.snap = snap;
+    // La última pista viene también en la vista (solo para un cazador activo): así no se pierde al
+    // recargar, y desaparece de la pantalla en cuanto la partida termina.
+    ui.ping = snap.lastPing ?? null;
     syncTracking();
     render();
   });
@@ -166,65 +169,70 @@ async function cmd(command) {
 
 function onEvent(e) {
   const d = e.data;
+  // Un evento repetido al reanudar (p. ej. tras recargar la página) actualiza el estado, pero no vuelve
+  // a avisar: nada de tarjetas, mensajes ni vibraciones de algo que pasó hace rato.
+  const stale = isStaleEvent(e, ui.snap);
+  const notify = stale ? () => {} : toast;
+  const buzz = (pattern) => (stale ? undefined : navigator.vibrate?.(pattern));
   switch (e.type) {
     case 'role_revealed':
-      ui.reveal = { team: d.team, until: performance.now() + 5_000 };
-      navigator.vibrate?.([120, 60, 120]);
+      if (!stale) ui.reveal = { team: d.team, until: performance.now() + 5_000 };
+      buzz([120, 60, 120]);
       break;
     case 'player_joined':
-      toast(`${d.name} ha entrado`);
+      notify(`${d.name} ha entrado`);
       break;
     case 'player_left':
-      toast(`${nameOf(d.playerId)} ha salido`);
+      notify(`${nameOf(d.playerId)} ha salido`);
       break;
     case 'player_kicked': // al expulsado le llega «removed» (session_lost), no este evento
-      toast(`${nameOf(d.playerId)} ha sido expulsado`);
+      notify(`${nameOf(d.playerId)} ha sido expulsado`);
       break;
     case 'host_changed':
-      toast(`${nameOf(d.hostId)} es ahora el anfitrión`);
+      notify(`${nameOf(d.hostId)} es ahora el anfitrión`);
       break;
     case 'hunt_started':
-      toast('¡Empieza la persecución!', 'brand');
-      navigator.vibrate?.(300);
+      notify('¡Empieza la persecución!', 'brand');
+      buzz(300);
       break;
     case 'start_zone_warning':
       ui.startZoneWarning = true;
-      navigator.vibrate?.(200);
+      buzz(200);
       break;
     case 'start_zone_returned':
       ui.startZoneWarning = false;
       break;
     case 'zone_exit_warning':
       ui.zoneWarning = { exposedAt: d.exposedAt };
-      navigator.vibrate?.([200, 100, 200]);
+      buzz([200, 100, 200]);
       break;
     case 'zone_reentered':
       ui.zoneWarning = null;
-      toast('Has vuelto a la zona');
+      notify('Has vuelto a la zona');
       break;
     case 'runner_exposed':
-      if (d.runnerId === ui.conn.playerId) toast('Llevas demasiado fuera: los cazadores te ven', 'danger');
-      else toast(`${nameOf(d.runnerId)} está fuera de la zona: visible`, 'brand');
+      if (d.runnerId === ui.conn.playerId) notify('Llevas demasiado fuera: los cazadores te ven', 'danger');
+      else notify(`${nameOf(d.runnerId)} está fuera de la zona: visible`, 'brand');
       break;
     case 'ping':
       ui.ping = d.ping;
-      toast('Nueva pista de los fugitivos', 'brand');
-      navigator.vibrate?.(150);
+      notify('Nueva pista de los fugitivos', 'brand');
+      buzz(150);
       break;
     case 'ping_sent':
-      toast('Los cazadores acaban de recibir una pista', 'danger');
+      notify('Los cazadores acaban de recibir una pista', 'danger');
       break;
     case 'tag_claimed':
-      navigator.vibrate?.([300, 100, 300]);
+      buzz([300, 100, 300]);
       break;
     case 'tag_claim_resolved': {
       const text = { confirmed: 'Captura confirmada', rejected: 'Captura rechazada', expired: 'Sin respuesta: no hay captura', cancelled: 'Reclamación cancelada' }[d.result];
       if (ui.claimSent?.claimId === d.claimId) ui.claimSent = null;
-      if (text) toast(text, d.result === 'confirmed' ? 'brand' : 'info');
+      if (text) notify(text, d.result === 'confirmed' ? 'brand' : 'info');
       break;
     }
     case 'runner_captured':
-      toast(d.runnerId === ui.conn.playerId ? 'Te han capturado' : `${nameOf(d.runnerId)} capturado`, 'danger');
+      notify(d.runnerId === ui.conn.playerId ? 'Te han capturado' : `${nameOf(d.runnerId)} capturado`, 'danger');
       break;
     case 'game_finished':
       stopTracking();
