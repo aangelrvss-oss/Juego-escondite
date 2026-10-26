@@ -494,6 +494,17 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 
 **Límite:** detrás de un túnel sin `TRUST_PROXY=1`, todos los móviles comparten dirección y el límite pasa a ser global (documentado en `server/README.md`).
 
+### Reglas de la partida para todos (briefing común; Plan Maestro §2.1 paso 5, §3.3 y §7; 26/10/2026, 20:05-20:08)
+**Hueco encontrado:** antes de empezar, los jugadores solo veían las duraciones. En ningún sitio se explicaban el criterio de captura (§3.3: «el briefing explica el criterio de captura»), qué pasa al salir de la zona, las pistas ni lo que ven los capturados. El Plan lo considera un error: «esconder una regla que cambie la estrategia».
+**Corrección:** tarjeta «Reglas de la partida» en la sala de espera, visible para todos. La genera `briefing(config)` con la configuración de la sala y los valores del motor (`RULES`): objetivo, roles, tiempo, zona, pistas, captura, capturados y seguridad.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/briefing.test.mjs`: los números coinciden con `engine/src/constants.ts` (cuenta atrás, antigüedad y precisión de la captura, plazo de confirmación, gracia fuera de la zona, retraso del espectador); usa la configuración de la sala; cubre las 8 secciones; sin coordenadas | **3 de 3** | Automatizada |
+| `web-flow.e2e.mjs`: el invitado ve la tarjeta con captura, zona, pistas, seguridad y capturados | **27 de 27** en total | Chrome real |
+
+**Fuera de alcance:** la fase BRIEFING del Plan, con las reglas fijadas en una fase propia (pendiente de decisión). Tampoco cambia la tarjeta privada de rol.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

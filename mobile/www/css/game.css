@@ -136,6 +136,12 @@ a { color: var(--brand); }
 .overlay.reveal.t-runner .role { color: var(--runner); }
 .overlay.sheet { align-content: end; padding-bottom: calc(28px + env(safe-area-inset-bottom, 0px)); }
 .overlay.sheet h2 { margin: 0; font-size: 24px; }
+/* Reglas de la partida (briefing común en la sala de espera). */
+.rules summary { cursor: pointer; list-style: none; }
+.rules summary h2 { display: inline; }
+.rules dl { margin: 8px 0 0; display: grid; gap: 6px; }
+.rules dt { font-weight: 800; color: var(--brand); }
+.rules dd { margin: 0 0 4px; color: var(--muted); line-height: 1.4; }
 /* QR de invitación: centrado, grande y sobre blanco (con zona de silencio) para que lo lea la cámara. */
 .overlay.qr-sheet { align-content: center; }
 .qr { display: block; width: min(78vw, 340px); height: auto; border-radius: 6px; }

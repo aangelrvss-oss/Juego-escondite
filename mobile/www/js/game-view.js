@@ -68,6 +68,40 @@ export const WIN_TEXT = Object.freeze({
   ended_by_host: 'El anfitrión terminó la partida',
 });
 
+// Reglas que aplica el motor (engine/src/constants.ts). La interfaz no las decide: solo las explica.
+// Una prueba comprueba que coinciden con las del motor (mobile/test/briefing.test.mjs).
+export const RULES = Object.freeze({
+  countdownMs: 5_000, // TIMING.countdownMs
+  tagMaxAgeMs: 15_000, // TAG.maxAgeMs
+  tagMaxAccuracyM: 30, // TAG.maxAccuracyM
+  tagConfirmMs: 30_000, // TIMING.tagConfirmMs
+  outOfZoneGraceMs: 30_000, // TIMING.outOfZoneGraceMs
+  spectatorDelayMs: 60_000, // TIMING.spectatorDelayMs
+});
+
+const minutes = (ms) => `${Math.round(ms / 60_000)} min`;
+const seconds = (ms) => `${Math.round(ms / 1_000)} s`;
+
+/**
+ * Briefing común de la partida (Plan Maestro §2.1 paso 5, §3.3 y §7): objetivo, zona, tiempos, cómo se
+ * captura, qué ve cada uno y límites de seguridad. Se genera con la configuración de la sala y las
+ * reglas del motor, para no esconder ninguna regla que cambie la estrategia. null sin configuración.
+ */
+export function briefing(config) {
+  if (!config) return null;
+  const radius = config.zone?.[0]?.radiusM;
+  return [
+    { title: 'Objetivo', text: 'Los cazadores ganan si capturan a todos los fugitivos antes del final. Los fugitivos ganan si al acabar el tiempo queda alguno libre.' },
+    { title: 'Roles', text: `Se revelan a cada uno, en privado, al terminar la cuenta atrás de ${seconds(RULES.countdownMs)}. Solo ves tu rol y el de tus compañeros (si el anfitrión asigna los roles a mano, él los conoce).` },
+    { title: 'Tiempo', text: `${minutes(config.headStartMs)} de huida (los cazadores esperan en el punto de encuentro) y ${minutes(config.durationMs)} de persecución. Manda la hora del servidor.` },
+    { title: 'Zona', text: `Círculo de ${radius} m alrededor del punto de encuentro. Un fugitivo que pase más de ${seconds(RULES.outOfZoneGraceMs)} fuera queda visible para los cazadores hasta que vuelva. Un cazador fuera de la zona no puede capturar.` },
+    { title: 'Pistas', text: `Cada ${minutes(config.pingIntervalMs)}, los cazadores reciben la última posición conocida de cada fugitivo, con su antigüedad.` },
+    { title: 'Captura', text: `Toque suave. El cazador la reclama en la app: el servidor exige lecturas de los dos de hace ${seconds(RULES.tagMaxAgeMs)} o menos, con ±${RULES.tagMaxAccuracyM} m o mejor, cerca y sin saltos del GPS. El fugitivo confirma en ${seconds(RULES.tagConfirmMs)}; sin respuesta no hay captura. También puede declararse capturado.` },
+    { title: 'Capturados', text: `Quien es capturado deja de jugar y ve a los demás con ${seconds(RULES.spectatorDelayMs)} de retraso.` },
+    { title: 'Seguridad', text: 'Nada de calzadas, vías ni propiedades privadas. No mires el móvil mientras corres. Mayores de 18. Puedes abandonar la partida cuando quieras.' },
+  ];
+}
+
 /**
  * Mission Report (Plan Maestro §4.4), solo con datos oficiales de la instantánea del servidor:
  * resultado, tiempo, estadísticas y momentos destacados verificables (capturas registradas por el

@@ -232,6 +232,8 @@ try {
   await host.evaluate(assign('Cris', 'hunter'));
   await host.evaluate(click('[data-act="center"]'));
   await host.waitFor(`document.querySelector('[data-act="center"]')?.textContent.includes('Volver')`, 'zona centrada (geolocalización emulada)');
+  await guest.waitFor(`document.querySelector('.rules')?.textContent.includes('Toque suave')`, 'reglas visibles para el invitado');
+  check('todos ven las reglas de la partida (captura, zona, pistas, seguridad) antes de empezar', await guest.evaluate(`['Captura', 'Zona', 'Pistas', 'Seguridad', 'Capturados'].every((t) => document.querySelector('.rules').textContent.includes(t))`));
   await host.evaluate(click('#c-safety'));
   await host.waitFor(`document.querySelector('#c-safety')?.checked`, 'lista de seguridad');
   for (const p of [host, guest, late]) await p.evaluate(click('[data-act="ready"]'));
