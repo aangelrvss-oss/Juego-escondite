@@ -534,6 +534,15 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 | `mobile/test/lobby-status.test.mjs` (nueva prueba) | **5 de 5** en el archivo | Automatizada |
 | `web-flow.e2e.mjs`: desde la cuenta atrás se ve «Compartiendo tu ubicación» | **29 de 29** en total | Chrome real, geolocalización emulada |
 
+### Versión de reglas por partida (Plan Maestro §8.3, 26/10/2026, 20:11-20:13)
+`RULES_VERSION` (`engine/src/constants.ts`, ahora `clasico/2026-10-26`) se fija en `RoomState.rulesVersion` al empezar cada partida. Viaja en `game_finished` y en la instantánea, y el Mission Report la muestra («Reglas: …»). Hay que cambiarla cada vez que cambie una regla que afecte al resultado; D-049 ya cambió el criterio de captura.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `engine/test/rules-version.test.ts`: sin versión antes de jugar; se fija al empezar y llega a `game_finished`, a la instantánea y al final | **2 de 2** | Automatizada |
+| `mobile/test/report.test.mjs` (+1) y `server/test/report.test.mjs`: el informe lleva la versión del motor; las partidas guardadas antes de existir el campo dan `null` | Superadas | Automatizada; servidor real |
+| Regresión | motor 140, servidor 42, cliente 84 y E2E 29 | — |
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

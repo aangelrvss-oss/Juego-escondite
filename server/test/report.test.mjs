@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, it } from 'node:test';
+import { RULES_VERSION } from '../../engine/src/constants.ts';
 import { GameConnection } from '../../mobile/www/js/net.js';
 import { missionReport } from '../../mobile/www/js/game-view.js';
 import { gameConfig, room, testServer, waitFor } from './helpers.mjs';
@@ -49,6 +50,8 @@ describe('Mission Report', () => {
     assert.equal(r.timeToVictoryMs, 90_000 + 4 * 60_000);
     assert.deepEqual(r.captures.map((c) => [c.runner, c.hunter, c.via]), [['Beto', 'Ana', 'self'], ['Caro', null, 'self']]);
     assert.ok(r.highlights.includes('Captura decisiva: Caro a los 5:30'));
+    assert.equal(r.rulesVersion, RULES_VERSION, 'versión de reglas con la que se jugó');
+    assert.equal(s.rulesVersion, RULES_VERSION);
 
     // Reconexión de Caro con su sesión guardada: el informe se reconstruye solo con la instantánea.
     const storage = caro.conn.storage;

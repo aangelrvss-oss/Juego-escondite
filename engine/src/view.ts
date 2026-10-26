@@ -114,6 +114,7 @@ export interface Snapshot {
   // reconstruir el Mission Report tras una reconexión sin depender del evento game_finished.
   activeStart: number | null;
   finishedAt: number | null;
+  rulesVersion: string | null;
   players: PlayerView[];
   config: RoomState['config'];
   captures: RoomState['captures'];
@@ -148,6 +149,7 @@ export function snapshotFor(state: RoomState, viewerId: string, now: number): Sn
     nextPingAt: state.nextPingAt,
     activeStart: state.activeStart,
     finishedAt: state.finishedAt,
+    rulesVersion: state.rulesVersion ?? null,
     players: state.playerOrder
       .map((id) => state.players[id])
       .filter((p): p is Player => p !== undefined && p.status !== 'left')

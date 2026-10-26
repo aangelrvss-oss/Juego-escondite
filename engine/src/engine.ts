@@ -2,7 +2,7 @@
 // El servidor (adaptador) le pasa la hora autoritativa `now` en cada llamada.
 // Referencia: docs/technical/GAME_STATE_MACHINE.md.
 
-import { DEFAULTS, LIMITS, LOCATION, START_ZONE, TAG, TIMING } from './constants.ts';
+import { DEFAULTS, LIMITS, LOCATION, RULES_VERSION, START_ZONE, TAG, TIMING } from './constants.ts';
 import { validateConfig, validateName } from './config.ts';
 import { distanceM, isOutsideZone, zoneAt } from './geo.ts';
 import { availabilityOf, isValidSample, latestSample, recordSample, toStoredSample } from './location.ts';
@@ -117,6 +117,7 @@ export function createRoom(input: CreateRoomInput): Step {
     outcome: null,
     finishedAt: null,
     closeReason: null,
+    rulesVersion: null,
   };
   if (!name) return { state: s, events: [], result: err('invalid_name') };
   s.players[input.hostId] = newPlayer(input.hostId, input.hostDeviceId, name, input.now);
@@ -334,6 +335,7 @@ function finish(ctx: Ctx, outcome: Outcome): void {
   }
   emit(ctx, 'game_finished', ALL, {
     outcome,
+    rulesVersion: s.rulesVersion,
     captures: s.captures,
     activeDurationMs: s.activeStart !== null ? ctx.now - s.activeStart : 0,
     flags,
@@ -712,6 +714,7 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
   s.captures = [];
   s.outcome = null;
   s.finishedAt = null;
+  s.rulesVersion = RULES_VERSION;
   // D-042: durante la cuenta atrás nadie conoce su rol; se revela al terminar (role_revealed).
   emit(ctx, 'countdown_started', ALL, { countdownEnd: s.countdownEnd });
   return ok();

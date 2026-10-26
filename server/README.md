@@ -111,8 +111,8 @@ Alternativas, no evaluadas en detalle: Durable Objects o un VPS (`DECISION_LOG.m
 
 ```bash
 npm run test:server        # 42 pruebas: cinco clientes reales por WebSocket, clientes hostiles, envío por HTTP, ping, renovación del código, Mission Report, abandono en partida, persistencia y capacidad por dirección
-npm test                   # motor y simulación (130)
-cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report, comprobación de GPS, estado de la sala, reglas e indicador de ubicación compartida (83)
+npm test                   # motor y simulación (140)
+cd mobile && npm test      # cliente: protocolo, vista, radar, ubicación, envío nativo, latido, enlace, QR, Mission Report, comprobación de GPS, estado de la sala, reglas e indicador de ubicación compartida (84)
 cd mobile && node e2e/game.e2e.mjs [capturas]   # 5 navegadores, partida completa (Playwright del entorno)
 node mobile/e2e/web-flow.e2e.mjs <ruta de chrome.exe o msedge.exe>   # enlace, QR, cambio de código y partida corta hasta el Mission Report en un navegador real (sin Playwright)
 ```

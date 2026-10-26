@@ -139,6 +139,7 @@ export function missionReport(snap, nameOf = (id) => id) {
     hunterRanking: ranking.map(([id, n]) => ({ name: nameOf(id), captures: n })),
     captures: captures.map((c) => ({ runner: nameOf(c.runnerId), hunter: c.hunterId ? nameOf(c.hunterId) : null, atMs: c.atOffsetMs, via: c.via })),
     highlights,
+    rulesVersion: snap.rulesVersion ?? null, // con qué reglas se jugó (Plan §8.3)
   };
 }
 

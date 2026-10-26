@@ -67,6 +67,11 @@ test('terminada por el anfitrión durante la huida: sin ganador y sin duración 
   assert.deepEqual(r.highlights, []);
 });
 
+test('el informe indica con qué versión de reglas se jugó (Plan §8.3)', () => {
+  assert.equal(missionReport(base({ rulesVersion: 'clasico/2026-10-26' }), nameOf).rulesVersion, 'clasico/2026-10-26');
+  assert.equal(missionReport(base(), nameOf).rulesVersion, null, 'partidas guardadas antes de existir el campo');
+});
+
 test('el informe no contiene coordenadas ni equipos', () => {
   const r = missionReport(base({ captures: [{ runnerId: 'r1', hunterId: 'h1', atOffsetMs: 1000, via: 'claim' }] }), nameOf);
   assert.doesNotMatch(JSON.stringify(r), /"(lat|lng|team|teamPref|accuracyM)"/);

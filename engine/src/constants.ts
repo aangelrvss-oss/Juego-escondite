@@ -19,6 +19,11 @@ export const LIMITS = {
   maxZoneVersions: 1,
 } as const;
 
+// Versión de las reglas con las que se juega cada partida (Plan Maestro §8.3: «cada Match guarda versión
+// de reglas para poder entender el resultado aunque el modo cambie más adelante»). Cambiarla cuando
+// cambie cualquier regla que afecte al resultado (p. ej., D-049 cambió el criterio de captura).
+export const RULES_VERSION = 'clasico/2026-10-26';
+
 // Valores por defecto aprobados (D-042).
 export const DEFAULTS = {
   headStartMs: 2 * MINUTE,

@@ -143,6 +143,8 @@ export interface RoomState {
   outcome: Outcome | null;
   finishedAt: number | null;
   closeReason: string | null;
+  // Versión de las reglas de la partida en curso o de la última (se fija al empezar).
+  rulesVersion: string | null;
 }
 
 export type Audience =

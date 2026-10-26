@@ -569,7 +569,7 @@ function finishedScreen(snap) {
       ${report.highlights.length ? `<h2>Momentos</h2><ul class="highlights">${report.highlights.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
       <h2>Capturas</h2>
       <ul class="captures">${report.captures.map((c) => `<li>${esc(c.runner)} capturado a los ${clock(c.atMs)}${c.hunter ? ` por ${esc(c.hunter)}` : ''}${c.via === 'self' ? ' · lo declaró el fugitivo' : ''}</li>`).join('') || '<li>Ninguna captura</li>'}</ul>
-      <p class="hint">Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado.</p>
+      <p class="hint">Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado.${report.rulesVersion ? ` Reglas: ${esc(report.rulesVersion)}.` : ''}</p>
     </section>
     ${isHost ? '<button class="btn btn-primary" data-act="rematch">Revancha</button>' : '<p class="line">Esperando a que el anfitrión proponga la revancha…</p>'}
     <button class="btn btn-ghost" data-act="leave">Salir</button>`;
