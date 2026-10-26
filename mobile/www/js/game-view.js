@@ -143,6 +143,23 @@ export function missionReport(snap, nameOf = (id) => id) {
   };
 }
 
+/**
+ * Texto para compartir el Mission Report (Plan Maestro §4.4, «Compartir»: sin ubicación sensible ni
+ * datos no autorizados). Solo usa lo que ya muestra el informe: nunca coordenadas ni equipos ocultos.
+ */
+export function reportShareText(report) {
+  if (!report) return null;
+  const lines = [`THE OUTRUN · Mission Report`, `${report.winner} — ${report.cause}`];
+  const stats = [];
+  if (report.durationMs !== null) stats.push(`persecución ${clock(report.durationMs)}`);
+  stats.push(`${report.captureCount} ${report.captureCount === 1 ? 'captura' : 'capturas'}`);
+  if (report.timeToVictoryMs !== null) stats.push(`victoria a los ${clock(report.timeToVictoryMs)}`);
+  lines.push(stats.join(' · '));
+  for (const h of report.highlights) lines.push(`• ${h}`);
+  lines.push('RUN. HIDE. STAY AHEAD.');
+  return lines.join('\n');
+}
+
 /** mm:ss (o h:mm:ss) de un intervalo en ms; nunca negativo. */
 export function clock(ms) {
   const s = Math.max(0, Math.ceil(ms / 1000));

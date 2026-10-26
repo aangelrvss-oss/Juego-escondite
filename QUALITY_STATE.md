@@ -543,6 +543,16 @@ El Plan considera errores, en la sala, «no indicar quién está desconectado o 
 | `mobile/test/report.test.mjs` (+1) y `server/test/report.test.mjs`: el informe lleva la versión del motor; las partidas guardadas antes de existir el campo dan `null` | Superadas | Automatizada; servidor real |
 | Regresión | motor 140, servidor 42, cliente 84 y E2E 29 | — |
 
+### Compartir el Mission Report (Plan Maestro §4.4, 26/10/2026, 20:13-20:15)
+Botón «Compartir resultado» en el final, para todos. Usa el menú del sistema (`navigator.share`) o, si no lo hay, copia el texto. El texto (`reportShareText`) tiene solo lo que ya muestra el informe: resultado, causa, cifras y momentos. **Nunca** coordenadas ni equipos ocultos.
+
+| Comprobación | Resultado | Tipo |
+|---|---|---|
+| `mobile/test/report.test.mjs` (+1): texto exacto de un informe, singular y plural, sin duración si no hubo persecución, y null sin informe | **7 de 7** en el archivo | Automatizada |
+| `web-flow.e2e.mjs`: los tres jugadores tienen el botón | **30 de 30** en total | Chrome real |
+
+**No probado:** el menú de compartir del sistema en un móvil (en Chrome sin interfaz no se pulsa, para no abrir el diálogo del sistema). Todavía no hay una imagen del informe: solo texto.
+
 ### Pruebas al cerrar (26/10/2026, 19:22-19:30 según el reloj del sistema)
 | Suite | Resultado |
 |---|---|

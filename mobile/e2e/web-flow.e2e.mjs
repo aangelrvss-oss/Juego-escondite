@@ -295,6 +295,7 @@ try {
   const texts = await Promise.all([host, guest, late].map((p) => p.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`)));
   check('Mission Report igual en los tres móviles', texts.every((x) => x === texts[0]), texts[0].slice(0, 160));
   check('el informe incluye duración y capturas', texts[0].includes('Persecución') && texts[0].includes('1:15') && texts[0].includes('Capturas'));
+  check('todos pueden compartir el resultado', (await Promise.all([host, guest, late].map((p) => p.evaluate(`!!document.querySelector('[data-act="share-report"]')`)))).every(Boolean));
   await guest.reload();
   await guest.waitFor(reportOk, 'Mission Report tras recargar', 10_000);
   const after = await guest.evaluate(`document.querySelector('.result').textContent.replace(/\\s+/g, ' ').trim()`);

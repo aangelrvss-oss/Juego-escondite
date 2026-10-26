@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { missionReport } from '../www/js/game-view.js';
+import { missionReport, reportShareText } from '../www/js/game-view.js';
 
 // Mission Report (Plan Maestro §4.4) a partir de la instantánea oficial. Datos de ejemplo, sin red.
 
@@ -70,6 +70,36 @@ test('terminada por el anfitrión durante la huida: sin ganador y sin duración 
 test('el informe indica con qué versión de reglas se jugó (Plan §8.3)', () => {
   assert.equal(missionReport(base({ rulesVersion: 'clasico/2026-10-26' }), nameOf).rulesVersion, 'clasico/2026-10-26');
   assert.equal(missionReport(base(), nameOf).rulesVersion, null, 'partidas guardadas antes de existir el campo');
+});
+
+test('texto para compartir: resultado, cifras y momentos, sin coordenadas ni equipos', () => {
+  const report = missionReport(
+    base({
+      captures: [
+        { runnerId: 'r1', hunterId: 'h1', atOffsetMs: 95_000, via: 'claim' },
+        { runnerId: 'r2', hunterId: 'h1', atOffsetMs: 12 * 60_000, via: 'claim' },
+      ],
+    }),
+    nameOf,
+  );
+  const text = reportShareText(report);
+  assert.equal(
+    text,
+    [
+      'THE OUTRUN · Mission Report',
+      'Ganan los cazadores — Todos los fugitivos capturados',
+      'persecución 12:00 · 2 capturas · victoria a los 12:00',
+      '• Primera captura: Caro a los 1:35',
+      '• Captura decisiva: Dani por Ana a los 12:00',
+      '• Más capturas: Ana (2)',
+      'RUN. HIDE. STAY AHEAD.',
+    ].join('\n'),
+  );
+  assert.equal(reportShareText(null), null);
+  const single = reportShareText(missionReport(base({ activeStart: null, outcome: { winner: null, cause: 'ended_by_host' } }), nameOf));
+  assert.match(single, /Sin ganador/);
+  assert.match(single, /0 capturas/);
+  assert.doesNotMatch(single, /persecución/, 'sin duración si no hubo persecución');
 });
 
 test('el informe no contiene coordenadas ni equipos', () => {

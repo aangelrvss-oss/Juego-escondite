@@ -2,7 +2,7 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { INVITE_PARAM, PHASE_TEXT, TEAM_TEXT, ago, briefing, clock, codeFromLink, connectionNotice, errorText, gpsCheckError, gpsStatus, inviteLink, me, missionReport, normalizeCode, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
@@ -571,6 +571,7 @@ function finishedScreen(snap) {
       <ul class="captures">${report.captures.map((c) => `<li>${esc(c.runner)} capturado a los ${clock(c.atMs)}${c.hunter ? ` por ${esc(c.hunter)}` : ''}${c.via === 'self' ? ' · lo declaró el fugitivo' : ''}</li>`).join('') || '<li>Ninguna captura</li>'}</ul>
       <p class="hint">Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado.${report.rulesVersion ? ` Reglas: ${esc(report.rulesVersion)}.` : ''}</p>
     </section>
+    <button class="btn btn-outline" data-act="share-report">Compartir resultado</button>
     ${isHost ? '<button class="btn btn-primary" data-act="rematch">Revancha</button>' : '<p class="line">Esperando a que el anfitrión proponga la revancha…</p>'}
     <button class="btn btn-ghost" data-act="leave">Salir</button>`;
 }
@@ -733,6 +734,20 @@ document.addEventListener('click', async (ev) => {
     case 'qr':
       ui.sheet = 'qr';
       return render();
+    case 'share-report': {
+      const text = reportShareText(missionReport(ui.snap, nameOf));
+      if (!text) return;
+      try {
+        if (navigator.share) await navigator.share({ title: 'THE OUTRUN · Mission Report', text });
+        else {
+          await navigator.clipboard.writeText(text);
+          toast('Resultado copiado');
+        }
+      } catch {
+        /* compartir cancelado */
+      }
+      return;
+    }
     case 'new-code':
       if (!ui.confirmNewCode) {
         ui.confirmNewCode = true;
