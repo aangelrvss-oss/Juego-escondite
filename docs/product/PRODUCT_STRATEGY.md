@@ -112,7 +112,7 @@ Mecánicas que este modo comparte con la categoría (pings periódicos, ventaja 
 
 | ID | Experimento | Estado |
 |---|---|---|
-| E1 | 2 o 3 partidas en Madrid con SCRAM o HideZone, con un grupo de amigos adultos y observación estructurada | Pendiente (lo ejecutaría el propietario) |
+| E1 | 2 o 3 partidas en Madrid con SCRAM o HideZone, con un grupo de amigos adultos y observación estructurada | Pendiente (lo ejecutaría el propietario). Protocolo de observación en borrador: `PROTOCOLO_SESIONES_JUGADORES.md` (26/10/2026) |
 | E2 | 5–8 entrevistas a organizadores adultos | Pendiente. Valida el enfoque C, no bloquea el MVP |
 | E4 | Prueba técnica de ubicación con el móvil bloqueado | Diseñada en `TECHNICAL_SPIKE_PLAN.md`. Es la siguiente sesión |
 

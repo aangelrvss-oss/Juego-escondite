@@ -62,7 +62,7 @@ Estados:
 - [ ] Verificaciones previas sin coste (`TECHNICAL_SPIKE_PLAN.md` §7; el plan de la prueba técnica está diseñado y sin ejecutar).
 - [ ] Caminata de H1 (15–20 min) para calibrar la precisión. S1-T01 a S1-T14 en el Xiaomi 14T y decidir V2, V1 o un cambio de técnica.
 - [ ] S2 (dos Android por la calle) y S3 (iPhone; requiere decidir entre Mac y Apple Developer Program).
-- [ ] Sesiones con personas ajenas al desarrollo (guía §9), con el protocolo de observación escrito antes de cada ronda.
+- [ ] Sesiones con personas ajenas al desarrollo (guía §9). Protocolo en borrador: `docs/product/PROTOCOLO_SESIONES_JUGADORES.md`, pendiente de tu aprobación; hay que fijar qué se prueba antes de cada ronda.
 - [ ] E1 (partidas con SCRAM o HideZone) y E2 (entrevistas a organizadores).
 - [ ] Ejecutar las pruebas Java y las E2E con Playwright. Necesita autorización para instalar JDK, SDK y Playwright.
 - [ ] ADR de la arquitectura con los resultados medidos.
