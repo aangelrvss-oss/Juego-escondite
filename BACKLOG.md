@@ -25,7 +25,7 @@ Estados:
 - [ ] Decidir D-020 a D-023 (propuestas de la sesión 3). Revisión de los resultados de S0 por el propietario.
 - [ ] Preguntas de reglas pendientes, para decidir y no implementar todavía: «sin respuesta en 30 s = sin captura» (§11, pregunta 7), aviso al fugitivo cuando le escanean (§8.2), árbitro de disputas, y proporciones y parámetros definitivos.
 - [ ] El propietario fija los parámetros abiertos (`GAME_MODES_AND_RULES.md` §11; D-038).
-- [ ] Actualizar los comentarios de código que dicen «fuera del MVP» (`engine/src/constants.ts`, `engine/test/zone.test.ts`), según D-032.
+- [x] Actualizar los comentarios de código que decían «fuera del MVP» (`engine/src/constants.ts`, `engine/test/zone.test.ts`), según D-032. Solo comentarios.
 - [ ] Revisar si siguen vigentes las preguntas de la sesión 2 (ordenador y Mac, segundo Android, cuentas gratuitas de Expo y Cloudflare) y la revisión pendiente de sus documentos.
 
 ## P0 · HUNT multijugador completo

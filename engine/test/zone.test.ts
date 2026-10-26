@@ -6,9 +6,9 @@ import { distanceM, isOutsideZone, offsetM, zoneAt } from '../src/geo.ts';
 import type { ZoneVersion } from '../src/types.ts';
 import { CENTER, config } from './helpers.ts';
 
-// La zona que se reduce o se desplaza está FUERA DEL MVP (MVP_SCOPE §3) y sus reglas de
-// juego (avisos, ritmo, quién la mueve) no están definidas. Aquí solo se prueba la
-// geometría de la estructura versionada prevista en MVP_SCOPE §4.
+// La zona que se reduce o se desplaza forma parte del diseño previsto (D-032), pero su inclusión
+// en la primera versión jugable no está decidida y sus parámetros son hipótesis (D-038). Aquí solo
+// se prueba la geometría de la estructura versionada (MVP_SCOPE §4).
 
 const schedule: ZoneVersion[] = [
   { fromOffsetMs: 0, center: CENTER, radiusM: 800 },

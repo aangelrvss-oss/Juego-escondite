@@ -14,8 +14,9 @@ export const LIMITS = {
   pingIntervalMs: { min: 2 * MINUTE, max: 15 * MINUTE },
   zoneRadiusM: { min: 150, max: 2_000 },
   nameLength: { min: 2, max: 20 },
-  // El MVP solo admite una versión de zona (zona fija). La estructura versionada existe
-  // para la ampliación "zona que se reduce", que está fuera del MVP.
+  // Hoy solo se admite una versión de zona (zona fija). La estructura versionada existe para la
+  // zona dinámica, que forma parte del diseño previsto (D-032) pero cuya inclusión en la primera
+  // versión jugable no está decidida y cuyos parámetros siguen siendo hipótesis (D-038).
   maxZoneVersions: 1,
 } as const;
 
