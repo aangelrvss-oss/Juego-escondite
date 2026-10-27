@@ -52,11 +52,27 @@ export interface ServerOptions {
   saveIntervalMs?: number;
 }
 
+// En Windows, renombrar encima de un archivo que otro proceso tiene abierto (un antivirus, una copia
+// de seguridad, el indexador o alguien que lo lee) falla con EPERM, EACCES o EBUSY: se comprobó que
+// con un lector activo fallaba la mayoría de los intentos. Se reintenta con esperas cortas (en total,
+// menos de 0,5 s) sin bloquear el servidor.
+const RENAME_RETRY_CODES = new Set(['EPERM', 'EACCES', 'EBUSY']);
+const RENAME_ATTEMPTS = 10;
+
 /** Escritura atómica: primero un archivo temporal y después se renombra encima del bueno. */
-function saveState(file: string, hub: Hub): void {
+async function saveState(file: string, hub: Hub): Promise<void> {
   const tmp = `${file}.tmp`;
   writeFileSync(tmp, JSON.stringify(hub.exportState()));
-  renameSync(tmp, file);
+  for (let attempt = 1; ; attempt++) {
+    try {
+      renameSync(tmp, file);
+      return;
+    } catch (e) {
+      const code = (e as NodeJS.ErrnoException).code ?? '';
+      if (attempt >= RENAME_ATTEMPTS || !RENAME_RETRY_CODES.has(code)) throw e;
+      await new Promise((r) => setTimeout(r, 10 * attempt));
+    }
+  }
 }
 
 export interface RunningServer {
@@ -138,15 +154,25 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
     }
     savedRevision = hub.revision();
   }
-  const persist = () => {
-    if (!stateFile || hub.revision() === savedRevision) return;
-    try {
-      savedRevision = hub.revision();
-      saveState(stateFile, hub);
-    } catch (e) {
-      savedRevision = -1; // se reintenta en el siguiente ciclo
-      console.error(new Date().toISOString(), 'no se pudo guardar el estado:', (e as Error).message);
-    }
+  // Un solo guardado a la vez; si falla del todo, se reintenta en el siguiente ciclo.
+  let saving: Promise<void> | null = null;
+  const persist = (): Promise<void> => {
+    if (saving) return saving;
+    if (!stateFile || hub.revision() === savedRevision) return Promise.resolve();
+    const revision = hub.revision();
+    saving = saveState(stateFile, hub)
+      .then(
+        () => {
+          savedRevision = revision;
+        },
+        (e) => {
+          console.error(new Date().toISOString(), 'no se pudo guardar el estado:', (e as Error).message);
+        },
+      )
+      .finally(() => {
+        saving = null;
+      });
+    return saving;
   };
   const saver = stateFile ? setInterval(persist, options.saveIntervalMs ?? 2_000) : undefined;
   saver?.unref?.();
@@ -255,15 +281,18 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       hub.pump();
       schedule();
     },
-    close: () =>
-      new Promise((done) => {
-        if (timer) clearTimeout(timer);
-        if (saver) clearInterval(saver);
-        persist(); // último guardado al apagar
+    close: async () => {
+      if (timer) clearTimeout(timer);
+      if (saver) clearInterval(saver);
+      // Último guardado al apagar: espera al que esté en curso y guarda lo que haya cambiado después.
+      await persist();
+      await persist();
+      await new Promise<void>((done) => {
         for (const socket of upgraded) socket.destroy();
         server.closeAllConnections?.();
         server.close(() => done());
-      }),
+      });
+    },
   };
 }
 

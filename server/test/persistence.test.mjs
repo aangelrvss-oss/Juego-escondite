@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { closeSync, existsSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, it } from 'node:test';
@@ -199,6 +199,26 @@ describe('persistencia opcional del servidor (STATE_FILE)', () => {
     t.players = players;
     await settle(200);
     assert.equal(JSON.parse(readFileSync(file, 'utf8')).rooms.length, 1, 'con cambios nuevos sí se guarda');
+  });
+
+  it('el guardado final al apagar no se pierde si otro programa tiene abierto el archivo un momento', async () => {
+    // En Windows, renombrar encima de un archivo abierto por otro proceso (antivirus, copia de
+    // seguridad, indexador) falla con EPERM. Aquí el «otro programa» es esta prueba: abre el archivo
+    // justo antes de apagar y lo suelta 100 ms después. En Linux o macOS el renombrado no falla y la
+    // prueba pasa igual.
+    const file = stateFile();
+    const server = await startServer({ staticRoot: null, stateFile: file, saveIntervalMs: 3_600_000, hub: { now: () => T0 } });
+    const ana = player({ wsUrl: `${server.url.replace('http', 'ws')}/ws` }, 'Ana');
+    await waitFor(() => ana.conn.status === 'open', 'conexión');
+    writeFileSync(file, JSON.stringify({ version: 1, savedAt: 0, rooms: [] })); // versión anterior en disco
+    const { code } = await ana.conn.create('Ana'); // cambio sin guardar (el intervalo es de 1 h)
+    ana.conn.close();
+    const fd = openSync(file, 'r');
+    setTimeout(() => closeSync(fd), 100);
+    await server.close();
+    const saved = JSON.parse(readFileSync(file, 'utf8'));
+    assert.equal(saved.rooms.length, 1, 'la sala creada antes de apagar está en el archivo');
+    assert.equal(saved.rooms[0].code, code);
   });
 
   it('sin STATE_FILE no se escribe nada (comportamiento de siempre)', async () => {
