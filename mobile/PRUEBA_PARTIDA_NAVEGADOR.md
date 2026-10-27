@@ -30,6 +30,14 @@ cloudflared tunnel --url http://localhost:8787                     # terminal 2:
 node server/health-watch.mjs                                       # terminal 3: contadores cada 10 s (sin datos personales)
 ```
 
+En Windows (PowerShell), el terminal 1 es así:
+```powershell
+$env:TRUST_PROXY="1"; $env:STATE_FILE="outrun-estado.json"; node server/main.ts
+```
+y el túnel, `cloudflared.exe tunnel --url http://localhost:8787`.
+
+**Comprobación antes de seguir:** abre `https://…/health` en el navegador del móvil A, con datos móviles y sin wifi. Debe responder `{"ok":true,…}`. Si no responde, el problema es el túnel o la red, no el juego: anótalo y para.
+
 `STATE_FILE` es opcional: guarda las salas (sin coordenadas ni secretos) por si el servidor se reinicia. Borra el archivo al terminar.
 
 ### 2. Entrar
@@ -60,7 +68,8 @@ node server/health-watch.mjs                                       # terminal 3:
    - No toquéis el móvil durante 2 minutos. **Anota si la pantalla se apaga.**
    - Si sale «Mantén la pantalla encendida», el navegador no lo permite: anota cuál es.
 3. **Quieto (lo más importante):** B se esconde y **no se mueve** durante 2–3 minutos.
-   - En el ordenador, `health-watch` debe seguir contando lecturas de los dos (al menos una cada 10 s).
+   - En el ordenador, `lecturas_ws` de `health-watch` debe seguir subiendo. Ojo: es el total de los dos, no distingue jugadores.
+   - **La comprobación por jugador la hace A:** cuando llegue la siguiente pista (cada 3 min), en «Última pista» B debe aparecer con «hace N s», un número pequeño (menos de 15 s), y **sin** «imprecisa o antigua». Anota N.
    - Después, A se acerca, toca suavemente a B y pulsa su nombre.
    - **Anota si la reclamación llega a B** o si A ve «No hay una ubicación reciente del fugitivo» o «La ubicación del fugitivo aún no es estable».
 4. B responde **No** la primera vez (la partida sigue) y **Sí, me ha pillado** la segunda.
@@ -95,6 +104,20 @@ La puerta de salida de la Fase 2 del Plan Maestro es «dos partidas consecutivas
 | Pantalla encendida | No se apaga sola durante la partida (o el aviso lo dice claramente) |
 | Jugador quieto | La reclamación sobre un fugitivo que lleva 2–3 min quieto llega y se puede confirmar |
 | Recuperación | Recargar, modo avión y retirar el permiso no rompen la partida ni repiten avisos antiguos |
+
+## Si algo falla
+
+| Síntoma | Qué mirar |
+|---|---|
+| `/health` no responde desde el móvil | El túnel o la red. No es un fallo del juego |
+| El navegador no pide permiso de ubicación o la niega siempre | La dirección tiene que empezar por `https://`. Revisa los permisos del sitio en el navegador |
+| «Falta el permiso de ubicación» fijo | El permiso está retirado. Actívalo en los ajustes del navegador y pulsa «Reintentar» |
+| La pantalla se apaga sola | Mira si aparece «Mantén la pantalla encendida»: el navegador no permite mantenerla encendida (por ejemplo, un iPhone con iOS anterior al 16.4 o en modo de ahorro). Anota el modelo y el navegador |
+| B quieto aparece en «Última pista» con «imprecisa o antigua» | Su navegador no está dando lecturas nuevas. Anota el modelo y el navegador y si la pantalla seguía encendida. Es justo lo que se quiere averiguar |
+| La reclamación da «Tu GPS acaba de dar un salto» o «aún no es estable» | Filtro de saltos (D-049): esperad 5–10 s y repetid. Anota cuántas veces pasa |
+| «Demasiados intentos» al unirse | El servidor no se arrancó con `TRUST_PROXY=1`: todos los móviles comparten la IP del túnel |
+| Un móvil se queda en «Reconectando…» más de 1 min con cobertura | Recarga la página: debe volver a la partida sin volver a entrar con el código. Anota la hora |
+| Los dos móviles ven resultados distintos | **Fallo crítico** para la puerta de la Fase 2. Haz capturas de los dos Mission Report, sin el radar |
 
 ## Qué enviar después
 

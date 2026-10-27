@@ -2,6 +2,18 @@
 
 > **Estado (26/10/2026): preparada, NO realizada.** No hay ningún resultado físico de esta prueba. Lo único validado es automático o en navegadores de un ordenador (`QUALITY_STATE.md`, sección «H2: prueba real en Android»).
 
+## Estado de los requisitos (revisión del 27/10/2026)
+
+| Requisito | Estado | Qué hace falta |
+|---|---|---|
+| APK `0.3.0-h2-bloqueo` | **No está en este ordenador.** Se compiló en el entorno anterior y nunca estuvo en Git (`mobile/apk-local/` no existe en este clon) | Que la recuperes del móvil o de donde la guardaras, y compruebes su SHA-256 (abajo). Si no existe, hay que volver a compilar |
+| Compilar una APK nueva | **No es posible ahora:** faltan JDK 21 y el SDK de Android (plataforma 36, build-tools 35) | Tu autorización para instalarlos (`mobile/README.md`, «Comandos») |
+| APK antigua frente al servidor actual | **Compatible según el código, sin probar:** el protocolo solo añade el mensaje `code`, que la app antigua ignora. Pero su interfaz es la anterior a los cambios del 26/10: sin declaración de edad, sin el aviso de permiso retirado, sin el arreglo de la recarga y con textos distintos | Saber que se prueba el cliente antiguo. La parte de la pantalla bloqueada (el envío nativo) no ha cambiado desde entonces |
+| Túnel HTTPS (`cloudflared`) | No instalado. **No autorizado** | Tu autorización para instalarlo y abrir el túnel durante la prueba. Expone el servidor a Internet mientras esté abierto |
+| Servidor | Listo: Node 24.12 en este ordenador. Las suites pasan (`QUALITY_STATE.md`) | — |
+| Dos Android | Xiaomi 14T y otro Android 12 o superior | Que estén disponibles |
+| Puerta de la Fase 2 del Plan | **Esta prueba no la cubre:** acaba con «Terminar partida» (sin ganador) | Para la puerta («dos partidas consecutivas completas»), usa `PRUEBA_PARTIDA_NAVEGADOR.md` o juega aquí dos partidas hasta su final normal |
+
 ## Qué se quiere saber
 
 1. Si dos personas pueden jugar desde sus propios móviles, en redes distintas, contra el servidor de tu ordenador publicado con un túnel HTTPS.
@@ -101,7 +113,7 @@ node server/health-watch.mjs                        # cada 10 s: conexiones y le
 - Cada uno ve **solo su rol**.
 - La huida y la persecución empiezan a la vez, y el temporizador es igual en ambos (±1 s).
 - La notificación de ambos móviles dice «Partida en curso: tu ubicación se envía al servidor de la partida».
-- En el radar aparece «se envía también con la pantalla bloqueada».
+- El indicador bajo el radar dice que la ubicación se envía también con la pantalla bloqueada. En una APK compilada con el código actual: «Compartiendo tu ubicación con el servidor de la partida (también con la pantalla bloqueada)». El texto exacto de la APK `0.3.0` puede ser otro.
 - En el terminal 3:
   - `lecturas_http` sube unas 2 por móvil cada 10 s (una lectura cada ~5 s);
   - `lecturas_ws` no sube, porque la app envía por el canal nativo.
