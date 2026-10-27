@@ -377,6 +377,8 @@ El Plan numera sus decisiones D-001 a D-008 (§12.2, pág. 20), igual que este r
 - archivo ilegible;
 - sin `STATE_FILE`, nada cambia.
 
+**Corrección (27/10/2026):** en Windows, el guardado fallaba con `EPERM` si otro programa leía el archivo, y se podía perder el guardado final al apagar. Ahora el renombrado se reintenta (`701a328`; detalle en `QUALITY_STATE.md`). **Advertencia de privacidad que faltaba:** la configuración guardada incluye el centro de la zona, que sale de la posición GPS del anfitrión.
+
 **Ampliado (26/10/2026, noche):** `server/test/crash.test.mjs` (3), con el proceso terminado sin aviso y arrancado de nuevo, y una prueba más en `persistence.test.mjs`: un comando reenviado tras el reinicio no se aplica dos veces.
 
 ### D-051 · Decisión técnica reversible (26/10/2026, noche) · En el navegador, pantalla encendida y lectura nueva con el móvil quieto

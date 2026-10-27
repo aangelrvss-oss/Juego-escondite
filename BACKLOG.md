@@ -49,7 +49,8 @@ Estados:
   - permiso retirado;
   - pantalla encendida y lectura con el móvil quieto en el navegador.
 - [ ] **Defecto conocido:** si una partida termina más de 6 h después de crear la sala, el Mission Report se sustituye enseguida por «sala cerrada». Para corregirlo hay que decidir un margen (D-038).
-- [ ] **Fallo intermitente** en la suite del servidor: 1 de 13 ejecuciones, prueba sin identificar (`QUALITY_STATE.md`). Guardar la salida completa de las próximas ejecuciones y revisar la carrera del guardado en `crash.test.mjs`.
+- [x] **Fallo intermitente** de la suite del servidor (27/10). Causa: en Windows, el guardado del estado fallaba (`EPERM`) si otro programa leía el archivo; también se perdía el guardado final al apagar. Corregido y probado bajo carga (`QUALITY_STATE.md`). Además, `keepalive.test.mjs` era frágil y se han ampliado sus márgenes.
+- [ ] Repetir la prueba de carga (3 suites en paralelo) con más memoria libre: con el arreglo solo se completaron 6 ejecuciones. La carrera de baja probabilidad de `crash.test.mjs` sigue abierta.
 - [ ] Pausa o cancelación clara (D-053).
 - [ ] Seguridad de la zona más allá de los avisos (guía §7: «una advertencia no arregla una mecánica peligrosa»), por ejemplo un constructor de zonas que excluya vías. Necesita decisión.
 - [ ] Política de conservación y borrado de datos, `PRIVACY_AND_COMPLIANCE.md` y `THREAT_MODEL.md`. Revisión legal antes de abrir al público.
@@ -58,7 +59,7 @@ Estados:
 ## P1 · Pruebas reales con varios dispositivos y jugadores
 - [ ] **Analizar el CSV de la prueba física de H1** (guía §6). No está en el repositorio ni en este ordenador: lo aporta el propietario.
 - [ ] Partida con dos móviles en el navegador (`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`). Necesita autorización para el túnel HTTPS. Es la primera vez que se escanearía el QR con una cámara.
-- [ ] Partida con dos Android con la pantalla bloqueada (`mobile/PRUEBA_PARTIDA_ANDROID.md`).
+- [ ] Partida con dos Android con la pantalla bloqueada (`mobile/PRUEBA_PARTIDA_ANDROID.md`). **Bloqueada:** no hay APK en este ordenador; hace falta recuperar la `0.3.0` (con la interfaz antigua) o autorizar JDK 21 y el SDK para compilar una nueva.
 - [ ] Puerta de la Fase 2 del Plan: dos partidas consecutivas completas sin reiniciar el servidor y sin contradicciones entre dispositivos.
 - [ ] Verificaciones previas sin coste (`TECHNICAL_SPIKE_PLAN.md` §7; el plan de la prueba técnica está diseñado y sin ejecutar).
 - [ ] Caminata de H1 (15–20 min) para calibrar la precisión. S1-T01 a S1-T14 en el Xiaomi 14T y decidir V2, V1 o un cambio de técnica.

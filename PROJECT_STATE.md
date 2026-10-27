@@ -210,6 +210,17 @@ Todo está probado con pruebas automáticas y en **Chrome de escritorio** (con e
 
 Pruebas al cerrar: motor 144, servidor 54, cliente 95, demo 62 y E2E en Chrome 41/41; typecheck sin errores. **Nada se ha validado en un móvil real.**
 
+## Fiabilidad y preparación de la prueba con móviles (27/10/2026)
+
+- **Fallo intermitente resuelto:** era un defecto real del servidor en Windows (el guardado del estado fallaba si otro programa leía el archivo y se podía perder al apagar) más una prueba frágil. Detalle y limitaciones en `QUALITY_STATE.md`.
+- **Auditoría de las decisiones autónomas (D-054):** ninguna contradice una decisión aprobada. Se recomienda mantenerlas todas; tres necesitan validarse con personas (`docs/product/DECISIONES_PENDIENTES.md`).
+- **Requisitos para la primera partida con dos móviles en el navegador** (`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`):
+  1. Tu autorización para instalar `cloudflared` y abrir un túnel HTTPS durante la prueba. Expone el servidor a Internet mientras esté abierto.
+  2. Dos móviles con un navegador actual (en iPhone, iOS 16.4 o superior para mantener la pantalla encendida) y datos móviles.
+  3. Este ordenador encendido durante toda la prueba. El servidor está listo y las suites pasan.
+  4. Dos personas (cuatro o más para empezar a observar la experiencia, con `docs/product/PROTOCOLO_SESIONES_JUGADORES.md`, que es un borrador).
+- **Requisitos para la prueba con la app Android** (`mobile/PRUEBA_PARTIDA_ANDROID.md`): lo mismo y, además, una APK. **No hay ninguna en este ordenador.** Hay dos opciones: recuperar la `0.3.0` (interfaz anterior al 26/10, compatible con el servidor según el código) o autorizar JDK 21 y el SDK de Android para compilar una nueva.
+
 ## Siguiente acción concreta
 
 0. ~~Configurar la identidad de Git y hacer los commits.~~ Hecho: hay commits locales de todo el trabajo, sin push. Decidir si se publica la rama `recuperacion-h2` en GitHub (no se ha hecho).

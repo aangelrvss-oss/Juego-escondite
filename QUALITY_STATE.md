@@ -642,3 +642,31 @@ Ver D-052 y la tabla de trazabilidad de arriba.
 | E2E en Chrome | 41 de 41 (tres veces) |
 
 **Fallo intermitente sin identificar:** una prueba del servidor falló una vez en 13 ejecuciones de la suite completa. De esa ejecución solo se guardó el resumen, así que no se sabe cuál fue. No se ha reproducido ni aislada ni con carga. Las sospechosas son las que dependen del reloj real (`crash.test.mjs` y `keepalive.test.mjs`): en `crash.test.mjs` hay una carrera conocida de probabilidad baja, si el guardado periódico cae entre la entrada de un jugador y la caída. **No se ha corregido** (está en el backlog). La próxima ejecución completa debe guardar la salida entera.
+
+## Investigación del fallo intermitente (27/10/2026)
+
+**Causa encontrada y corregida.** El fallo intermitente de la suite del servidor (1 de 13 ejecuciones el 26/10) era en realidad dos:
+
+1. **Defecto real del servidor en Windows.** Con `STATE_FILE`, el guardado escribe un temporal y lo renombra (`renameSync`). En Windows, renombrar encima de un archivo que otro proceso tiene abierto falla con `EPERM`.
+   - **Experimento aislado:** con un lector en bucle fallaron 253 de 300 renombrados; sin lector, ninguno.
+   - **En las pruebas**, el lector era la propia prueba (`crash.test.mjs` consulta el archivo cada 10 ms). Bajo carga se agotaban sus plazos de 8 s («guardado periódico de la huida», «primer guardado tras un cambio»).
+   - **En uso real:** un antivirus, una copia de seguridad o el indexador podían impedir el guardado, y **el guardado final al apagar con Ctrl+C se perdía**.
+   - **Arreglo (`701a328`):**
+     - hasta 10 reintentos ante `EPERM`, `EACCES` o `EBUSY`, con esperas cortas (menos de 0,5 s) y sin bloquear;
+     - un solo guardado a la vez;
+     - el cierre espera al guardado en curso.
+   - **Prueba determinista nueva:** el archivo se abre justo antes de apagar. Con un solo intento (el comportamiento anterior) falla con `EPERM`.
+2. **Fragilidad de una prueba.** `keepalive.test.mjs` cortaba a los 400 ms con un ping cada 100 ms, y una pausa del bucle de eventos bajo carga lo rompía. Los márgenes pasan a 1.500/100 ms sin cambiar lo que se comprueba (`2174dcb`). La mutación (sin ping) se sigue detectando.
+
+| Comprobación | Antes del arreglo | Después |
+|---|---|---|
+| Tres suites del servidor y la del cliente a la vez (salida completa guardada) | **4 de 6** ejecuciones con fallos (`crash.test.mjs`, 2 pruebas; `keepalive.test.mjs`, 1) | **0 de 6** |
+| Suite del servidor en serie | — | 60 de 60 |
+| Motor, cliente y demo (en serie) | — | 144, 95 y 62 |
+| E2E en Chrome | — | 41 de 41 |
+
+**Limitaciones de la investigación:**
+- El sistema detuvo la tercera ronda de carga por **falta de memoria del equipo** (solo quedaban 0,3–0,9 GB libres, con otros programas abiertos). La muestra con el arreglo es de 6 ejecuciones bajo carga, no de 18.
+- No se sabe con certeza cuál fue la prueba del fallo único del 26/10: no se guardó su salida. Los dos patrones encontrados lo explican, pero no se puede confirmar.
+- La carrera conocida de `crash.test.mjs` (un guardado periódico entre la entrada de un jugador y la caída) sigue siendo posible. Es de probabilidad muy baja y no se ha observado.
+- Solo se ha probado en Windows 11. En Linux y macOS, el renombrado no falla así.
