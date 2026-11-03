@@ -1,0 +1,26 @@
+# Despliegue de THE OUTRUN en Render (Blueprint). Ver docs/DEPLOYMENT.md.
+# Un único servicio web Node: sirve la interfaz (mobile/www), el WebSocket del juego (/ws) y /health.
+# Interfaz y servidor van en el mismo origen: sin CORS ni URLs cruzadas.
+services:
+  - type: web
+    name: the-outrun
+    runtime: node
+    plan: free
+    region: frankfurt
+    branch: mapa-real
+    # Sin empaquetador: el «build» instala las bibliotecas de la interfaz (MapLibre, Capacitor), las copia a
+    # mobile/www/vendor y genera mobile/www/mapa.config.json desde MAPTILER_KEY (nunca está en Git).
+    buildCommand: npm ci --prefix mobile --omit=dev && npm run vendor --prefix mobile && node mobile/scripts/mapa-desde-entorno.mjs
+    # Node 24 ejecuta TypeScript directamente (versión fijada en .node-version).
+    startCommand: node server/main.ts
+    healthCheckPath: /health
+    envVars:
+      - key: HOST
+        value: 0.0.0.0
+      # Detrás del proxy de Render: la IP real de cada móvil llega en X-Forwarded-For (límites por IP).
+      - key: TRUST_PROXY
+        value: '1'
+      # Clave PÚBLICA de MapTiler (restringida por origen en MapTiler). Se pide en el panel de Render; no
+      # va en el repositorio. Sin ella, el juego funciona con el radar de reserva.
+      - key: MAPTILER_KEY
+        sync: false
