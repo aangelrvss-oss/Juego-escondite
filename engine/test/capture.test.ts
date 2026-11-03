@@ -64,6 +64,7 @@ describe('validación de capturas (AC-E1 a AC-E7)', () => {
 
   const rejections: [string, (g: Harness) => void, string][] = [
     ['sin posición del cazador', (g) => g.at('r1', 5), 'your_location_stale'],
+    ['sin posición del fugitivo', (g) => g.at('h', 0), 'target_location_stale'],
     ['posición del cazador de hace más de 15 s', (g) => {
       g.at('h', 0, 8, g.now - 16 * SECOND);
       g.at('r1', 5);

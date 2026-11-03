@@ -1,0 +1,36 @@
+=== repro-a4-1-zorro-incapturable.mjs
+A claim: { ok: false, error: 'target_location_stale' } | f.away = false
+A última pista: [ { ageS: 180, availability: 'UNAVAILABLE', hasPos: true } ]
+A resultado: { winner: 'runner', cause: 'time_up' } (esperado hoy: winner runner, time_up)
+B claim con acc 31 m: { ok: false, error: 'accuracy_too_low' }
+B expuesto: false | h ve al zorro: false
+C caducidades: 3 | rejectedTagCount: 0 | flags: []
+C flags en game_finished: {} | outcome: { winner: 'runner', cause: 'time_up' }
+D outcome: { winner: 'runner', cause: 'time_up' } | responder tarde: { ok: false, error: 'claim_not_found' }
+=== repro-a4-2-fantasma-cuenta-atras.mjs
+f tras salir: {
+  status: 'left',
+  team: 'runner',
+  leftRoom: false,
+  playedGameNo: 1,
+  gameNo: 1
+}
+Grupo «Zorro» del Mission Report: [ 'f (Abandonó)', 'b (Escapó)' ]
+FALLO: el informe lista a quien salió en la cuenta atrás de un sorteo abortado
+f en la revancha: invited (esperado hoy: invited; correcto: left/fuera)
+=== repro-a4-3-autoeleccion-zorro.mjs
+(1) prefs vistas por el anfitrión: [ 'h:null', 'a:null', 'b:null', 'c:null' ]
+(1) zorro: [ 'a' ] (esperado hoy: [a] siempre)
+(2) start: { ok: false, error: 'teams_unbalanced', detail: 'fox_hunt' } | prefs vistas por el anfitrión: [ 'h:null', 'a:null', 'b:null', 'c:null' ]
+=== repro-a4-4-sin-conexion-y-anfitrion.mjs
+(a) h2.away = true | el zorro recibe h2: [
+  {
+    reason: 'hunter_seen',
+    hasPos: true,
+    ageS: 40,
+    availability: 'STALE'
+  }
+]
+(a) f.away = true | pista: [ { hasPos: true, ageS: 120, availability: 'STALE' } ]
+(b) claim: true
+(b) outcome: { winner: null, cause: 'ended_by_host' } (esperado hoy: winner null, ended_by_host)

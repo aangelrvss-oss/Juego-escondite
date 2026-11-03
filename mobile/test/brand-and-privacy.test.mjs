@@ -24,12 +24,27 @@ test('la pantalla de diagnóstico no usa la red: sin URLs externas, fetch, XHR n
   }
 });
 
+// Única excepción, y cerrada: el mapa real (map-view.js) pide la cartografía al proveedor configurado
+// (MapLibre lo hace con la URL del estilo) y lee su configuración local (mapa.config.json, mismo origen).
+// No envía posiciones ni nada del juego: solo descarga el mapa de la zona que se está viendo.
+const MAP_MODULE = 'map-view.js';
+
 test('el juego solo habla con el servidor propio, por WebSocket y desde net.js', () => {
   const dir = new URL('../www/js/', import.meta.url);
   const files = readdirSync(dir).filter((f) => !DIAGNOSTIC.includes(f)).map((f) => [f, readFileSync(new URL(f, dir), 'utf8')]);
   files.push(['index.html', read('../www/index.html')], ['game.css', read('../www/css/game.css')]);
   assert.ok(files.length >= 6, 'módulos del juego');
+  assert.ok(files.some(([name]) => name === MAP_MODULE), 'el módulo del mapa también se revisa');
   for (const [name, src] of files) {
+    if (name === MAP_MODULE) {
+      const code = src.replace(/^\s*(\/\/|\*|\/\*\*).*$/gm, ''); // sin comentarios (citan ejemplos)
+      assert.deepEqual([...new Set(code.match(/https?:\/\/[\w.-]+/g))], ['https://api.maptiler.com'], 'el mapa solo conoce al proveedor configurado');
+      assert.deepEqual(code.match(/\bfetch\w*\(/g), ['fetchImpl('], 'un único fetch');
+      assert.match(code, /fetchImpl\(MAP_CONFIG_URL,/, 'y es el de su configuración local');
+      assert.match(code, /export const MAP_CONFIG_URL = 'mapa\.config\.json';/);
+      assert.doesNotMatch(code, /XMLHttpRequest|sendBeacon|WebSocket|innerHTML/, name);
+      continue;
+    }
     assert.doesNotMatch(src, /https?:\/\/[\w-]/, `${name}: URL externa`); // `https://${...}` (esquema por defecto) sí vale
     assert.doesNotMatch(src, /\bfetch\(|XMLHttpRequest|sendBeacon/, name);
     if (name !== 'net.js') assert.doesNotMatch(src, /new\s+\w*WebSocket/, name);

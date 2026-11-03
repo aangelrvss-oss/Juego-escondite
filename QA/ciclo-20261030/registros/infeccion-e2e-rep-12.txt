@@ -1,0 +1,17 @@
+ok · el anfitrión elige Infección; los demás lo ven en la sala y en las reglas; con 3 no se puede empezar (1)
+ok · empieza la persecución con 1 cazadora y 3 fugitivos; el contador dice «Infectados» (2)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: lecturas recientes y estables de Ana y Beto
+    at file:///C:/Users/aange/Projects/Juego-escondite-recuperacion/mobile/e2e/infeccion.e2e.mjs:132:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.12.0

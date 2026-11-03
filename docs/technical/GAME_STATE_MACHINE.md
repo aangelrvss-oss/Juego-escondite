@@ -69,6 +69,14 @@ El resultado lo calcula y publica **solo el servidor**, en el evento `game_finis
 - Si vuelve, recupera la condición de jugador, no la de anfitrión. [P]
 
 ### 5.2 Un jugador se desconecta (sin abandonar)
+> **Cambiado el 30/10/2026 (D-057):**
+> - a los 30 s sin ninguna señal de la aplicación (WebSocket o lectura nativa), todos lo ven «sin conexión» (`player_presence`);
+> - a los 5 min sin señal queda fuera como en §5.3 (`player_left` con `reason: 'timeout'`, `leftReason: 'timeout'`);
+> - el capturado (espectador) no queda fuera;
+> - si coincide con el final, el final va antes;
+> - tras reiniciar el servidor o detectar que estuvo suspendido, el plazo empieza de cero.
+>
+> Lo que sigue describe lo que pasa durante esos 5 minutos.
 - Sigue en juego. Su ubicación pasa a `STALE` y después a `UNAVAILABLE` (§6.3).
 - Si es un fugitivo y llega una pista, los cazadores reciben su **última posición conocida con su antigüedad** ("hace 4 min"). Esto evita que desconectar el GPS sea una forma de esconderse. [P: valorar una penalización por desconexión prolongada]
 

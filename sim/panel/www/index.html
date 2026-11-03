@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0b0d">
+<title>Simulador · THE OUTRUN</title>
+<link rel="stylesheet" href="/css/tokens.generated.css">
+<link rel="stylesheet" href="/css/game.css">
+<link rel="stylesheet" href="/vendor/maplibre-gl/maplibre-gl.css" data-maplibre="1">
+<link rel="stylesheet" href="/sim/panel.css">
+</head>
+<body class="sim">
+<header class="sim-top">
+  <div class="sim-brand">
+    <span class="sim-logo" id="logo"></span>
+    <span class="sim-tool">Simulador · herramienta de desarrollo</span>
+  </div>
+  <div class="sim-status" id="status" aria-live="polite"></div>
+</header>
+
+<section class="sim-bar" aria-label="Preparar la simulación">
+  <fieldset class="sim-modes">
+    <legend>Modo</legend>
+    <label><input type="radio" name="modo" value="classic" checked> Clásico</label>
+    <label><input type="radio" name="modo" value="infection"> Infección</label>
+    <label><input type="radio" name="modo" value="fox_hunt"> Caza del zorro</label>
+  </fieldset>
+  <label class="sim-field">Juegas como
+    <select id="humano">
+      <option value="">Nadie (10 bots)</option>
+    </select>
+  </label>
+  <button class="btn btn-primary btn-small" data-act="iniciar">Iniciar con 10 participantes</button>
+  <button class="btn btn-outline btn-small" data-act="reiniciar">Reiniciar</button>
+</section>
+
+<section class="sim-bar" aria-label="Tiempo">
+  <button class="btn btn-outline btn-small" data-act="pausa" id="pausa">Pausar</button>
+  <div class="sim-speeds" role="group" aria-label="Velocidad del reloj">
+    <button data-speed="1">×1</button><button data-speed="2">×2</button><button data-speed="5">×5</button><button data-speed="10">×10</button><button data-speed="20">×20</button>
+  </div>
+  <div class="sim-speeds" role="group" aria-label="Avanzar el tiempo">
+    <button data-advance="30000">+30 s</button><button data-advance="60000">+1 min</button><button data-advance="300000">+5 min</button>
+  </div>
+  <button class="btn btn-ghost btn-small" data-act="captura-valida">Captura válida</button>
+  <button class="btn btn-ghost btn-small" data-act="captura-invalida">Captura inválida</button>
+  <button class="btn btn-danger btn-small" data-act="finalizar">Finalizar partida</button>
+  <button class="btn btn-outline btn-small" data-act="revancha">Revancha</button>
+</section>
+
+<main class="sim-grid">
+  <section class="card sim-mapcard" aria-label="Mapa">
+    <h2><span id="map-title">Vista de control</span>
+      <select id="vista" aria-label="Qué se ve en el mapa"><option value="">Todos (vista de control)</option></select>
+    </h2>
+    <p class="sim-note" id="map-sub"></p>
+    <div class="sim-map" id="map"></div>
+    <p class="sim-note" id="map-note"></p>
+    <ul class="sim-legend">
+      <li><i class="lg t-hunter"></i>Cazador</li><li><i class="lg t-runner"></i>Fugitivo / zorro</li>
+      <li><i class="lg t-x"></i>Capturado o fuera</li><li><i class="lg lg-ping"></i>Última pista</li>
+    </ul>
+  </section>
+
+  <section class="card sim-phone" aria-label="Interfaz real del juego">
+    <h2><span id="phone-title">Interfaz real</span><button class="btn btn-ghost btn-small" data-act="soltar" id="soltar" hidden>Devolver al bot</button></h2>
+    <div class="sim-frame" id="frame-box"><p class="sim-note" id="frame-empty">Nadie juega desde la interfaz: los 10 son bots. Elige «Juegas como» antes de iniciar o en la tabla.</p></div>
+    <p class="sim-note">Es la app real servida por el servidor de la simulación. GPS y reloj simulados; haz clic en el mapa para mover a tu participante.</p>
+  </section>
+
+  <section class="card sim-people" aria-label="Participantes">
+    <h2>Participantes <span class="sim-count" id="count"></span></h2>
+    <div class="sim-tablewrap"><table>
+      <thead><tr><th>Nombre</th><th>Rol</th><th>Estado</th><th>Conexión</th><th>Última señal</th></tr></thead>
+      <tbody id="people"></tbody>
+    </table></div>
+    <div class="sim-actions" id="actions">
+      <p class="sim-note">Selecciona un participante en la tabla para probar su conexión.</p>
+    </div>
+  </section>
+
+  <section class="card sim-results" aria-label="Capturas y resultado">
+    <h2>Capturas y resultado</h2>
+    <div id="results"></div>
+  </section>
+
+  <section class="card sim-log" aria-label="Consola de eventos">
+    <h2>Consola de eventos <span class="sim-count">hora de juego · participante · qué pasa</span></h2>
+    <ol id="log" class="sim-loglist"></ol>
+  </section>
+</main>
+<p class="sim-foot">Real: servidor, motor y reglas, protocolo, red del cliente (net.js) y la interfaz. Simulado: GPS, decisiones de los bots y reloj. Solo en este ordenador; no publica nada.</p>
+<script type="module" src="/sim/panel.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+
+[A1-1a fox self-pick]
+  OBSERVADO: {"start":{"ok":true},"foxIs":["c"],"hostSeesPrefOfC":null}
+  ESPERADO SI EL HALLAZGO EXISTE: start ok y foxIs = ["c"] siempre (independiente del sorteo); el anfitrión no ve la preferencia de c (teamPref null)
+
+[A1-1b fox start blocked by players]
+  OBSERVADO: {"ok":false,"error":"teams_unbalanced","detail":"fox_hunt"}
+  ESPERADO SI EL HALLAZGO EXISTE: {"ok":false,"error":"teams_unbalanced","detail":"fox_hunt"} sin que el anfitrión pueda ver por qué (prefs ocultas)
+
+[A1-1c infection self-pick hunter]
+  OBSERVADO: {"start":{"ok":true},"xTeam":"hunter"}
+  ESPERADO SI EL HALLAZGO EXISTE: start ok y xTeam = "hunter" siempre
+
+[A1-2 swap->infection]
+  OBSERVADO: {"start":{"ok":false,"error":"teams_unbalanced","detail":"infection"},"prefsVisibleToHost":[["h",null],["a",null],["b",null],["c",null]]}
+  ESPERADO SI EL HALLAZGO EXISTE: {"ok":false,"error":"teams_unbalanced","detail":"infection"} (swap fija 3 cazadores; Infección con n=4 exige 1) y prefs no visibles para el anfitrión (null salvo la suya)
+
+[A1-3 cooldown limit]
+  OBSERVADO: {"awayFlag":true,"unchangedAfterReconnect":true,"at59999":{"ok":false,"error":"tag_cooldown"},"at60000":true}
+  ESPERADO SI EL HALLAZGO EXISTE: VERIFICACIÓN: at59999 = tag_cooldown, at60000 = true, unchangedAfterReconnect = true
+
+[A1-4 fox silent wins]
+  OBSERVADO: {"outcome":{"winner":"runner","cause":"time_up"},"foxAwayEvents":1}
+  ESPERADO SI EL HALLAZGO EXISTE: outcome {"winner":"runner","cause":"time_up"} aunque el zorro lleva 4 min sin señal (conforme a D-057 literal; riesgo de diseño)
+
+[A1-5 all timeout (runner id=a)]
+  OBSERVADO: {"winner":null,"cause":"runners_abandoned"}
+  ESPERADO SI EL HALLAZGO EXISTE: runner "a" -> runners_abandoned; runner "z" -> hunters_abandoned (depende del id, ambos sin ganador)
+
+[A1-5 all timeout (runner id=z)]
+  OBSERVADO: {"winner":null,"cause":"hunters_abandoned"}
+  ESPERADO SI EL HALLAZGO EXISTE: runner "a" -> runners_abandoned; runner "z" -> hunters_abandoned (depende del id, ambos sin ganador)
+
+[A1-6 converted counts as hunter]
+  OBSERVADO: {"phase":"ACTIVE","outcome":null,"host":"r1"}
+  ESPERADO SI EL HALLAZGO EXISTE: VERIFICACIÓN: phase ACTIVE (el convertido cuenta como cazador; §3.6 «iniciales y convertidos»)
+
+[A1-7 exact hunters n=4..20]
+  OBSERVADO: []
+  ESPERADO SI EL HALLAZGO EXISTE: VERIFICACIÓN: [] (ningún caso incorrecto)

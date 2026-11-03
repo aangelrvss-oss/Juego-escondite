@@ -22,8 +22,13 @@ const at = (north, east = 0) => {
 const clock = { t: Date.UTC(2026, 9, 26, 17, 0, 0) };
 const server = await startServer({ hub: { now: () => clock.t } });
 const advance = async (ms) => {
-  clock.t += ms;
-  server.pump();
+  // Como en la realidad (ping cada 10 s), quien tiene la página abierta da señales de vida durante el
+  // salto: el periodo de gracia (D-057) solo afecta a quien está desconectado de verdad.
+  for (const end = clock.t + ms; clock.t < end; ) {
+    clock.t = Math.min(end, clock.t + 20_000);
+    server.pump();
+    server.hub.keepAliveConnected();
+  }
 };
 
 const browser = await chromium.launch();
@@ -40,6 +45,9 @@ try {
       geolocation: START[name],
       permissions: ['geolocation'],
     });
+    // Esta prueba es de la partida, no del mapa: no usa la configuración local de mapa.config.json (que
+    // puede llevar una clave real restringida a otro origen) y trabaja con el mapa sin configurar.
+    await context.route('**/mapa.config.json', (route) => route.fulfill({ json: { proveedor: 'ninguno' } }));
     const page = await context.newPage();
     const frames = [];
     const errors = [];
@@ -165,7 +173,9 @@ try {
     for (const f of p.frames) {
       if (f.t === 'snapshot') {
         for (const v of f.snapshot.players) {
-          if (v.team !== null) assert.ok(v.id === myId || mate(v.id), `${p.name} recibe el equipo de ${nameById[v.id]}`);
+          // Al terminar se revelan los equipos de todos (decisión del 29/10/2026); antes, nunca el de un rival.
+          if (v.team !== null && f.snapshot.phase !== 'FINISHED') assert.ok(v.id === myId || mate(v.id), `${p.name} recibe el equipo de ${nameById[v.id]}`);
+          if (f.snapshot.phase === 'FINISHED' && f.snapshot.gameNo === 1) assert.equal(v.team, roles[nameById[v.id]], `${p.name} ve al final el equipo de ${nameById[v.id]}`);
           if (v.teamPref !== null) assert.equal(p.name, 'Ana', `${p.name} recibe una asignación`);
         }
       }

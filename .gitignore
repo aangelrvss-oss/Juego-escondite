@@ -1,1 +1,15 @@
 node_modules/
+
+# Material promocional y grabaciones (vídeos de demostración, recortes, fotogramas): nunca al repositorio.
+material-promocional/
+sim/grabacion/
+*.webm
+*.mp4
+*.mov
+*.mkv
+*.mjpeg
+
+# Archivos locales del sistema y de diagnóstico
+.DS_Store
+Thumbs.db
+*.log

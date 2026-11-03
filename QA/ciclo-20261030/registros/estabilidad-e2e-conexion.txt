@@ -1,0 +1,18 @@
+ok · al reclamar, el cazador ve «Esperando a que Beto confirme» (1)
+ok · tras recargar, el cazador sigue viendo su reclamación pendiente (2)
+ok · captura rechazada: los dos lo ven, el tercero no; el fugitivo sigue libre y el cazador puede volver a reclamar (3)
+ok · la pestaña anterior explica que la partida está abierta en otra y no muestra el mapa ni manda al inicio (4)
+ok · «Jugar en esta pestaña» recupera la partida (rol y estado intactos) y para la otra (5)
+ok · a los 30 s sin señales, los demás ven «Sin conexión: Caro» (sin equipo ni posición) (6)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.waitForFunction: Timeout 6000ms exceeded.
+    at toastWith (C:\Users\aange\Projects\Juego-escondite-recuperacion\mobile\e2e\conexion.e2e.mjs:37:8)
+    at C:\Users\aange\Projects\Juego-escondite-recuperacion\mobile\e2e\conexion.e2e.mjs:164:9 {
+  log: [],
+  name: 'TimeoutError'
+}
+
+Node.js v24.12.0

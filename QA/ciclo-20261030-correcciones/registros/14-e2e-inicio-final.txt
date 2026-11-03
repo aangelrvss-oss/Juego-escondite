@@ -1,0 +1,15 @@
+ok · movil-360: sin desbordamiento, controles ≥ 44 px, texto ≥ 12 px, un solo h1; tres modos jugables y ninguno «Próximamente» (1)
+ok · movil-360: al elegir un modo cambian la descripción y las reglas (2)
+ok · movil-360: sin la edad no se crea la sala; el aviso va junto a la casilla y se anuncia (3)
+ok · movil-360: dos toques en «Crear partida» crean una sola sala, con el modo elegido en el inicio (4)
+ok · movil-360: con invitación, un solo botón principal; pegar el enlace entero en el código también entra (5)
+ok · movil-360: con «reducir movimiento» no hay animaciones (6)
+ok · escritorio-1280: sin desbordamiento, controles ≥ 44 px, texto ≥ 12 px, un solo h1; tres modos jugables y ninguno «Próximamente» (7)
+ok · escritorio-1280: al elegir un modo cambian la descripción y las reglas (8)
+ok · escritorio-1280: sin la edad no se crea la sala; el aviso va junto a la casilla y se anuncia (9)
+ok · escritorio-1280: dos toques en «Crear partida» crean una sola sala, con el modo elegido en el inicio (10)
+ok · escritorio-1280: con invitación, un solo botón principal; pegar el enlace entero en el código también entra (11)
+ok · escritorio-1280: con «reducir movimiento» no hay animaciones (12)
+ok · sin errores de JavaScript (13)
+
+13/13 comprobaciones correctas

@@ -42,5 +42,7 @@ test('aviso de conexión: nada si está abierta; en partida explica que la parti
   assert.equal(connectionNotice('idle', null), null);
   for (const phase of ['COUNTDOWN', 'HEAD_START', 'ACTIVE']) assert.match(connectionNotice('reconnecting', phase), /La partida sigue.*Reconectando/);
   assert.match(connectionNotice('reconnecting', 'LOBBY'), /Reconectando/);
-  assert.match(connectionNotice('closed', 'ACTIVE'), /Vuelve al inicio/);
+  // Nunca manda al inicio a mitad de partida (borraría la sesión y no se podría volver a entrar).
+  assert.match(connectionNotice('closed', 'ACTIVE'), /Recarga la página/);
+  assert.doesNotMatch(connectionNotice('closed', 'ACTIVE'), /inicio/);
 });

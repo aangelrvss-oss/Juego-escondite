@@ -84,7 +84,10 @@ describe('envío nativo de la ubicación por HTTP (POST /api/loc)', () => {
     assert.equal(await upload({ ...reading(ana, 0), secret: sessionOf(beto).secret }), 401, 'secreto de otro jugador');
     assert.equal(await upload({ ...reading(ana, 0), playerId: 'p_inventado' }), 401);
     for (let i = 2; i < RATE.failuresPerMinutePerIp; i++) assert.equal(await upload({ ...reading(ana, 0), secret: `x${i}` }), 401);
-    assert.equal(await upload(reading(ana, 0)), 429, 'incluso con la sesión buena: la dirección está bloqueada un minuto');
+    assert.equal(await upload({ ...reading(ana, 0), secret: 'x-otra' }), 429, 'la dirección queda bloqueada un minuto para sesiones falsas');
+    // V-07 (ciclo 30/10/2026): los fallos ajenos desde la misma dirección (Wi-Fi o CGNAT compartidas) no
+    // bloquean a quien tiene sesión válida. Antes esperaba 429 aquí, que era justo el fallo.
+    assert.equal(await upload(reading(ana, 0)), 202, 'la sesión buena sigue funcionando (en la cuenta atrás se acepta y se ignora)');
     await t.advance(60_001);
     assert.equal(await upload(reading(ana, 0)), 204, 'pasado el minuto vuelve a funcionar (ya en la huida)');
   });

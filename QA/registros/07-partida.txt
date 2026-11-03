@@ -1,0 +1,9 @@
+ok · 5 jugadores en la sala 22D6GK
+ok · configuración, asignación manual y todos listos
+ok · cuenta atrás y revelación individual del rol
+ok · huida y persecución sincronizadas por el servidor
+ok · captura reclamada, confirmada y validada por el servidor
+ok · Dani pierde la red y recupera la partida
+ok · final y revancha
+ok · ningún jugador recibió roles, asignaciones ni posiciones ajenas; 0 errores de página
+Partida completa: 8/8 etapas correctas

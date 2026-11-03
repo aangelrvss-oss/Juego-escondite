@@ -74,7 +74,8 @@ describe('aislamiento de datos por equipo (AC-D1, AC-D2, AC-D3)', () => {
     g.advance(3 * MINUTE - 10 * SECOND);
     const [ping] = g.eventsOf('ping');
     assert.ok(ping);
-    assert.deepEqual(ping.audience, { kind: 'team', team: 'hunter' });
+    // Los cazadores activos en el instante de la pista (D-057: no quien se convierta en el mismo paso).
+    assert.deepEqual(ping.audience, { kind: 'players', ids: ['h'] });
     assert.equal(ping.containsLocation, true);
     const entries = (ping.data.ping as { entries: { runnerId: string; ageMs: number | null; availability: string }[] }).entries;
     const r1 = entries.find((e) => e.runnerId === 'r1');

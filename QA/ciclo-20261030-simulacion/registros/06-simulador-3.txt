@@ -1,0 +1,28 @@
+▶ simulador: tres modos con 10 participantes, motor real
+  ✔ classic: 10 participantes, roles del motor (3 cazadores) y la partida termina con un resultado del motor (21966.7291ms)
+  ✔ infection: 10 participantes, roles del motor (2 cazadores) y la partida termina con un resultado del motor (22882.0471ms)
+  ✔ fox_hunt: 10 participantes, roles del motor (9 cazadores) y la partida termina con un resultado del motor (6755.0923ms)
+✔ simulador: tres modos con 10 participantes, motor real (51605.5434ms)
+▶ simulador: acciones de prueba
+  ✔ desconexión forzada: «sin conexión» a los 30 s, vuelve al restaurar; a los 5 min queda fuera (9108.5608ms)
+  ✔ pestaña suspendida (socket abierto, sin señales): «sin conexión» aunque el tiempo vaya acelerado (3324.9434ms)
+  ✔ pestaña duplicada: el servidor cierra la anterior con 4001, sigue una sola conexión y el jugador nunca aparece desconectado (78.2271ms)
+  ✔ captura inválida: el motor la rechaza; captura válida guiada: el motor la acepta y el fugitivo la confirma (3898.2429ms)
+  ✔ Infección: el capturado pasa a cazador y espera 60 s antes de poder capturar (3774.6364ms)
+  ✔ Caza del zorro: un único zorro, que ve a los cazadores (filtro real del servidor) (688.1681ms)
+  ✔ pausa: el reloj del servidor se detiene; finalizar: el anfitrión termina la partida sin ganador (2690.3653ms)
+  ✔ reiniciar: servidor nuevo sin salas, sesiones ni conexiones; la siguiente simulación no hereda participantes (142.7649ms)
+  ✔ interfaz: la sesión solo se entrega para quien juega desde ella, y nunca la del anfitrión (48.101ms)
+✔ simulador: acciones de prueba (23755.4337ms)
+▶ simulador: aislamiento
+  ✔ el servidor normal no tiene las rutas del simulador (17.7278ms)
+  ✔ el simulador rechaza acciones de otro origen y escucha solo en 127.0.0.1 (10.4571ms)
+✔ simulador: aislamiento (28.4227ms)
+ℹ tests 14
+ℹ suites 3
+ℹ pass 14
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75728.4241

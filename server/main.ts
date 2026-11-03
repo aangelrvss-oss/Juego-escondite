@@ -7,20 +7,24 @@
 //   TRUST_PROXY=1       usar CF-Connecting-IP / X-Forwarded-For como dirección del cliente (solo
 //                       detrás de un túnel o proxy de confianza).
 //   LOG=1               registro de operaciones (sin nombres, coordenadas ni secretos).
+//   DIAG_FILE           (opcional) archivo de diagnóstico de una prueba física: una línea JSON por
+//                       hecho (conexiones, sesiones, fases, comandos, eventos, resúmenes de GPS y
+//                       errores), con alias S1/J1 y sin coordenadas, nombres, códigos, IP ni secretos.
+//                       Se resume con: node server/informe-diagnostico.mjs <archivo>
 //   MAX_ROOMS_PER_IP    salas activas por dirección (por defecto 5). Detrás de un túnel, sin
 //                       TRUST_PROXY=1 todos los móviles comparten dirección.
 //   STATE_FILE          (opcional) archivo donde guardar las salas para sobrevivir a un reinicio del
 //                       servidor. Sin coordenadas de jugadores ni secretos (solo sus hashes). Sin esta
 //                       variable, las salas viven solo en memoria, como antes.
 
-import { createReadStream, existsSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { closeSync, createReadStream, existsSync, mkdirSync, openSync, readFileSync, renameSync, statSync, writeFileSync, writeSync } from 'node:fs';
 import { createServer } from 'node:http';
-import type { IncomingMessage, Server } from 'node:http';
+import type { IncomingMessage, Server, ServerResponse } from 'node:http';
 import type { Duplex } from 'node:stream';
-import { extname, join, normalize, resolve, sep } from 'node:path';
+import { dirname, extname, join, normalize, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { Hub } from './hub.ts';
-import type { HubOptions, UploadOutcome } from './hub.ts';
+import type { DiagRecord, HubOptions, UploadOutcome } from './hub.ts';
 import { LIMITS, parseLocationUpload } from './protocol.ts';
 import { acceptWebSocket, handshakeKey, rejectUpgrade } from './ws.ts';
 
@@ -50,6 +54,11 @@ export interface ServerOptions {
   stateFile?: string | null;
   /** Cada cuánto se guarda si ha habido cambios (por defecto, 2 s). */
   saveIntervalMs?: number;
+  /**
+   * Rutas HTTP extra de herramientas de desarrollo (p. ej., el simulador de sim/panel). Se consultan antes
+   * que los archivos de la interfaz; devuelven true si han respondido. El servidor normal no las usa.
+   */
+  routes?: (req: IncomingMessage, res: ServerResponse, path: string) => boolean;
 }
 
 // En Windows, renombrar encima de un archivo que otro proceso tiene abierto (un antivirus, una copia
@@ -136,6 +145,8 @@ function readBody(req: IncomingMessage, maxBytes: number): Promise<string | null
 
 export async function startServer(options: ServerOptions = {}): Promise<RunningServer> {
   const hub = new Hub(options.hub);
+  const diag = options.hub?.diag;
+  const clock = options.hub?.now ?? Date.now;
   const extra = options.allowedOrigins ?? [];
   const trustProxy = options.trustProxy ?? false;
   const root = options.staticRoot === undefined ? fileURLToPath(new URL('../mobile/www/', import.meta.url)) : options.staticRoot;
@@ -167,6 +178,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
         },
         (e) => {
           console.error(new Date().toISOString(), 'no se pudo guardar el estado:', (e as Error).message);
+          diag?.({ k: 'server_error', at: clock(), what: 'save_state', error: (e as NodeJS.ErrnoException).code ?? (e as Error).name });
         },
       )
       .finally(() => {
@@ -178,7 +190,11 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   saver?.unref?.();
 
   let timer: NodeJS.Timeout | undefined;
+  // Tras close() no se vuelven a procesar plazos: los cierres de socket del apagado llamaban a schedule()
+  // y rearmaban el temporizador (un paso después del último guardado, que se perdía).
+  let closing = false;
   const schedule = () => {
+    if (closing) return;
     if (timer) clearTimeout(timer);
     const now = (options.hub?.now ?? Date.now)();
     const delay = Math.max(0, Math.min(1_000, hub.nextWakeAt() - now));
@@ -219,6 +235,7 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       });
       return;
     }
+    if (options.routes?.(req, res, path)) return;
     if (!rootAbs || req.method !== 'GET') {
       res.writeHead(404).end();
       return;
@@ -240,9 +257,13 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   server.on('upgrade', (req, socket, head) => {
     const path = new URL(req.url ?? '/', 'http://x').pathname;
     const key = handshakeKey(req);
-    if (path !== '/ws' || !key) return rejectUpgrade(socket, 400, 'Bad Request');
-    if (!originAllowed(req.headers.origin, req.headers.host, extra)) return rejectUpgrade(socket, 403, 'Forbidden');
-    if (upgraded.size >= MAX_CONNECTIONS) return rejectUpgrade(socket, 503, 'Service Unavailable');
+    const refuse = (status: number, text: string) => {
+      diag?.({ k: 'ws_rejected', at: clock(), status });
+      rejectUpgrade(socket, status, text);
+    };
+    if (path !== '/ws' || !key) return refuse(400, 'Bad Request');
+    if (!originAllowed(req.headers.origin, req.headers.host, extra)) return refuse(403, 'Forbidden');
+    if (upgraded.size >= MAX_CONNECTIONS) return refuse(503, 'Service Unavailable');
     const ws = acceptWebSocket(socket, key, head, {
       maxPayloadBytes: LIMITS.maxMessageBytes,
       maxBufferedBytes: 1_000_000,
@@ -259,12 +280,15 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
         // Un fallo inesperado afecta solo a esta conexión, nunca al resto de partidas. Se registra el
         // tipo de error (sin el mensaje recibido, que puede llevar datos privados).
         console.error(new Date().toISOString(), 'error interno al procesar un mensaje:', (e as Error).name, (e as Error).message);
+        // En el diagnóstico, solo el tipo y la línea del código donde falló (nunca el mensaje).
+        const where = /server[\\/][\w.]+:\d+|engine[\\/]src[\\/][\w.]+:\d+/.exec((e as Error).stack ?? '')?.[0] ?? null;
+        diag?.({ k: 'server_error', at: clock(), what: 'message', error: (e as Error).name, where });
         ws.close(1011, 'internal error');
       }
       schedule();
     };
-    ws.onClose = () => {
-      handle.closed();
+    ws.onClose = (why) => {
+      handle.closed(why);
       schedule();
     };
   });
@@ -282,8 +306,10 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
       schedule();
     },
     close: async () => {
+      closing = true;
       if (timer) clearTimeout(timer);
       if (saver) clearInterval(saver);
+      hub.flushDiagnostics(); // el último resumen de GPS, aunque se pare a mitad de partida
       // Último guardado al apagar: espera al que esté en curso y guarda lo que haya cambiado después.
       await persist();
       await persist();
@@ -296,7 +322,32 @@ export async function startServer(options: ServerOptions = {}): Promise<RunningS
   };
 }
 
+/**
+ * Registro de diagnóstico en un archivo (DIAG_FILE): se añade al final, una línea JSON por hecho, y se
+ * escribe al momento (si el ordenador se apaga, lo escrito se conserva). Un fallo al escribir nunca
+ * detiene el servidor: se avisa una vez por la consola.
+ */
+export function diagnosticsFile(file: string): { write: (record: DiagRecord) => void; close: () => void } {
+  mkdirSync(dirname(resolve(file)), { recursive: true });
+  const fd = openSync(file, 'a');
+  let warned = false;
+  return {
+    write(record) {
+      try {
+        writeSync(fd, `${JSON.stringify({ t: new Date(record.at).toISOString(), ...record })}
+`);
+      } catch (e) {
+        if (!warned) console.error(new Date().toISOString(), 'no se pudo escribir el diagnóstico:', (e as Error).message);
+        warned = true;
+      }
+    },
+    close: () => closeSync(fd),
+  };
+}
+
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const diagFile = process.env.DIAG_FILE ? diagnosticsFile(process.env.DIAG_FILE) : null;
+  diagFile?.write({ k: 'server_start', at: Date.now(), node: process.version, trustProxy: process.env.TRUST_PROXY === '1', stateFile: Boolean(process.env.STATE_FILE) });
   const running = await startServer({
     port: Number(process.env.PORT ?? 8787),
     host: process.env.HOST ?? '127.0.0.1',
@@ -305,12 +356,20 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
     hub: {
       log: process.env.LOG === '1' ? (line) => console.log(new Date().toISOString(), line) : undefined,
       ...(process.env.MAX_ROOMS_PER_IP ? { maxRoomsPerIp: Math.max(1, Number(process.env.MAX_ROOMS_PER_IP) || 5) } : {}),
+      ...(diagFile ? { diag: diagFile.write } : {}),
     },
     stateFile: process.env.STATE_FILE || null,
   });
   console.log(`THE OUTRUN escuchando en ${running.url} (WebSocket en /ws, estado en /health)`);
+  if (diagFile) console.log(`Diagnóstico en ${resolve(process.env.DIAG_FILE!)}`);
   // Ctrl+C o parada del sistema: se guarda el estado (si STATE_FILE está definido) antes de salir.
   for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-    process.once(signal, () => void running.close().then(() => process.exit(0)));
+    process.once(signal, () =>
+      void running.close().then(() => {
+        diagFile?.write({ k: 'server_stop', at: Date.now(), signal });
+        diagFile?.close();
+        process.exit(0);
+      }),
+    );
   }
 }

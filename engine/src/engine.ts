@@ -2,12 +2,14 @@
 // El servidor (adaptador) le pasa la hora autoritativa `now` en cada llamada.
 // Referencia: docs/technical/GAME_STATE_MACHINE.md.
 
-import { DEFAULTS, LIMITS, LOCATION, RULES_VERSION, START_ZONE, TAG, TIMING } from './constants.ts';
+import { DEFAULTS, LIMITS, LOCATION, PRESENCE, START_ZONE, TAG, TIMING } from './constants.ts';
 import { validateConfig, validateName } from './config.ts';
-import { distanceM, isOutsideZone, zoneAt } from './geo.ts';
+import { distanceM, isOutsideZone } from './geo.ts';
 import { availabilityOf, isValidSample, latestSample, recordSample, toStoredSample } from './location.ts';
+import { modeOf } from './modes.ts';
 import { resolveTeams } from './teams.ts';
 import { invalidCommandField } from './validate.ts';
+import { buildZonePlan, currentZone, zonePhaseStarts } from './zone.ts';
 import type {
   Audience,
   Command,
@@ -61,6 +63,9 @@ function newPlayer(id: string, deviceId: string, name: string, now: number): Pla
     status: 'lobby',
     connected: true,
     disconnectedSince: null,
+    lastSeenAt: now,
+    away: false,
+    leftReason: null,
     samples: [],
     outsideSince: null,
     exposed: false,
@@ -118,6 +123,8 @@ export function createRoom(input: CreateRoomInput): Step {
     finishedAt: null,
     closeReason: null,
     rulesVersion: null,
+    zonePlan: null,
+    zonePhase: 0,
   };
   if (!name) return { state: s, events: [], result: err('invalid_name') };
   s.players[input.hostId] = newPlayer(input.hostId, input.hostDeviceId, name, input.now);
@@ -134,7 +141,10 @@ type DueKind =
   | 'claim_expiry'
   | 'exposure'
   | 'ping'
+  | 'zone_phase'
   | 'host_handover'
+  | 'away'
+  | 'absence_timeout'
   | 'lobby_idle'
   | 'lifetime'
   | 'rematch_window';
@@ -166,6 +176,14 @@ function dueList(s: RoomState): Due[] {
   ) {
     due.push({ at: host.disconnectedSince + TIMING.hostHandoverMs, kind: 'host_handover', priority: 4 });
   }
+  if (s.phase === 'HEAD_START' || s.phase === 'ACTIVE') {
+    // D-057: presencia y periodo de gracia, contados desde la última señal de la aplicación.
+    for (const p of playersInOrder(s)) {
+      if (p.status !== 'active' || p.lastSeenAt == null) continue;
+      if (!p.away) due.push({ at: p.lastSeenAt + PRESENCE.awayAfterMs, kind: 'away', priority: 4, ref: p.id });
+      due.push({ at: p.lastSeenAt + PRESENCE.absenceTimeoutMs, kind: 'absence_timeout', priority: 4, ref: p.id });
+    }
+  }
   switch (s.phase) {
     case 'LOBBY':
       due.push({ at: s.lastActivityAt + TIMING.lobbyIdleMs, kind: 'lobby_idle', priority: 5 });
@@ -189,6 +207,11 @@ function dueList(s: RoomState): Due[] {
         }
       }
       if (s.nextPingAt !== null) due.push({ at: s.nextPingAt, kind: 'ping', priority: 3 });
+      // Zona dinámica: el siguiente cambio de fase, a su hora exacta (aunque se procese con retraso).
+      if (s.zonePlan && s.activeStart !== null) {
+        const startOffset = zonePhaseStarts(s.zonePlan)[s.zonePhase ?? 0];
+        if (startOffset !== undefined) due.push({ at: s.activeStart + startOffset, kind: 'zone_phase', priority: 2 });
+      }
       break;
     }
     case 'FINISHED':
@@ -281,9 +304,49 @@ function processDue(ctx: Ctx, d: Due): void {
     case 'ping':
       doPing(ctx);
       return;
+    case 'zone_phase': {
+      // Empieza una fase: la zona va encogiendo y desplazándose hasta su destino, que se revela ahora (la
+      // instantánea que recibe cada móvil tras el evento lo incluye). Sin coordenadas en el evento.
+      const plan = s.zonePlan;
+      if (!plan || s.activeStart === null) return;
+      s.zonePhase = (s.zonePhase ?? 0) + 1;
+      const target = plan[s.zonePhase + 1];
+      if (!target) return;
+      emit(ctx, 'zone_phase', ALL, {
+        phase: s.zonePhase,
+        radiusM: target.radiusM,
+        endsAt: s.activeStart + target.fromOffsetMs,
+        last: s.zonePhase >= zonePhaseStarts(plan).length,
+      });
+      // Quien se haya quedado fuera sin enviar ninguna lectura nueva (p. ej., quieto con el móvil
+      // bloqueado) se evalúa con la última que hay, como al recibirla (GAME_STATE_MACHINE §9.4).
+      for (const r of activeOf(s, 'runner')) evaluateZone(ctx, r);
+      return;
+    }
     case 'host_handover': {
       const candidate = handoverCandidate(s);
       if (candidate) setHost(ctx, candidate.id);
+      return;
+    }
+    case 'away': {
+      const p = d.ref ? s.players[d.ref] : undefined;
+      if (!p) return;
+      p.away = true;
+      // Sin coordenadas ni equipo: solo que no da señales (lo ven todos, también los rivales).
+      emit(ctx, 'player_presence', ALL, { playerId: p.id, away: true });
+      return;
+    }
+    case 'absence_timeout': {
+      // V-25: todos los que vencen en el mismo instante quedan fuera juntos y el final se comprueba una
+      // sola vez. Así la causa no depende del orden de los identificadores (si se quedan sin fugitivos y
+      // sin cazadores a la vez: runners_abandoned, sin ganador, como dice checkEnd).
+      const out = playersInOrder(s).filter(
+        (p) => p.status === 'active' && p.lastSeenAt != null && p.lastSeenAt + PRESENCE.absenceTimeoutMs === d.at,
+      );
+      if (out.length === 0) return;
+      for (const p of out) removePlayer(ctx, p, 'timeout');
+      if (out.some((p) => p.id === s.hostId)) transferHostNow(ctx);
+      checkEnd(ctx, 'leave');
       return;
     }
     case 'lobby_idle':
@@ -312,13 +375,24 @@ function doPing(ctx: Ctx): void {
     };
   });
   s.lastPing = { pingNo: s.pingCount, at: ctx.now, entries };
-  emit(ctx, 'ping', { kind: 'team', team: 'hunter' }, { ping: s.lastPing }, true);
+  // A los cazadores activos en este instante: quien se convierta después en el mismo paso (Infección) no
+  // la recibe (D-057: el convertido no recibe la pista anterior a su conversión).
+  emit(ctx, 'ping', toPlayers(...activeOf(s, 'hunter').map((h) => h.id)), { ping: s.lastPing }, true);
   emit(ctx, 'ping_sent', { kind: 'team', team: 'runner' }, { pingNo: s.pingCount });
   const next = s.nextPingAt + config.pingIntervalMs;
   s.nextPingAt = next < s.gameEnd ? next : null;
 }
 
 // ---------------------------------------------------------------- transiciones auxiliares
+
+/** Señal de vida de la aplicación (D-057): reinicia el periodo de gracia y, si hacía falta, avisa de que ha vuelto. */
+function markSeen(ctx: Ctx, p: Player): void {
+  p.lastSeenAt = ctx.now;
+  if (p.away) {
+    p.away = false;
+    emit(ctx, 'player_presence', ALL, { playerId: p.id, away: false });
+  }
+}
 
 function finish(ctx: Ctx, outcome: Outcome): void {
   const s = ctx.s;
@@ -331,6 +405,7 @@ function finish(ctx: Ctx, outcome: Outcome): void {
   const flags: Record<string, string[]> = {};
   for (const p of playersInOrder(s)) {
     clearLocationState(p);
+    p.away = false;
     if (p.playedGameNo === s.gameNo && p.flags.length > 0) flags[p.id] = [...p.flags];
   }
   emit(ctx, 'game_finished', ALL, {
@@ -373,12 +448,21 @@ function backToLobby(ctx: Ctx, reason: string): void {
   const s = ctx.s;
   s.phase = 'LOBBY';
   s.countdownEnd = null;
+  s.zonePlan = null;
+  s.zonePhase = 0;
   for (const p of playersInOrder(s)) {
     if (p.status === 'active') {
       p.status = 'lobby';
       p.team = null;
       p.ready = false;
       p.playedGameNo = null;
+    } else if (p.status === 'left' && !p.leftRoom && p.playedGameNo === s.gameNo) {
+      // V-04: quien salió durante esta cuenta atrás no jugó ninguna partida. Sin partida, salir es salir
+      // de la sala (como en LOBBY): no figura en el informe de la partida siguiente (mismo gameNo) ni se
+      // le invita a la revancha. Puede volver a entrar con el código como cualquiera.
+      p.team = null;
+      p.playedGameNo = null;
+      p.leftRoom = true;
     }
   }
   emit(ctx, 'countdown_aborted', ALL, { reason });
@@ -399,13 +483,57 @@ function checkEnd(ctx: Ctx, cause: 'capture' | 'leave'): void {
   }
 }
 
+/**
+ * GAME_STATE_MACHINE §5.3: quien es capturado (o abandona) deja de compartir su ubicación al instante.
+ * Su entrada sale también de la última pista, que se reenvía en la instantánea al cazador que reconecta.
+ */
+function forgetInLastPing(s: RoomState, playerId: string): void {
+  if (s.lastPing?.entries.some((e) => e.runnerId === playerId)) {
+    s.lastPing = { ...s.lastPing, entries: s.lastPing.entries.filter((e) => e.runnerId !== playerId) };
+  }
+}
+
 function capture(ctx: Ctx, runner: Player, hunterId: string | null, via: 'self' | 'claim'): void {
   const s = ctx.s;
+  if (modeOf(s.config).onCapture === 'convert') {
+    convert(ctx, runner, hunterId, via);
+    return;
+  }
   runner.status = 'captured';
   clearLocationState(runner);
+  forgetInLastPing(s, runner.id);
   const entry = { runnerId: runner.id, hunterId, atOffsetMs: ctx.now - (s.activeStart ?? ctx.now), via };
   s.captures.push(entry);
   emit(ctx, 'runner_captured', ALL, { ...entry });
+  checkEnd(ctx, 'capture');
+}
+
+/**
+ * Infección (GAME_MODES_AND_RULES §3, D-057): la captura confirmada convierte al fugitivo en cazador en
+ * el mismo paso. Sigue jugando (activo), con el equipo nuevo: deja de ver a los fugitivos y de ser visto
+ * por ellos, ve a los cazadores, no recibe la última pista ya emitida (solo las siguientes) y no puede
+ * reclamar capturas hasta `canTagFrom`. Sus lecturas de fugitivo se borran.
+ */
+function convert(ctx: Ctx, runner: Player, hunterId: string | null, via: 'self' | 'claim'): void {
+  const s = ctx.s;
+  // V-28: si estaba expuesto, los cazadores dejan de verlo como expuesto. Con `reason`, para que el cliente no
+  // lo anuncie como «ha vuelto a la zona» (R-2): lo que ha pasado es la conversión.
+  if (runner.exposed) {
+    emit(ctx, 'runner_unexposed', toPlayers(...activeOf(s, 'hunter').map((h) => h.id), runner.id), {
+      runnerId: runner.id,
+      reason: 'converted',
+    });
+  }
+  runner.team = 'hunter';
+  clearLocationState(runner);
+  forgetInLastPing(s, runner.id);
+  runner.convertedAt = ctx.now;
+  runner.canTagFrom = ctx.now + modeOf(s.config).convertTagDelayMs;
+  runner.pingsBeforeConversion = s.pingCount;
+  const entry = { runnerId: runner.id, hunterId, atOffsetMs: ctx.now - (s.activeStart ?? ctx.now), via, converted: true };
+  s.captures.push(entry);
+  emit(ctx, 'runner_captured', ALL, { ...entry });
+  emit(ctx, 'role_changed', toPlayers(runner.id), { team: 'hunter', canTagFrom: runner.canTagFrom });
   checkEnd(ctx, 'capture');
 }
 
@@ -436,7 +564,8 @@ function evaluateZone(ctx: Ctx, runner: Player): void {
   const s = ctx.s;
   const last = latestSample(runner);
   if (!s.config || !last) return;
-  const zone = zoneAt(s.config.zone, ctx.now - (s.activeStart ?? ctx.now));
+  const zone = currentZone(s, ctx.now);
+  if (!zone) return;
   const outside = isOutsideZone(last, last.accuracyM, zone);
   if (outside && runner.outsideSince === null) {
     runner.outsideSince = ctx.now;
@@ -478,7 +607,9 @@ export function applyCommand(state: RoomState, actorId: string, cmd: Command, no
   const invalid = invalidCommandField(cmd);
   const result = invalid === null ? handle(ctx, actorId, cmd) : err('invalid_command', invalid);
   if (result.ok) {
-    ctx.s.lastActivityAt = now;
+    // Una señal de vida o una (re)conexión no es actividad de la sala: no impide que caduque una sala de
+    // espera olvidada (V-22: una pestaña que reconecta la mantenía viva hasta las 6 h).
+    if (cmd.type !== 'seen' && cmd.type !== 'connection') ctx.s.lastActivityAt = now;
   } else {
     // Un comando rechazado no deja rastro en el estado ni emite eventos.
     ctx.s = snapshot;
@@ -498,9 +629,17 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
 
   switch (cmd.type) {
     case 'connection':
+      if (cmd.connected) markSeen(ctx, p);
+      // Una reanudación sobre una conexión que ya estaba abierta (doble socket, otra pestaña) no es un
+      // cambio: no se avisa otra vez a todos.
+      if (p.connected === cmd.connected) return ok();
       p.connected = cmd.connected;
       p.disconnectedSince = cmd.connected ? null : now;
       emit(ctx, 'player_connection', ALL, { playerId: p.id, connected: cmd.connected });
+      return ok();
+
+    case 'seen':
+      markSeen(ctx, p);
       return ok();
 
     case 'set_team_pref':
@@ -585,6 +724,8 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       if (s.phase !== 'HEAD_START' && s.phase !== 'ACTIVE') return err('wrong_phase');
       if (p.status !== 'active') return err('not_sharing');
       if (!isValidSample(cmd.sample)) return err('invalid_sample');
+      // Una lectura de ubicación es también una señal de vida de la aplicación (D-057).
+      markSeen(ctx, p);
       const stored = toStoredSample(cmd.sample, now);
       const accepted = recordSample(p, stored, now);
       if (accepted && p.team === 'runner') evaluateZone(ctx, p);
@@ -634,7 +775,9 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
         });
       } else if (cmd.hunterId) {
         const h = s.players[cmd.hunterId];
-        if (h && h.team === 'hunter' && h.status === 'active') hunterId = h.id;
+        // Un convertido en su espera (Infección) no puede capturar: tampoco se le atribuye.
+        const waiting = h?.canTagFrom != null && ctx.now < h.canTagFrom;
+        if (h && h.team === 'hunter' && h.status === 'active' && !waiting) hunterId = h.id;
       }
       capture(ctx, p, hunterId, 'self');
       return ok();
@@ -665,13 +808,38 @@ function join(ctx: Ctx, actorId: string, rawName: string, deviceId: string): Com
   if (s.blockedDevices.includes(deviceId)) return err('not_found');
   if (s.players[actorId]) return err('already_joined');
   const sameDevice = playersInOrder(s).find((p) => p.deviceId === deviceId && !p.leftRoom && p.status !== 'left');
-  if (sameDevice) return err('already_joined');
-  if (lobbyPlayers(s).length >= LIMITS.maxPlayers) return err('room_full');
+  // V-05: el mismo dispositivo recupera su plaza si nadie la está usando: un invitado a la revancha que
+  // abandonó (el móvil olvidó la sesión) o una plaza de la sala de espera cuyo `welcome` se perdió. Solo
+  // en LOBBY (nunca un jugador en partida), solo plazas sin conexión abierta (si la hay, es otra pestaña
+  // o alguien que juega: already_joined) y después del veto por expulsión (not_found se mantiene).
+  const reclaimed =
+    sameDevice && (sameDevice.status === 'lobby' || sameDevice.status === 'invited') && !sameDevice.connected
+      ? sameDevice
+      : null;
+  if (sameDevice && !reclaimed) return err('already_joined');
+  if (lobbyPlayers(s).filter((p) => p !== reclaimed).length >= LIMITS.maxPlayers) return err('room_full');
   const name = validateName(rawName);
   if (!name) return err('invalid_name');
-  s.players[actorId] = newPlayer(actorId, deviceId, name, ctx.now);
+  const player = newPlayer(actorId, deviceId, name, ctx.now);
+  s.players[actorId] = player;
   s.playerOrder.push(actorId);
-  emit(ctx, 'player_joined', ALL, { playerId: actorId, name });
+  if (!reclaimed) {
+    emit(ctx, 'player_joined', ALL, { playerId: actorId, name });
+    return ok();
+  }
+  // La plaza antigua sale de la sala (el servidor revoca su sesión y avisa a su conexión, si queda
+  // alguna) y la nueva hereda lo que el anfitrión o el propio jugador habían fijado para ella.
+  reclaimed.status = 'left';
+  reclaimed.leftRoom = true;
+  reclaimed.ready = false;
+  reclaimed.leftReason = 'left';
+  player.teamPref = reclaimed.teamPref;
+  for (const p of playersInOrder(s)) {
+    if (p.teamPrefSetBy === reclaimed.id) p.teamPrefSetBy = actorId;
+  }
+  player.teamPrefSetBy = reclaimed.teamPrefSetBy; // ya traducido arriba si la fijó el propio jugador
+  emit(ctx, 'player_joined', ALL, { playerId: actorId, name, replaces: reclaimed.id });
+  if (s.hostId === reclaimed.id) setHost(ctx, actorId);
   return ok();
 }
 
@@ -681,12 +849,19 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
   if (s.phase !== 'LOBBY') return err('wrong_phase');
   if (!s.config) return err('config_missing');
   if (!s.config.safetyChecklistConfirmed) return err('safety_not_confirmed');
+  // V-06: la partida y su informe tienen que caber en la vida de la sala (6 h): cuenta atrás, huida,
+  // persecución y el periodo de revancha, en el que se consulta el informe. Si no, la sala caducaría
+  // con la partida recién terminada (CANCELLED/expired, sin informe).
+  const needed = TIMING.countdownMs + s.config.headStartMs + s.config.durationMs + TIMING.rematchWindowMs;
+  if (ctx.now + needed > s.createdAt + TIMING.roomMaxLifetimeMs) return err('room_expiring');
   const lobby = lobbyPlayers(s);
-  if (lobby.length < LIMITS.minPlayers) return err('not_enough_players');
+  const mode = modeOf(s.config);
+  if (lobby.length < Math.max(LIMITS.minPlayers, mode.minPlayers)) return err('not_enough_players', mode.id);
   if (lobby.length > LIMITS.maxPlayers) return err('room_full');
   if (lobby.some((p) => !p.ready || !p.connected)) return err('players_not_ready');
-  const teams = resolveTeams(lobby, s.seed + s.gameNo);
-  if (!teams) return err('teams_unbalanced');
+  const teams = resolveTeams(lobby, s.seed + s.gameNo, mode);
+  // En los modos con un número fijo de cazadores, el detalle dice el modo (la interfaz explica la regla).
+  if (!teams) return err('teams_unbalanced', mode.exactHunters ? mode.id : undefined);
 
   for (const p of playersInOrder(s)) {
     if (p.status === 'invited') {
@@ -700,6 +875,12 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
     p.flags = [];
     p.rejectedTagCount = 0;
     p.playedGameNo = s.gameNo;
+    p.lastSeenAt = ctx.now;
+    p.away = false;
+    p.leftReason = null;
+    p.convertedAt = null;
+    p.canTagFrom = null;
+    p.pingsBeforeConversion = null;
     clearLocationState(p);
   }
   s.phase = 'COUNTDOWN';
@@ -714,7 +895,10 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
   s.captures = [];
   s.outcome = null;
   s.finishedAt = null;
-  s.rulesVersion = RULES_VERSION;
+  s.rulesVersion = mode.rulesVersion;
+  // Zona dinámica: el plan se fija al empezar, con una semilla distinta en cada partida de la sala.
+  s.zonePlan = s.config.dynamicZone ? buildZonePlan(s.config, (s.seed ^ 0x5a0e) + s.gameNo) : null;
+  s.zonePhase = 0;
   // D-042: durante la cuenta atrás nadie conoce su rol; se revela al terminar (role_revealed).
   emit(ctx, 'countdown_started', ALL, { countdownEnd: s.countdownEnd });
   return ok();
@@ -725,6 +909,8 @@ function claimTag(ctx: Ctx, hunter: Player, runnerId: string): CommandResult {
   const now = ctx.now;
   if (s.phase !== 'ACTIVE') return err('wrong_phase');
   if (hunter.team !== 'hunter' || hunter.status !== 'active') return err('not_a_hunter');
+  // Infección: el recién convertido espera antes de poder capturar (GAME_MODES_AND_RULES §3.3, D-057).
+  if (hunter.canTagFrom != null && now < hunter.canTagFrom) return err('tag_cooldown');
   const runner = s.players[runnerId];
   if (!runner || runner.team !== 'runner') return err('target_not_active');
   if (runner.status === 'captured') return err('already_captured');
@@ -743,7 +929,8 @@ function claimTag(ctx: Ctx, hunter: Player, runnerId: string): CommandResult {
   if (rs.jump) return err('target_location_unstable');
   // D-033: un cazador fuera de la zona no puede reclamar capturas mientras siga fuera. Mismo criterio
   // que para los fugitivos (fuera solo si lo está incluso descontando la precisión). No se le expone.
-  if (s.config && isOutsideZone(hs, hs.accuracyM, zoneAt(s.config.zone, now - (s.activeStart ?? now)))) {
+  const zone = currentZone(s, now);
+  if (zone && isOutsideZone(hs, hs.accuracyM, zone)) {
     return err('hunter_outside_zone');
   }
   const threshold = Math.min(TAG.baseRadiusM + hs.accuracyM + rs.accuracyM, TAG.maxRadiusM);
@@ -770,17 +957,16 @@ function claimTag(ctx: Ctx, hunter: Player, runnerId: string): CommandResult {
 function leave(ctx: Ctx, p: Player, isHost: boolean): CommandResult {
   const s = ctx.s;
   const phase = s.phase;
-  p.status = 'left';
-  p.ready = false;
-  clearLocationState(p);
-  p.leftRoom = phase === 'LOBBY' || phase === 'FINISHED';
-  for (const c of Object.values(s.claims)) {
-    if (c.runnerId === p.id || c.hunterId === p.id) {
-      delete s.claims[c.id];
-      emit(ctx, 'tag_claim_resolved', toPlayers(c.hunterId, c.runnerId), { claimId: c.id, result: 'cancelled' });
+  if (phase === 'HEAD_START' || phase === 'ACTIVE') {
+    // Ya fuera de la partida (periodo de gracia, D-057) y ahora sale también de la sala: sin otro aviso.
+    if (p.status === 'left') {
+      p.leftRoom = true;
+      return ok();
     }
+    withdraw(ctx, p, 'left');
+    return ok();
   }
-  emit(ctx, 'player_left', ALL, { playerId: p.id });
+  removePlayer(ctx, p, 'left');
 
   if (isHost && !transferHostNow(ctx) && phase === 'LOBBY') {
     close(ctx, 'empty');
@@ -789,11 +975,45 @@ function leave(ctx: Ctx, p: Player, isHost: boolean): CommandResult {
   if (phase === 'LOBBY' && lobbyPlayers(s).length === 0) {
     close(ctx, 'empty');
   } else if (phase === 'COUNTDOWN') {
-    if (activeOf(s, 'runner').length === 0 || activeOf(s, 'hunter').length === 0) backToLobby(ctx, 'team_empty');
-  } else if (phase === 'HEAD_START' || phase === 'ACTIVE') {
-    checkEnd(ctx, 'leave');
+    const active = activeOf(s, 'runner').length + activeOf(s, 'hunter').length;
+    if (activeOf(s, 'runner').length === 0 || activeOf(s, 'hunter').length === 0 || active < modeOf(s.config).minPlayers) {
+      backToLobby(ctx, 'team_empty');
+    }
   }
   return ok();
+}
+
+/** Lo común a salir de la sala o de una partida: deja de jugar, se cancelan sus reclamaciones y se avisa a todos. */
+function removePlayer(ctx: Ctx, p: Player, reason: 'left' | 'timeout'): void {
+  const s = ctx.s;
+  p.status = 'left';
+  p.ready = false;
+  p.away = false;
+  // Tras el final, salir de la sala no cambia lo que pasó en la partida: el informe sigue igual (y quien
+  // quedó fuera por el periodo de gracia sigue saliendo como «Sin conexión»).
+  p.leftReason = s.phase === 'FINISHED' ? (p.leftReason ?? 'after_end') : reason;
+  clearLocationState(p);
+  forgetInLastPing(s, p.id);
+  p.leftRoom = s.phase === 'LOBBY' || s.phase === 'FINISHED';
+  for (const c of Object.values(s.claims)) {
+    if (c.runnerId === p.id || c.hunterId === p.id) {
+      delete s.claims[c.id];
+      emit(ctx, 'tag_claim_resolved', toPlayers(c.hunterId, c.runnerId), { claimId: c.id, result: 'cancelled' });
+    }
+  }
+  emit(ctx, 'player_left', ALL, reason === 'left' ? { playerId: p.id } : { playerId: p.id, reason });
+}
+
+/**
+ * Salida de una partida en curso: por decisión propia (`leave`) o al vencer el periodo de gracia (D-057:
+ * mismas consecuencias que abandonar). Si se queda sin fugitivos o sin cazadores, termina sin ganador.
+ */
+function withdraw(ctx: Ctx, p: Player, reason: 'left' | 'timeout'): void {
+  const s = ctx.s;
+  const wasHost = p.id === s.hostId;
+  removePlayer(ctx, p, reason);
+  if (wasHost) transferHostNow(ctx);
+  checkEnd(ctx, 'leave');
 }
 
 function rematch(ctx: Ctx, isHost: boolean, swapRoles: boolean): CommandResult {
@@ -814,6 +1034,8 @@ function rematch(ctx: Ctx, isHost: boolean, swapRoles: boolean): CommandResult {
   s.captures = [];
   s.outcome = null;
   s.finishedAt = null;
+  s.zonePlan = null;
+  s.zonePhase = 0;
   for (const p of playersInOrder(s)) {
     const eligible = p.playedGameNo === playedGame && !p.leftRoom;
     if (!eligible && p.id !== s.hostId) {
@@ -824,11 +1046,17 @@ function rematch(ctx: Ctx, isHost: boolean, swapRoles: boolean): CommandResult {
       continue;
     }
     const previous = p.team;
-    p.teamPref = previous === null ? 'random' : swapRoles ? (previous === 'hunter' ? 'runner' : 'hunter') : previous;
+    // Revancha = sorteo nuevo (decisión del 29/10/2026, D-037): nadie arrastra su equipo, y el reparto
+    // se hace al empezar, como en la primera partida. Solo un cambio de equipos pedido expresamente
+    // (swapRoles) fija el contrario. El anfitrión puede seguir asignando a mano en la sala.
+    const swap = swapRoles && previous !== null && !modeOf(s.config).exactHunters;
+    p.teamPref = swap ? (previous === 'hunter' ? 'runner' : 'hunter') : 'random';
     // El arrastre de equipos de la revancha no lo ve nadie (ni el propio jugador ni el anfitrión).
     p.teamPrefSetBy = null;
     p.team = null;
     p.ready = false;
+    p.away = false;
+    p.leftReason = null;
     clearLocationState(p);
     p.status = p.id === s.hostId ? 'lobby' : 'invited';
   }

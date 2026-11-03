@@ -1,0 +1,8 @@
+  ✔ pantalla inicial
+  ✔ sala de espera del anfitrión (sin zona)
+  ✔ sala de espera del anfitrión con zona y un nombre de 20 letras
+  ✔ la etiqueta «Anfitrión» sigue visible
+  ✔ «Mostrar QR» se puede pulsar
+  ✔ hoja del QR
+
+6/6 pantallas sin desbordamiento a 360 px (emulación móvil de Playwright)

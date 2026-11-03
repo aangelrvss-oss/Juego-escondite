@@ -1,0 +1,4 @@
+fase ACTIVE cazadores [ 'AVATAR_04', 'AVATAR_09' ] fugitivo AVATAR_01 reclamaciones ya abiertas []
+resultados [{"ok":false,"error":"your_location_unstable"},{"ok":false,"error":"your_location_unstable"}]
+fugitivo ahora runner capturas sobre él 0
+reclamaciones []

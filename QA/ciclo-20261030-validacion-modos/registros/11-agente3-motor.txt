@@ -1,0 +1,56 @@
+▶ A3 · reparto inicial por tamaño (start real, no solo MODES.hunters)
+  ✔ n=4: 1 cazador(es) exactos con sorteo, en 10 semillas (10.4068ms)
+  ✔ n=4: asignación manual con 2 cazadores → teams_unbalanced; con 1 exactos → empieza (2.4803ms)
+  ✔ n=5: 1 cazador(es) exactos con sorteo, en 10 semillas (7.7722ms)
+  ✔ n=5: asignación manual con 2 cazadores → teams_unbalanced; con 1 exactos → empieza (1.1062ms)
+  ✔ n=7: 1 cazador(es) exactos con sorteo, en 10 semillas (10.9435ms)
+  ✔ n=7: asignación manual con 2 cazadores → teams_unbalanced; con 1 exactos → empieza (1.3783ms)
+  ✔ n=8: 2 cazador(es) exactos con sorteo, en 10 semillas (11.578ms)
+  ✔ n=8: asignación manual con 3 cazadores → teams_unbalanced; con 2 exactos → empieza (1.8311ms)
+  ✔ n=9: 2 cazador(es) exactos con sorteo, en 10 semillas (14.0038ms)
+  ✔ n=9: asignación manual con 3 cazadores → teams_unbalanced; con 2 exactos → empieza (1.9659ms)
+  ✔ n=11: 2 cazador(es) exactos con sorteo, en 10 semillas (19.6561ms)
+  ✔ n=11: asignación manual con 3 cazadores → teams_unbalanced; con 2 exactos → empieza (2.4303ms)
+  ✔ n=12: 3 cazador(es) exactos con sorteo, en 10 semillas (22.0036ms)
+  ✔ n=12: asignación manual con 4 cazadores → teams_unbalanced; con 3 exactos → empieza (3.0112ms)
+  ✔ n=16: 4 cazador(es) exactos con sorteo, en 10 semillas (35.9211ms)
+  ✔ n=16: asignación manual con 5 cazadores → teams_unbalanced; con 4 exactos → empieza (4.6324ms)
+  ✔ n=20: 5 cazador(es) exactos con sorteo, en 10 semillas (49.6515ms)
+  ✔ n=20: asignación manual con 6 cazadores → teams_unbalanced; con 5 exactos → empieza (6.5559ms)
+  ✔ todos «fugitivo» a mano → teams_unbalanced (0 cazadores); n=3 → not_enough_players (1.1992ms)
+  ✔ [HALLAZGO A3-7] salida en la cuenta atrás: n=8→7 sigue con 2 cazadores (el objetivo para 7 es 1) (2.0068ms)
+✔ A3 · reparto inicial por tamaño (start real, no solo MODES.hunters) (212.3552ms)
+▶ A3 · espera de 60 s: bordes exactos
+  ✔ reclamación a canTagFrom−1 ms → tag_cooldown; a canTagFrom exacto → aceptada (5.3994ms)
+  ✔ autodeclaración atribuida a un convertido: canTagFrom−1 → hunterId null; canTagFrom → atribuida (7.4741ms)
+✔ A3 · espera de 60 s: bordes exactos (13.0013ms)
+▶ A3 · capturas casi simultáneas
+  ✔ dos cazadores sobre el mismo fugitivo: la 2.ª reclamación → already_pending; tras la conversión → target_not_active (no already_captured) (4.6951ms)
+  ✔ «Me han pillado» con reclamación pendiente de h, eligiendo a otro: se atribuye a h (el de la reclamación) (4.8471ms)
+  ✔ dos fugitivos distintos, los dos últimos, en serie: el 2.º acaba la partida (all_captured) (3.5526ms)
+  ✔ confirmación que llega tras el final por tiempo: claim_not_found y ganan los supervivientes (12.2381ms)
+✔ A3 · capturas casi simultáneas (25.5543ms)
+▶ A3 · presencia del convertido
+  ✔ convertido sin señal: «sin conexión» a 30 s, sigue contando como cazador; a 5 min fuera; sin cazadores → sin ganador (6.2688ms)
+  ✔ convertido que vuelve a los 4:50: sigue cazador activo, ya sin espera; recibe pistas posteriores (7.3831ms)
+  ✔ convertido que vuelve tras 5 min: fuera (left/timeout), solo eventos «all», y puede unirse a la revancha (27.6546ms)
+  ✔ último fugitivo sin señal 5 min: sin ganador (runners_abandoned), no «Todos infectados» (5.9565ms)
+✔ A3 · presencia del convertido (47.4614ms)
+▶ A3 · revancha tras Infección
+  ✔ [HALLAZGO A3-5] convertedAt/canTagFrom/pingsBeforeConversion sobreviven a finish() y rematch() hasta start() (3.5739ms)
+  ✔ revancha con swapRoles en Infección: se ignora (sorteo nuevo), 1 cazador con 4 (21.8567ms)
+✔ A3 · revancha tras Infección (25.6549ms)
+▶ A3 · informe (funciones puras del cliente)
+  ✔ [HALLAZGO A3-3] la cadena sigue solo la 1.ª rama: b y d no aparecen en ninguna cadena (0.6849ms)
+  ✔ autodeclaración sin cazador (o con convertido en espera): la cadena empieza en el propio infectado (0.1161ms)
+  ✔ [HALLAZGO A3-2] role_changed repetido con más de 15 s de antigüedad es «stale» → sin tarjeta (0.1701ms)
+  ✔ tiempo agotado con un único superviviente: no hay línea «Último superviviente» (0.6832ms)
+✔ A3 · informe (funciones puras del cliente) (1.8557ms)
+ℹ tests 36
+ℹ suites 6
+ℹ pass 36
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 546.8883

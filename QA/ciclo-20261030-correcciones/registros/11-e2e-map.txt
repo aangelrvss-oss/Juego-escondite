@@ -1,0 +1,50 @@
+  ✔ el mapa no existe fuera de la partida
+  ✔ sin mapa.config.json, la partida muestra el radar y explica por qué
+  ✔ con la clave rechazada (403) vuelve el radar con el motivo y la partida sigue
+  ✔ «Reintentar el mapa» carga MapLibre con WebGL en el navegador
+  ✔ se ve al compañero (Beto) y el punto de encuentro (marcador sin etiqueta, explicado en la leyenda)
+  ✔ la cazadora (Ana) no aparece en el mapa de un fugitivo
+  ✔ marcador propio con su círculo de precisión
+  ✔ la atribución del proveedor se ve sin plegar y sin tapar los botones
+  ✔ «Mi posición» activo con una lectura válida
+  ✔ la rueda (o el gesto) acerca el mapa
+  ✔ arrastrar con un dedo desplaza el mapa
+  ✔ pellizcar con dos dedos acerca el mapa
+  ✔ tras los gestos, 4 envíos de posiciones y muchos redibujados, el zoom se conserva
+  ✔ el mapa es el mismo (no se ha recreado)
+  ✔ el marcador propio es el mismo elemento
+  ✔ el marcador de Beto se ha movido con sus nuevas posiciones
+  ✔ a 360×740 nada desborda en horizontal y el mapa cabe
+  ✔ los botones del mapa miden al menos 44 px
+  ✔ sin conexión: el mapa lo indica y congela las posiciones
+  ✔ sin conexión: el mapa sigue siendo el mismo
+  ✔ al reconectar desaparece el aviso y el mapa sigue
+  ✔ los avisos no tapan el reloj ni el rol
+  ✔ la acción del rol se ve sin desplazarse (fija abajo) en 360×740
+  ✔ la acción fija no tapa los botones del mapa ni la atribución
+  ✔ la cazadora puede reclamar con el GPS del navegador
+  ✖ la partida se completa (tiempo agotado: Caro espectadora)
+  (diag +0 s phase {"phase":"COUNTDOWN","from":"LOBBY","online":["J1","J2","J3"],"offline":[]})
+  (diag +5 s phase {"phase":"HEAD_START","from":"COUNTDOWN","online":["J1","J2","J3"],"offline":[]})
+  (diag +30 s ws_close {"conn":3,"why":"server_1001","secs":30,"phase":"HEAD_START","player":"J3"})
+  (diag +30 s session {"how":"resume","conn":4,"replayed":1,"phase":"HEAD_START","player":"J3"})
+  (diag +50 s gps {"phase":"HEAD_START","player":"J1","secs":45,"ws":5,"http":0,"ignored":{},"maxGapS":5,"sinceLastS":25,"accP50":8,"accMax":8,"ageP50":0,"ageMax":0,"connected":true})
+  (diag +50 s gps {"phase":"HEAD_START","player":"J2","secs":45,"ws":5,"http":0,"ignored":{},"maxGapS":5,"sinceLastS":25,"accP50":8,"accMax":8,"ageP50":0,"ageMax":0,"connected":true})
+  (diag +50 s gps {"phase":"HEAD_START","player":"J3","secs":45,"ws":1,"http":0,"ignored":{"too_soon":2},"maxGapS":0,"sinceLastS":40,"accP50":6,"accMax":6,"ageP50":0,"ageMax":0,"connected":true})
+  (diag +90 s gps {"phase":"HEAD_START","player":"J1","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":65,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +90 s gps {"phase":"HEAD_START","player":"J2","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":65,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +90 s gps {"phase":"HEAD_START","player":"J3","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":80,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +130 s gps {"phase":"HEAD_START","player":"J1","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":105,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +130 s gps {"phase":"HEAD_START","player":"J2","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":105,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +130 s gps {"phase":"HEAD_START","player":"J3","secs":40,"ws":0,"http":0,"ignored":{},"maxGapS":0,"sinceLastS":120,"accP50":null,"accMax":null,"ageP50":null,"ageMax":null,"connected":true})
+  (diag +130 s phase {"phase":"ACTIVE","from":"HEAD_START","online":["J1","J2","J3"],"offline":[]})
+  (navegador: entrega posición, antigüedad 9 s)
+  (página: {"net":"Conectado","gps":"GPS ±6 m","sharing":"No se comparte tu ubicación"})
+  (mapa: Beto · hace 2 min
+© Atribución de prueba
+Mi po ición
+Ver zona)
+  ✔ ninguna petición a Internet fuera de la cartografía simulada
+  ✔ sin errores de JavaScript en la página
+
+27/28 comprobaciones del mapa en Chrome (chrome.exe)

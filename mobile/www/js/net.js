@@ -19,6 +19,11 @@ const PING_EVERY_MS = 10_000;
 // ve un silencio largo aunque los mensajes hayan seguido llegando o la conexión siga viva.
 const DEAD_AFTER_MS = 25_000;
 const PROBE_MS = 5_000;
+// Acciones que dependen del momento en que se pulsan: si se quedaron sin enviar durante un corte, al
+// reconectar más tarde ya no se envían (una reclamación o un «Sí, me ha pillado» de hace minutos no deben
+// ejecutarse ahora). Menos que los 30 s que dura una reclamación. El resto de comandos se reenvía igual.
+const TIMELY_COMMANDS = new Set(['claim_tag', 'respond_tag', 'self_tag']);
+const STALE_ACTION_MS = 20_000;
 
 function memoryStorage() {
   const m = new Map();
@@ -95,7 +100,12 @@ export class GameConnection {
     this.clockSamples = [];
     this.lastHeardAt = 0;
     this.pingTimer = undefined;
+    this.reconnectTimer = undefined;
+    this.lastPingSentAt = 0;
     this.probeSentAt = null; // sonda pendiente tras un silencio largo
+    // La misma sesión se ha abierto en otra pestaña o ventana (cierre 4001): esta queda parada hasta que
+    // el jugador pida jugar aquí (`start()`); nunca se recupera sola, o las dos se la quitarían en bucle.
+    this.replaced = false;
     // Al reanudar, el servidor repite los eventos perdidos y luego manda la instantánea. Se retienen
     // hasta entonces para entregarlos con su antigüedad según la hora del servidor (`ageMs`): así la
     // interfaz distingue lo que acaba de pasar de lo que pasó hace minutos (p. ej. tras recargar).
@@ -165,13 +175,35 @@ export class GameConnection {
     this.timers.delete(t);
   }
 
-  /** Abre la conexión. Si hay una sesión guardada, la reanuda. */
+  /**
+   * Abre la conexión (o la recupera tras perderla o tras abrirse en otra pestaña). Si hay una sesión
+   * guardada, la reanuda. Nunca abre un segundo socket si ya hay uno abriéndose.
+   */
   start() {
     if (this.status === 'connecting' || this.status === 'open') return;
+    if (this.socket && this.socket.readyState === 0) return;
+    this.replaced = false;
     this.#open();
   }
 
+  /** Al volver a primer plano: si la conexión sigue abierta, se da señal de vida ya (y se comprueba). */
+  wake() {
+    if (this.status === 'open') this.#ping();
+    // Cerrada (salió de la sala, o abierta en otra pestaña) o sin empezar: no se abre nada solo.
+    else if (this.status === 'reconnecting' || this.status === 'connecting') this.start();
+  }
+
   #open() {
+    this.#clearTimer(this.reconnectTimer);
+    this.reconnectTimer = undefined;
+    const old = this.socket;
+    if (old) {
+      // Un socket anterior que siga vivo deja de contar (sus avisos se ignoran) y se cierra.
+      this.socket = null;
+      try {
+        old.close();
+      } catch {}
+    }
     this.#setStatus(this.attempt === 0 ? 'connecting' : 'reconnecting');
     let socket;
     try {
@@ -182,6 +214,7 @@ export class GameConnection {
     }
     this.socket = socket;
     socket.onopen = () => {
+      if (this.socket !== socket) return;
       this.attempt = 0;
       this.lastHeardAt = this.now();
       this.probeSentAt = null;
@@ -189,14 +222,20 @@ export class GameConnection {
       this.#ping();
       if (this.session) this.#raw({ t: 'resume', playerId: this.session.playerId, secret: this.session.secret, lastSeq: this.lastSeq });
     };
-    socket.onmessage = (ev) => this.#onMessage(ev.data);
+    socket.onmessage = (ev) => {
+      if (this.socket === socket) this.#onMessage(ev.data);
+    };
     socket.onclose = (ev) => {
       if (this.socket !== socket) return;
       this.socket = null;
       if (this.status === 'closed') return;
       if (ev?.code === 4001) {
-        // La misma sesión se abrió en otro sitio: no se pelea por ella reconectando en bucle.
+        // La misma sesión se abrió en otro sitio: no se pelea por ella reconectando en bucle. La sesión
+        // se conserva (es la misma de la otra pestaña): el jugador puede volver a jugar aquí.
+        this.replaced = true;
+        this.#clearTimer(this.pingTimer);
         this.#setStatus('closed');
+        this.#failPending('replaced');
         this.#emit('error', 'replaced');
         return;
       }
@@ -204,9 +243,13 @@ export class GameConnection {
         // La sala ya no existe en el servidor.
         this.#setStatus('closed');
         this.#saveSession(null);
+        this.#dropPending('room_closed');
         this.#emit('session_lost', 'room_closed');
         return;
       }
+      // Crear o entrar a medias: la respuesta ya no llegará por este socket (y al reconectar no hay sesión
+      // que reanudar). Se avisa ya, para que la pantalla de inicio no se quede esperando.
+      this.#failEntering('offline');
       this.#scheduleReconnect();
     };
     socket.onerror = () => {};
@@ -216,9 +259,34 @@ export class GameConnection {
     this.#setStatus('reconnecting');
     const base = BACKOFF_MS[Math.min(this.attempt, BACKOFF_MS.length - 1)];
     this.attempt++;
-    this.#timer(() => {
-      if (this.status !== 'closed') this.#open();
+    this.#clearTimer(this.reconnectTimer);
+    // Un solo reintento pendiente: si mientras tanto alguien llama a start(), #open lo cancela.
+    this.reconnectTimer = this.#timer(() => {
+      this.reconnectTimer = undefined;
+      if (this.status === 'reconnecting' && !this.socket) this.#open();
     }, base + Math.floor(Math.random() * 250));
+  }
+
+  #failPending(error) {
+    this.#dropPending(error);
+    this.#failEntering(error);
+  }
+
+  /**
+   * Los comandos pendientes son de la sesión actual: si se pierde (sala borrada, sesión inválida,
+   * expulsión), se responden ya con el error y se olvidan. Nunca se reenvían con la sesión de otra sala
+   * (V-16): un «leave» antiguo cerraría la sala nueva.
+   */
+  #dropPending(error) {
+    const pending = [...this.pending.values()];
+    this.pending.clear();
+    for (const p of pending) p.resolve({ ok: false, error });
+  }
+
+  #failEntering(error) {
+    const waiting = this.waiting;
+    this.waiting = null;
+    waiting?.reject(new Error(error));
   }
 
   #raw(msg) {
@@ -243,6 +311,7 @@ export class GameConnection {
       return;
     }
     this.probeSentAt = now - this.lastHeardAt > DEAD_AFTER_MS ? now : null;
+    this.lastPingSentAt = now;
     this.#raw({ t: 'ping', c: now });
     // Un solo temporizador de ping: cada reconexión sustituye al anterior, nunca se acumulan.
     this.pingTimer = this.#timer(() => this.#ping(), this.probeSentAt === null ? PING_EVERY_MS : PROBE_MS);
@@ -250,6 +319,9 @@ export class GameConnection {
 
   #onMessage(text) {
     this.lastHeardAt = this.now();
+    // Señal de vida también cuando el navegador espacia los temporizadores (página en segundo plano): los
+    // mensajes del servidor (posiciones cada 5 s en la partida) sí se atienden a tiempo.
+    if (this.status === 'open' && this.lastHeardAt - this.lastPingSentAt >= PING_EVERY_MS) this.#ping();
     let msg;
     try {
       msg = JSON.parse(text);
@@ -278,8 +350,14 @@ export class GameConnection {
         if (!msg.secret) this.replay ??= [];
         this.waiting?.resolve({ playerId: msg.playerId, code: msg.code });
         this.waiting = null;
-        // Comandos enviados durante el corte: mismo id, el servidor devuelve la respuesta guardada.
-        for (const [id, p] of this.pending) this.#raw({ t: 'cmd', id, cmd: p.cmd });
+        // Comandos enviados durante el corte: mismo id, el servidor devuelve la respuesta guardada. Las
+        // acciones de captura que llevan demasiado esperando se descartan (el estado llega en la instantánea).
+        for (const [id, p] of this.pending) {
+          if (TIMELY_COMMANDS.has(p.cmd?.type) && this.now() - p.at > STALE_ACTION_MS) {
+            this.pending.delete(id);
+            p.resolve({ ok: false, error: 'stale_action' });
+          } else this.#raw({ t: 'cmd', id, cmd: p.cmd });
+        }
         this.#emit('welcome', { playerId: msg.playerId, code: msg.code });
         return;
       case 'snapshot': {
@@ -330,6 +408,7 @@ export class GameConnection {
           this.snapshot = null;
           this.lastSeq = 0;
           this.replay = null;
+          this.#dropPending(msg.error);
           this.#emit('session_lost', msg.error);
         }
         if (this.waiting) {
@@ -362,7 +441,10 @@ export class GameConnection {
   command(cmd) {
     const id = randomToken();
     return new Promise((resolve) => {
-      this.pending.set(id, { cmd, resolve });
+      // Sin conexión ni reintento en marcha (cerrada o abierta en otra pestaña) no llegaría nunca: se
+      // responde ya en lugar de dejar la pantalla esperando.
+      if (this.status === 'closed' || this.status === 'idle') return resolve({ ok: false, error: this.replaced ? 'replaced' : 'offline' });
+      this.pending.set(id, { cmd, resolve, at: this.now() });
       this.#raw({ t: 'cmd', id, cmd });
     });
   }
@@ -386,8 +468,7 @@ export class GameConnection {
     this.#setStatus('closed');
     for (const t of this.timers) clearTimeout(t);
     this.timers.clear();
-    for (const p of this.pending.values()) p.resolve({ ok: false, error: 'offline' });
-    this.pending.clear();
+    this.#failPending('offline');
     const s = this.socket;
     this.socket = null;
     s?.close();

@@ -1,0 +1,14 @@
+ok · al reclamar, el cazador ve «Esperando a que Beto confirme» (1)
+ok · tras recargar, el cazador sigue viendo su reclamación pendiente (2)
+ok · captura rechazada: los dos lo ven, el tercero no; el fugitivo sigue libre y el cazador puede volver a reclamar (3)
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+browserContext.newPage: Target crashed 
+    at C:\Users\aange\Projects\Juego-escondite-recuperacion\mobile\e2e\conexion.e2e.mjs:149:35 {
+  log: [],
+  name: 'Error'
+}
+
+Node.js v24.12.0

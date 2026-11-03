@@ -97,7 +97,10 @@ function nativeSource(bridge, { pollMs = 100, stopTimeoutMs = 3_000 } = {}) {
 // Con el móvil quieto (un fugitivo escondido), muchos navegadores apenas entregan lecturas nuevas por
 // watchPosition, sobre todo en iPhone. Su posición caducaría para el servidor (> 15 s) y nadie podría
 // reclamar su captura. Si pasan `refreshAfterMs` sin lectura, se pide una nueva con getCurrentPosition.
-function webSource(geolocation, { refreshAfterMs = 8_000, checkMs = 2_000 } = {}) {
+// Una petición sin respuesta pasado su plazo (más un margen) se da por perdida: hay navegadores que no
+// llaman a ninguna función de getCurrentPosition aunque tenga timeout (p. ej., con la página en segundo
+// plano), y entonces el refresco se quedaba bloqueado para siempre y la posición dejaba de renovarse.
+function webSource(geolocation, { refreshAfterMs = 8_000, checkMs = 2_000, requestTimeoutMs = 10_000 } = {}) {
   let watch = null;
   let refresh = null;
   const stopRefresh = () => {
@@ -110,8 +113,17 @@ function webSource(geolocation, { refreshAfterMs = 8_000, checkMs = 2_000 } = {}
       if (watch !== null) geolocation.clearWatch(watch); // nunca dos seguimientos a la vez
       stopRefresh();
       let lastAt = performance.now();
-      let asking = false;
+      let lastTimestamp = Number.NEGATIVE_INFINITY; // hora de medida (reloj del móvil) de la última lectura entregada
+      let seq = 0;
+      let current = 0; // id de la petición en curso (0 = ninguna)
+      let askedAt = 0;
+      let abandoned = 0; // peticiones dadas por perdidas que aún podrían responder
+      const MAX_ABANDONED = 2; // nunca se acumulan peticiones colgadas sin límite
       const emit = (pos) => {
+        // Nunca una lectura más vieja que la última entregada: la posición no retrocede y lo ya superado
+        // no se vuelve a enviar (p. ej., la respuesta tardía de una petición dada por perdida).
+        if (pos.timestamp <= lastTimestamp) return;
+        lastTimestamp = pos.timestamp;
         lastAt = performance.now();
         onReading({
           lat: pos.coords.latitude,
@@ -122,12 +134,24 @@ function webSource(geolocation, { refreshAfterMs = 8_000, checkMs = 2_000 } = {}
         });
       };
       refresh = setInterval(() => {
-        if (asking || performance.now() - lastAt < refreshAfterMs || !geolocation.getCurrentPosition) return;
-        asking = true;
+        const now = performance.now();
+        if (current && now - askedAt > requestTimeoutMs + checkMs) {
+          current = 0; // perdida: se puede pedir otra (si responde tarde, su lectura sigue valiendo)
+          abandoned++;
+        }
+        if (current || abandoned >= MAX_ABANDONED || now - lastAt < refreshAfterMs || !geolocation.getCurrentPosition) return;
+        const id = ++seq;
+        current = id;
+        askedAt = now;
+        // Solo la petición en curso desbloquea el refresco; una abandonada que responde deja de contar.
+        const settle = () => {
+          if (current === id) current = 0;
+          else abandoned = Math.max(0, abandoned - 1);
+        };
         geolocation.getCurrentPosition(
-          (pos) => ((asking = false), watch !== null && emit(pos)),
-          () => (asking = false), // los fallos de permiso los avisa el seguimiento
-          { enableHighAccuracy: true, maximumAge: 0, timeout: 10_000 },
+          (pos) => (settle(), watch !== null && emit(pos)),
+          () => settle(), // los fallos de permiso los avisa el seguimiento
+          { enableHighAccuracy: true, maximumAge: 0, timeout: requestTimeoutMs },
         );
       }, checkMs);
       return new Promise((resolve, reject) => {

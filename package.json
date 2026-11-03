@@ -13,7 +13,10 @@
     "build:demo": "node demo/build.mjs",
     "test:demo": "node --test \"demo/test/*.test.mjs\"",
     "test:server": "node --test \"server/test/*.test.mjs\"",
-    "start:server": "node server/main.ts"
+    "start:server": "node server/main.ts",
+    "sim:panel": "node sim/panel/servidor.mjs",
+    "test:sim-panel": "node --test \"sim/panel/test/simulacion.test.mjs\"",
+    "test:sim-escenarios": "node --test --test-concurrency=1 \"sim/panel/test/escenarios-completos.test.mjs\""
   },
   "devDependencies": {
     "@types/node": "22.19.1",

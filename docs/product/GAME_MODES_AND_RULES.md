@@ -53,6 +53,8 @@
 ## 3. Modo Infección
 
 > **Sesión 5 (D-030):** ampliación **futura**. No es requisito de la primera versión jugable ni de S1. Se conserva el diseño completo.
+>
+> **30/10/2026 (D-057): implementado.** Las reglas definitivas, con los parámetros aprobados, están en el §11. Lo que sigue se conserva como historial del diseño.
 
 ### 3.1 Reglas [PROPIETARIO]
 - La partida empieza con **uno o varios cazadores**, y el resto son fugitivos.
@@ -336,3 +338,82 @@ Autodeclaración del fugitivo, o declaración del cazador con posiciones actuale
 7. Captura sin respuesta en 30 s: ¿sigue siendo "no hay captura"?
 8. Infección: valores de `T_transición`, cazadores iniciales y acceso a la última pista. ¿Se reconoce al "último superviviente"?
 9. Parámetros numéricos de §3.5, §6.7, §8.2 y §9.3.
+
+
+## 11. Modos implementados y reglas definitivas (30/10/2026, D-057)
+
+> Aprobadas por el propietario el 30/10/2026. Código: `engine/src/modes.ts`, una tabla de reglas por modo; todo lo común está en `engine.ts`. La configuración de la sala lleva `mode`: sin él, Clásico.
+
+### 11.1 Común a los tres modos
+- **Igual en todos:**
+  - fases y tiempos;
+  - zona y exposición fuera de la zona (30 s);
+  - un cazador fuera de la zona no captura (D-033);
+  - captura por reclamación con confirmación (o autodeclaración), con la misma validación GPS;
+  - pistas con antigüedad real;
+  - revancha con sorteo nuevo (D-056).
+- **Presencia y periodo de gracia (D-057 §1):**
+  - a los 30 s sin señal de la aplicación, todos ven «sin conexión»;
+  - a los 5 min queda fuera de la partida, como si la hubiera abandonado.
+- **Modo y versión de reglas:** cada partida guarda su versión (`rulesVersion`):
+  - Clásico: `clasico/2026-10-30`;
+  - Infección: `infeccion/2026-10-30`;
+  - Fox Hunt: `zorro/2026-10-30`.
+
+### 11.2 Infección (`infection`)
+- **Mínimo de jugadores:** 4.
+- **Cazadores iniciales:** `max(1, floor(n/4))`, exactos. Si las asignaciones manuales no cuadran, la partida no empieza (`teams_unbalanced`).
+- **Conversión:** al confirmarse la captura (reclamación aceptada o «Me han pillado»), en el mismo paso del servidor:
+  - el fugitivo pasa a cazador y sigue activo; sus lecturas de fugitivo se borran;
+  - deja de ver a los fugitivos y de ser visto por ellos, y ve a los cazadores;
+  - recibe las pistas siguientes, pero no la última ya emitida, ni el evento de una pista que llegue en el mismo paso;
+  - no puede reclamar capturas durante 60 s (`tag_cooldown`), ni se le atribuye una autodeclaración en ese tiempo.
+- **Avisos:** a todos, «X ha sido infectado: ahora caza»; al convertido, la tarjeta «Te han infectado · ahora eres CAZADOR».
+- **Rechazo:** nunca convierte.
+- **Final:**
+  - **sin fugitivos activos:** ganan los cazadores, también los convertidos («Todos infectados»);
+  - **tiempo agotado con alguno libre:** ganan los supervivientes;
+  - **abandono o periodo de gracia del último fugitivo o de todos los cazadores:** sin ganador.
+- **Informe:**
+  - cadena de contagio y último superviviente;
+  - cada convertido figura con los cazadores, como «Infectado a los mm:ss»;
+  - resultado personal: «Te infectó X…; después infectaste a N».
+- **Diferencias con Clásico:**
+  - el capturado sigue jugando en el otro equipo, en lugar de mirar con retraso;
+  - el número de cazadores crece durante la partida;
+  - hay menos cazadores iniciales;
+  - el mínimo es de 4 jugadores.
+
+### 11.3 Caza del zorro (`fox_hunt`, variante «Mr. X»)
+- **Mínimo de jugadores:** 3. Si en la cuenta atrás quedan menos, se vuelve a la sala.
+- **Roles:** un único zorro (fugitivo), por sorteo o asignado por el anfitrión; el resto, cazadores. Si las asignaciones manuales no dan exactamente un zorro, la partida no empieza.
+- **Roles públicos tras la cuenta atrás:** todos saben quién es el zorro.
+- **Información:**
+  - el zorro ve a los cazadores activos en directo, desde la huida;
+  - los cazadores se ven entre sí;
+  - los cazadores reciben la posición exacta del zorro en cada pista (con el intervalo de la sala y su antigüedad), y en directo si pasa más de 30 s fuera de la zona.
+- **Final:**
+  - capturan al zorro: ganan los cazadores en ese momento («Zorro atrapado»);
+  - se agota el tiempo: gana el zorro;
+  - el zorro abandona o queda fuera por el periodo de gracia: sin ganador.
+- **Revancha:** sorteo nuevo. Pedir un cambio de equipos también da un sorteo, porque hay un solo zorro.
+- **Diferencias con Clásico:**
+  - es uno contra todos;
+  - el fugitivo ve a los cazadores (excepción aprobada a §6.5 solo en este modo);
+  - los roles son públicos;
+  - una captura termina la partida.
+- **Diferencias con Sardines** (no implementado): el zorro se mueve y lo persiguen para capturarlo; no hay escondite fijo ni grupo que se une.
+
+### 11.4 Tabla comparativa
+
+| | Clásico | Infección | Caza del zorro |
+|---|---|---|---|
+| Jugadores | 2–20 | 4–20 | 3–20 |
+| Cazadores al empezar | `ceil(n/4)` (entre 1 y n/2); a mano sin tope | `max(1, floor(n/4))`, exactos | n−1 (un zorro) |
+| Al capturar | Espectador con 60 s de retraso | Pasa a cazador (60 s sin capturar) | Termina la partida |
+| El fugitivo ve a los cazadores | No | No | Sí, en directo |
+| Roles de los demás | Ocultos hasta el final | Ocultos hasta el final (las conversiones son públicas) | Públicos tras la cuenta atrás |
+| Gana el bando que busca si… | Captura a todos | Infecta a todos | Atrapa al zorro |
+
+### 11.5 Sardines
+**Aplazado** (D-057). Sin reglas aprobadas. El diseño propuesto está en `QA/ciclo-20261030/INFORME_AUDITORIA.md` y en el informe del ciclo.

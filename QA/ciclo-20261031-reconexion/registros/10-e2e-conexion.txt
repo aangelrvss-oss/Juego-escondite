@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: lecturas recientes y estables de Ana y Beto
+    at file:///C:/Users/aange/Projects/Juego-escondite-recuperacion/mobile/e2e/conexion.e2e.mjs:128:10 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.12.0

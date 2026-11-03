@@ -12,6 +12,7 @@ Servidor **autoritativo**: las reglas viven solo en el motor (`engine/`), y el s
 | Protocolo | `protocol.ts` | Mensajes JSON validados (`create`, `join`, `resume`, `cmd`, `loc`, `ping`). Contrato común para Android, iOS y navegador |
 | Autoridad | `hub.ts` | Sesiones (secreto de 32 bytes guardado como hash), códigos de sala de 6 caracteres, distribución filtrada por destinatario con `seq` propio, reanudación, idempotencia, límites de abuso y borrado de salas cerradas |
 | Arranque | `main.ts` | HTTP: sirve la interfaz web (`mobile/www`) y `/health`; WebSocket en `/ws` (con ping de protocolo cada 20 s); `POST /api/loc` para el envío nativo de la ubicación; comprueba el origen |
+| Diagnóstico de la prueba | `informe-diagnostico.mjs` | Convierte el registro de `DIAG_FILE` en un informe Markdown: cronología, conexiones, GPS por jugador, capturas, resultado, revancha y alertas |
 | Registro de la prueba | `health-watch.mjs` | Cada 10 s: conexiones y lecturas recibidas por canal (WebSocket o HTTP). Solo contadores |
 
 **Ubicación con la pantalla bloqueada (app Android):**
@@ -41,6 +42,8 @@ Servidor **autoritativo**: las reglas viven solo en el motor (`engine/`), y el s
 
 Requisito: **Node 22.18 o superior**. El servidor no necesita `npm install`.
 
+**En Windows, para una prueba con móviles:** `.\server\iniciar-servidor.ps1`. Comprueba Node, los archivos y el puerto (sin cerrar programas ajenos), arranca el servidor solo en 127.0.0.1 con `TRUST_PROXY=1`, espera a `/health` y explica el siguiente paso. Con `-SoloComprobar` no arranca nada. Se detiene con Ctrl+C. Procedimiento completo: [`../mobile/PRUEBA_REAL_EN_CALLE.md`](../mobile/PRUEBA_REAL_EN_CALLE.md).
+
 ```bash
 node server/main.ts              # escucha en http://127.0.0.1:8787 (solo este ordenador)
 LOG=1 node server/main.ts        # con registro de operaciones
@@ -55,6 +58,7 @@ node server/health-watch.mjs     # registro de contadores cada 10 s (para la pru
 | `TRUST_PROXY=1` | Usar la IP real del cliente que indica el túnel (`CF-Connecting-IP`), para los límites por dirección. Solo detrás de un túnel de confianza |
 | `ALLOWED_ORIGINS` | Orígenes web extra admitidos en `/ws`, separados por comas |
 | `LOG=1` | Registro **sin nombres, coordenadas ni secretos**: solo tipos de comando, resultados y número de salas |
+| `DIAG_FILE` | *(Opcional; `iniciar-servidor.ps1` lo activa en `%USERPROFILE%\OutrunDiagnostico\`.)* Diagnóstico de una prueba física: una línea JSON por hecho (conexiones y motivo de cierre, sesiones, fases con quién estaba conectado, comandos y su resultado, eventos del juego, resumen del GPS de cada jugador cada 30 s y errores). Alias S1/J1/R1 en vez de códigos, nombres e identificadores; **sin coordenadas, IP ni secretos** (`test/diagnostics.test.mjs`). Informe legible: `node server/informe-diagnostico.mjs <archivo.jsonl>` |
 | `STATE_FILE` | *(Opcional.)* Archivo donde se guardan las salas cada 2 s (si hay cambios) y al apagar con Ctrl+C. Al arrancar, se restauran y los móviles se reconectan solos con su sesión. **No guarda coordenadas de jugadores** (ni lecturas ni pistas) **ni secretos** (solo sus hashes). **Sí guarda** nombres, identificadores de instalación, equipos, capturas y la zona de la partida. Una sala borrada desaparece del archivo en el siguiente guardado. Sin esta variable, todo vive solo en memoria |
 
 ## Acceso desde los móviles (redes distintas)
@@ -70,7 +74,7 @@ Una red local con `http://` **no sirve para jugar**.
 ```bash
 node server/main.ts                                   # terminal 1
 TRUST_PROXY=1 node server/main.ts                     # (o así, si usas el túnel)
-cloudflared tunnel --url http://localhost:8787        # terminal 2 → muestra https://algo.trycloudflare.com
+cloudflared tunnel --url http://127.0.0.1:8787        # terminal 2 → muestra https://algo.trycloudflare.com
 ```
 
 Pendiente de verificar antes de jugar:

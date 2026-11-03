@@ -1,0 +1,9 @@
+[partida 1] fox_hunt n=10 cazadores=9 (esperado 9) rulesVersion=zorro/2026-10-30
+[partida 1] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=1
+[partida 1] captura inválida: {}; game_finished recibido por 10/10
+[revancha] fase=LOBBY gameNo=2 restos de conversión en la sala=0 reclamaciones=0
+[revancha] fox_hunt n=10 cazadores=9 (esperado 9) rulesVersion=zorro/2026-10-30
+[revancha] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=1
+[revancha] captura inválida: {}; game_finished recibido por 10/10
+posiciones: 1330 mensajes, 10773 elementos; pistas recibidas: 27
+RESULTADO: sin problemas

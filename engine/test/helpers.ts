@@ -20,6 +20,8 @@ export function config(overrides: Partial<GameConfig> = {}): GameConfig {
   };
 }
 
+const ALIVE_STEP_MS = 20_000;
+
 // Pequeño arnés sobre el motor puro: guarda estado, hora y eventos acumulados.
 export class Harness {
   state: RoomState;
@@ -45,8 +47,26 @@ export class Harness {
     assert.equal(r.ok, true, `expected ok for ${command.type}, got ${JSON.stringify(r)}`);
   }
 
+  /**
+   * Adelanta el reloj. Como en la realidad, quien tiene la conexión abierta da señales de vida (la
+   * aplicación envía un ping cada 10 s): se simulan cada ALIVE_STEP_MS para que el periodo de gracia
+   * (D-057) solo afecte a quien está desconectado. `tickTo` adelanta sin señales.
+   */
   advance(ms: number): void {
-    this.now += ms;
+    const target = this.now + ms;
+    while (this.now < target) {
+      this.tickTo(Math.min(target, this.now + ALIVE_STEP_MS));
+      if (this.state.phase !== 'HEAD_START' && this.state.phase !== 'ACTIVE') continue;
+      for (const id of this.state.playerOrder) {
+        const p = this.state.players[id];
+        if (p?.status === 'active' && p.connected) this.cmd(id, { type: 'seen' });
+      }
+    }
+  }
+
+  /** Adelanta el reloj con un solo tick, sin señales de vida de nadie. */
+  tickTo(at: number): void {
+    this.now = at;
     const step = tick(this.state, this.now);
     this.state = step.state;
     this.events.push(...step.events);

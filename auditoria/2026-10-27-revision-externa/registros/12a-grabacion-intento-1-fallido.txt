@@ -1,0 +1,31 @@
+   2.7 s · Pantalla inicial
+   6.0 s · Sala creada: configuración del anfitrión
+  10.6 s · Configuración: zona de 400 m, 10 min, pistas cada 2 min
+  18.8 s · Sala de espera con cuatro jugadores
+  21.5 s · Todos listos: el anfitrión puede empezar
+  23.2 s · Cuenta atrás
+  27.7 s · Rol revelado: CAZADOR
+  32.8 s · Huida: mapa con la zona; los fugitivos no se ven
+  38.9 s · Huida: el compañero cazador (Bruno) aparece en el mapa
+  49.8 s · Persecución
+  52.4 s · Sin conexión: aviso y posiciones congeladas
+  60.1 s · Conexión recuperada
+  76.2 s · Primera pista: posiciones de los fugitivos en el mapa
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+locator.scrollIntoViewIfNeeded: Element is not attached to the DOM
+Call log:
+[2m  - attempting scroll into view action[22m
+[2m    - waiting for element to be stable[22m
+
+    at C:\Users\aange\Projects\Juego-escondite-recuperacion\mobile\e2e\gameplay-capture.mjs:262:32 {
+  log: [
+    '  - attempting scroll into view action',
+    '    - waiting for element to be stable'
+  ],
+  name: 'Error'
+}
+
+Node.js v24.12.0

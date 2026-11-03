@@ -162,13 +162,72 @@ test('ubicación web con el móvil quieto: si el seguimiento no da lecturas, se 
   await sleep(120);
   assert.equal(asked.length, 1, 'una sola petición pendiente');
   assert.equal(asked[0].opts.maximumAge, 0);
-  asked[0].s(fix(200));
+  asked[0].s(fix(50)); // medida hace 50 ms: posterior a la última del seguimiento (hace ~120 ms)
   assert.equal(got.length, 7);
-  assert.ok(got.at(-1).ageMs >= 200 && got.at(-1).ageMs < 1_000, 'con su antigüedad real');
+  assert.ok(got.at(-1).ageMs >= 50 && got.at(-1).ageMs < 1_000, 'con su antigüedad real');
   await src.stop();
   const before = asked.length;
   await sleep(120);
   assert.equal(asked.length, before, 'al parar no se piden más');
+});
+
+test('ubicación web: si el navegador nunca responde a una petición, se vuelve a pedir (no se queda parada para siempre)', async () => {
+  // Hay navegadores que no llaman a ninguna función de getCurrentPosition (ni éxito ni error) aunque se
+  // les pase un timeout, p. ej. con la página en segundo plano. Antes, el refresco quedaba bloqueado con
+  // una petición «pendiente» eterna y la posición no se renovaba nunca con el móvil quieto.
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let ok;
+  const asked = [];
+  const geolocation = {
+    watchPosition: (s) => ((ok = s), 7),
+    clearWatch: () => {},
+    getCurrentPosition: (s, e, opts) => asked.push({ s, e, opts }), // no responde nunca por su cuenta
+  };
+  const fix = () => ({ coords: { latitude: CENTER.lat, longitude: CENTER.lng, accuracy: 9 }, timestamp: Date.now() });
+  const src = await createLocationSource({ geolocation, loadNative: async () => ({ plugin: null }), webOptions: { refreshAfterMs: 40, checkMs: 10, requestTimeoutMs: 60 } });
+  const got = [];
+  const started = src.start((r) => got.push(r));
+  try {
+  ok(fix());
+  await started;
+  await sleep(80);
+  assert.equal(asked.length, 1, 'primera petición');
+  assert.equal(asked[0].opts.timeout, 60);
+  await sleep(150); // la petición sigue sin respuesta pasado su plazo (más margen)
+  assert.ok(asked.length >= 2, `se pide otra vez en vez de esperar para siempre (${asked.length})`);
+  asked.at(-1).s(fix());
+  assert.equal(got.length, 2, 'la nueva lectura llega');
+  // La respuesta tardía de la petición abandonada, medida antes que la última, no sustituye a la nueva.
+  asked[0].s({ coords: { latitude: CENTER.lat, longitude: CENTER.lng, accuracy: 9 }, timestamp: Date.now() - 5_000 });
+  assert.equal(got.length, 2, 'una lectura vieja nunca sustituye a una más reciente');
+  } finally {
+    await src.stop(); // también si falla: el refresco no puede dejar vivo el proceso
+  }
+});
+
+test('ubicación web: si el navegador no responde nunca, las peticiones colgadas tienen un límite', async () => {
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  let ok;
+  const asked = [];
+  const geolocation = { watchPosition: (s) => ((ok = s), 7), clearWatch: () => {}, getCurrentPosition: (s, e) => asked.push({ s, e }) };
+  const fix = () => ({ coords: { latitude: CENTER.lat, longitude: CENTER.lng, accuracy: 9 }, timestamp: Date.now() });
+  const src = await createLocationSource({ geolocation, loadNative: async () => ({ plugin: null }), webOptions: { refreshAfterMs: 20, checkMs: 10, requestTimeoutMs: 30 } });
+  const got = [];
+  const started = src.start((r) => got.push(r));
+  try {
+    ok(fix());
+    await started;
+    await sleep(600); // sin límite habría unas 15 peticiones
+    assert.ok(asked.length <= 3, `como mucho la de curso y 2 abandonadas (${asked.length})`);
+    const before = asked.length;
+    asked[0].e({ code: 3 }); // una abandonada responde (con error): deja sitio para otra
+    await sleep(120);
+    assert.equal(asked.length, before + 1, 'se vuelve a pedir');
+    asked.at(-1).s(fix());
+    assert.equal(got.length, 2, 'y la lectura nueva llega');
+  } finally {
+    await src.stop();
+  }
 });
 
 test('conexión: tras varias reconexiones solo hay una cadena de ping', async () => {
@@ -201,4 +260,36 @@ test('conexión: tras varias reconexiones solo hay una cadena de ping', async ()
   conn.close();
   assert.equal(sockets.length, 4, 'tres reconexiones');
   assert.ok(timers <= 1, `temporizadores vivos: ${timers}`);
+});
+
+test('conexión: si se corta antes del «welcome», crear o entrar falla (la pantalla de inicio no se queda esperando)', async () => {
+  const { GameConnection } = await import('../www/js/net.js');
+  const sockets = [];
+  class FakeSocket {
+    constructor() {
+      this.readyState = 1;
+      this.sent = [];
+      sockets.push(this);
+      queueMicrotask(() => this.onopen?.());
+    }
+    send(text) {
+      this.sent.push(JSON.parse(text));
+    }
+    close() {
+      this.readyState = 3;
+      queueMicrotask(() => this.onclose?.({ code: 1006 }));
+    }
+  }
+  const mem = new Map();
+  const conn = new GameConnection({ url: 'ws://x/ws', WebSocketImpl: FakeSocket, storage: { getItem: (k) => mem.get(k) ?? null, setItem: (k, v) => mem.set(k, v), removeItem: (k) => mem.delete(k) } });
+  conn.start();
+  await new Promise((r) => setTimeout(r, 10));
+  const creating = conn.create('Ana');
+  sockets.at(-1).close(); // el servidor nunca llega a responder
+  await assert.rejects(Promise.race([creating, new Promise((_, no) => setTimeout(() => no(new Error('sigue esperando')), 500))]), /offline/);
+  // Se puede volver a intentar (no queda «ocupado»), y cerrar también libera la espera.
+  await new Promise((r) => setTimeout(r, 900));
+  const joining = conn.join('ABCDEF', 'Ana');
+  conn.close();
+  await assert.rejects(joining, /offline/);
 });

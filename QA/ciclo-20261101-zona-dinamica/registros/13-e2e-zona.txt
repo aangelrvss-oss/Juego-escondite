@@ -1,0 +1,23 @@
+  ✔ el selector ofrece 50, 100, 250, 500 y 1.000 m · 50 m | 100 m | 250 m | 500 m | 1.000 m
+  ✔ el servidor y los demás jugadores reciben 100 m y la zona dinámica
+  ✔ las reglas de la sala explican la zona dinámica
+  ✔ inicio (100 m): el mapa dibuja el círculo del servidor · mapa 100.0 m, servidor 100.0 m, centros a 0.00 m, 1 mapa(s)
+  ✔ bajo el reloj: tamaño y cuánto falta para que empiece a cerrarse · Zona 100 m · empieza a cerrarse en 4:58
+  ✔ al empezar la fase 1, aviso «La zona se cierra»
+  ✔ mitad de la fase 1: el mapa dibuja el círculo del servidor · mapa 92.4 m, servidor 92.5 m, centros a 0.04 m, 1 mapa(s)
+  ✔ bajo el reloj: «se cierra hasta 85 m» y el tiempo que falta · Zona 92 m · se cierra hasta 85 m 2:28
+  ✔ final de la fase 1: el mapa dibuja el círculo del servidor · mapa 84.9 m, servidor 85.0 m, centros a 0.06 m, 1 mapa(s)
+  ✔ a los 10 min, 85 m; el centro se ha desplazado · 84.9 m, centro a 6.7 m del inicial
+  ✔ el desplazamiento es progresivo (a mitad de fase, a mitad de camino)
+  ✔ fase 2 tras reconectar: el mapa dibuja el círculo del servidor · mapa 78.4 m, servidor 78.5 m, centros a 0.06 m, 1 mapa(s)
+  ✔ tras reconectar y recargar: un solo mapa y una sola zona
+  ✔ casi al final (19:59): el mapa dibuja el círculo del servidor · mapa 61.0 m, servidor 61.0 m, centros a 0.01 m, 1 mapa(s)
+  ✔ revancha con 50 m: el mapa dibuja el círculo del servidor · mapa 50.0 m, servidor 50.0 m, centros a 0.00 m, 1 mapa(s)
+  ✔ 50 m: la zona no cambia en toda la partida y se dice · Zona 50 m · ya no cambia
+  ✔ revancha con 50 m a los 12 min: el mapa dibuja el círculo del servidor · mapa 50.0 m, servidor 50.0 m, centros a 0.00 m, 1 mapa(s)
+  ✔ ningún aviso de fase con 50 m
+  ✔ a 360×740 nada desborda con la línea de zona · {"page":360,"view":360,"map":328,"mapH":296}
+  ✔ ninguna petición a Internet fuera de la cartografía simulada
+  ✔ sin errores de JavaScript en la página
+
+21/21 comprobaciones de la zona dinámica en Chrome (chrome.exe)

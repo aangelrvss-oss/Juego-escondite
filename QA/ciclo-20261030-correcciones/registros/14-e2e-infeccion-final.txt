@@ -1,0 +1,10 @@
+ok · el anfitrión elige Infección; los demás lo ven en la sala y en las reglas; con 3 no se puede empezar (1)
+ok · empieza la persecución con 1 cazadora y 3 fugitivos; el contador dice «Infectados» (2)
+ok · Beto ve «Te han infectado · ahora eres CAZADOR»; los demás, solo el aviso (3)
+ok · Beto ya es cazador y espera 1 min antes de poder capturar (4)
+ok · pasado el minuto, Beto puede reclamar a los fugitivos que quedan (y no a los cazadores) (5)
+ok · todos infectados: el mismo Mission Report para los cuatro, con la cadena de contagio y el último superviviente (6)
+ok · la revancha sigue en Infección, con todos en «Sorteo» (7)
+ok · sin errores en la consola de ninguna página (8)
+
+8/8 comprobaciones correctas

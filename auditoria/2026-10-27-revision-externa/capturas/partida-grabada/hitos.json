@@ -1,0 +1,111 @@
+{
+  "duracionAproxS": 183,
+  "milestones": [
+    {
+      "t": 2.7,
+      "label": "Pantalla inicial",
+      "captura": "01-pantalla-inicial.png"
+    },
+    {
+      "t": 5.9,
+      "label": "Sala creada: configuración del anfitrión",
+      "captura": "02-sala-creada-configuracion-del-anfitrion.png"
+    },
+    {
+      "t": 10.5,
+      "label": "Configuración: zona de 400 m, 10 min, pistas cada 2 min",
+      "captura": "03-configuracion-zona-de-400-m-10-min-pistas-cada-2-min.png"
+    },
+    {
+      "t": 18.7,
+      "label": "Sala de espera con cuatro jugadores",
+      "captura": "04-sala-de-espera-con-cuatro-jugadores.png"
+    },
+    {
+      "t": 21.4,
+      "label": "Todos listos: el anfitrión puede empezar",
+      "captura": "05-todos-listos-el-anfitrion-puede-empezar.png"
+    },
+    {
+      "t": 23,
+      "label": "Cuenta atrás",
+      "captura": "06-cuenta-atras.png"
+    },
+    {
+      "t": 28,
+      "label": "Rol revelado: CAZADOR",
+      "captura": "07-rol-revelado-cazador.png"
+    },
+    {
+      "t": 33.2,
+      "label": "Huida: mapa con la zona; los fugitivos no se ven",
+      "captura": "08-huida-mapa-con-la-zona-los-fugitivos-no-se-ven.png"
+    },
+    {
+      "t": 39.3,
+      "label": "Huida: el compañero cazador (Bruno) aparece en el mapa",
+      "captura": "09-huida-el-companero-cazador-bruno-aparece-en-el-mapa.png"
+    },
+    {
+      "t": 50.1,
+      "label": "Persecución",
+      "captura": "10-persecucion.png"
+    },
+    {
+      "t": 52.7,
+      "label": "Sin conexión: aviso y posiciones congeladas",
+      "captura": "11-sin-conexion-aviso-y-posiciones-congeladas.png"
+    },
+    {
+      "t": 60.2,
+      "label": "Conexión recuperada",
+      "captura": "12-conexion-recuperada.png"
+    },
+    {
+      "t": 76.5,
+      "label": "Primera pista: posiciones de los fugitivos en el mapa",
+      "captura": "13-primera-pista-posiciones-de-los-fugitivos-en-el-mapa.png"
+    },
+    {
+      "t": 80.1,
+      "label": "Lista de la última pista",
+      "captura": "14-lista-de-la-ultima-pista.png"
+    },
+    {
+      "t": 84.7,
+      "label": "Reclamación lejos de Diego: el servidor la rechaza",
+      "captura": "15-reclamacion-lejos-de-diego-el-servidor-la-rechaza.png"
+    },
+    {
+      "t": 129.1,
+      "label": "Ana llega junto a Carla",
+      "captura": "16-ana-llega-junto-a-carla.png"
+    },
+    {
+      "t": 131.8,
+      "label": "Reclamación enviada: esperando a que Carla confirme",
+      "captura": "17-reclamacion-enviada-esperando-a-que-carla-confirme.png"
+    },
+    {
+      "t": 136.4,
+      "label": "Carla confirma: captura",
+      "captura": "18-carla-confirma-captura.png"
+    },
+    {
+      "t": 177.6,
+      "label": "Mission Report: ganan los cazadores",
+      "captura": "19-mission-report-ganan-los-cazadores.png"
+    },
+    {
+      "t": 181.2,
+      "label": "Final: revancha disponible para el anfitrión",
+      "captura": "20-final-revancha-disponible-para-el-anfitrion.png"
+    }
+  ],
+  "peticionesExternasBloqueadas": [],
+  "erroresDePagina": [
+    "WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+    "WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+    "WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED"
+  ]
+}

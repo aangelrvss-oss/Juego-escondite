@@ -50,15 +50,18 @@ const zoneList: Check = (v, path) => {
 const COMMANDS: Record<Command['type'], Record<string, Check>> = {
   join: { name: str, deviceId: str },
   connection: { connected: bool },
+  seen: {},
   set_team_pref: { pref: str },
   assign_team: { targetId: str, pref: str },
   set_ready: { ready: bool },
   configure: {
     config: shape({
+      mode: optional(str),
       durationMs: num,
       headStartMs: optional(num),
       pingIntervalMs: num,
       zone: zoneList,
+      dynamicZone: optional(bool),
       meetingPoint: latLng,
       safetyChecklistConfirmed: bool,
     }),

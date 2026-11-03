@@ -1,0 +1,126 @@
+﻿
+> juego-escondite-s0@0.0.0 test:server
+> node --test "server/test/*.test.mjs"
+
+▶ capacidad del servidor por dirección
+  ✔ una dirección puede tener como mucho 5 salas activas; las demás direcciones no se ven afectadas (20.5217ms)
+  ✔ sin este límite, una sola dirección llenaría el servidor para todos (el caso que se evita) (27.4582ms)
+  ✔ al cerrar una sala, esa dirección puede volver a crear (22.3694ms)
+  ✔ el límite es configurable (4.4047ms)
+✔ capacidad del servidor por dirección (77.7524ms)
+▶ capturas: desconexiones, fases y revancha (servidor real)
+  ✔ el fugitivo pierde la conexión con una reclamación pendiente: al volver la ve y puede confirmarla (1116.4208ms)
+  ✔ si el fugitivo no vuelve en 30 s, la reclamación caduca: no hay captura y la cazadora lo sabe (229.8324ms)
+  ✔ la cazadora se desconecta con su reclamación pendiente: la confirmación del fugitivo vale y la ve al volver (839.537ms)
+  ✔ fin de la partida con una reclamación pendiente: se descarta, no captura y después nada se puede reclamar (156.8022ms)
+  ✔ el tiempo se acaba con una reclamación pendiente: gana quien ganaba y la reclamación no captura (264.3232ms)
+  ✔ una reclamación de la partida anterior no puede capturar en la revancha (232.0801ms)
+  ✔ tras una captura: el capturado deja de llegar a su compañero, pasa a espectador y no se puede volver a capturar (352.634ms)
+✔ capturas: desconexiones, fases y revancha (servidor real) (3194.4805ms)
+▶ capturas con mensajes que se cruzan (servidor real)
+  ✔ dos cazadores reclaman al mismo fugitivo a la vez: una reclamación, la otra «ya pendiente» (681.1615ms)
+  ✔ el fugitivo se declara capturado mientras le reclaman: una sola captura, atribuida a quien reclamaba (214.3103ms)
+  ✔ una confirmación que llega después de caducar la reclamación no captura (167.2213ms)
+  ✔ la confirmación repetida (mismo id o id nuevo) produce una sola captura (277.9934ms)
+  ✔ una lectura retrasada (medida hace 20 s) no hace actual al fugitivo: la reclamación se rechaza (189.5437ms)
+✔ capturas con mensajes que se cruzan (servidor real) (1533.2511ms)
+▶ persistencia ante una caída real del proceso
+  ✔ una partida en huida sobrevive a matar el proceso; los móviles se reconectan solos y la partida sigue (7399.6642ms)
+  ✔ lo ocurrido en los últimos instantes antes de la caída se pierde sin romper nada: quien entró justo antes vuelve a la pantalla de inicio (2928.8088ms)
+  ✔ un archivo de estado dañado no impide arrancar ni se sobrescribe hasta que haya cambios (4204.3892ms)
+✔ persistencia ante una caída real del proceso (14535.3469ms)
+▶ registro de diagnóstico de la prueba física (DIAG_FILE)
+  ✔ recoge conexiones, fases, GPS, capturas, final y revancha sin datos personales (1489.8171ms)
+  ✔ sin DIAG_FILE no se registra nada ni se crean alias (78.6349ms)
+  ✔ el archivo se crea con su carpeta, se añade al final y el informe se genera por línea de comandos (106.456ms)
+  ✔ el informe señala una revancha que no llega a empezar y un jugador sin GPS (2.5378ms)
+✔ registro de diagnóstico de la prueba física (DIAG_FILE) (1686.0638ms)
+▶ protocolo hostil
+  ✔ mensajes mal formados: se rechazan sin romper la conexión ni el servidor (253.9672ms)
+  ✔ un mensaje demasiado grande o binario cierra la conexión (148.5209ms)
+  ✔ comandos que solo puede generar el servidor, comandos mal formados e intentos de cambiar el rol (142.1933ms)
+  ✔ un comando repetido con el mismo id no se aplica dos veces (113.0879ms)
+  ✔ sesiones falsas, códigos adivinados y avalanchas de mensajes (97.907ms)
+  ✔ orígenes web ajenos no pueden abrir el WebSocket (22.0723ms)
+  ✔ las salas cerradas se borran: sin sesiones ni memoria pendiente (167.5245ms)
+✔ protocolo hostil (949.1617ms)
+▶ robustez del servidor HTTP y de las sesiones duplicadas
+  ✔ URL mal formada o intento de salir de la carpeta pública: 400/404 y el servidor sigue vivo (25.8401ms)
+  ✔ la misma sesión abierta en dos sitios: la antigua se desconecta sin pelear en bucle (1541.9264ms)
+✔ robustez del servidor HTTP y de las sesiones duplicadas (1568.2298ms)
+▶ renovación del código de sala
+  ✔ el anfitrión obtiene un código nuevo, todos lo reciben una vez y el anterior deja de servir (492.553ms)
+  ✔ tras dos renovaciones, ninguno de los códigos anteriores sirve (110.4238ms)
+  ✔ quien ya está dentro conserva su sesión: al reconectar recibe el código nuevo (79.9467ms)
+  ✔ un jugador que no es el anfitrión no puede renovarlo y el código sigue igual (49.9426ms)
+  ✔ un comando con campos extra se rechaza sin cambiar el código (31.6544ms)
+  ✔ el mismo comando repetido (mismo id) no renueva dos veces (103.0281ms)
+  ✔ colisiones: el código nuevo nunca coincide con el de otra sala activa ni con el actual (34.7707ms)
+  ✔ fuera de la sala de espera se rechaza (cuenta atrás, huida, persecución y final); en la revancha vuelve a estar permitido (117.5343ms)
+  ✔ al cerrar la sala tras renovar, el código vigente también deja de servir (33.5435ms)
+✔ renovación del código de sala (1056.7982ms)
+▶ mantenimiento de la conexión con la página dormida
+  ✔ con ping del servidor, un cliente que no envía nada sigue conectado más allá del tiempo de inactividad (3716.6038ms)
+  ✔ sin ping del servidor, el mismo cliente se corta por inactividad (lo que pasaba antes) (1524.1899ms)
+✔ mantenimiento de la conexión con la página dormida (5243.5655ms)
+▶ abandonar en mitad de la partida
+  ✔ quien sale deja de compartir: su ubicación se borra y el servidor rechaza las siguientes (410) (739.1994ms)
+  ✔ quien ha salido ya no recibe posiciones ni eventos de la partida (367.3409ms)
+  ✔ si sale el último fugitivo, la partida termina sin ganador por abandono (125.7832ms)
+  ✔ si sale el anfitrión, otro jugador pasa a ser anfitrión y la partida sigue (122.0625ms)
+✔ abandonar en mitad de la partida (1356.9706ms)
+▶ registro del servidor
+  ✔ una partida completa no deja coordenadas, nombres, códigos ni secretos en el registro (1320.7247ms)
+  ✔ el patrón detecta una coordenada (control de la propia prueba) (0.9302ms)
+✔ registro del servidor (1323.4036ms)
+▶ partida completa con cinco jugadores reales por WebSocket
+  ✔ sala → cuenta atrás → roles privados → huida → persecución → capturas validadas → reconexión → final → revancha (1275.3745ms)
+  ✔ un cliente con el reloj desfasado una hora juega igual: la antigüedad la mide el servidor (134.2969ms)
+✔ partida completa con cinco jugadores reales por WebSocket (1411.7246ms)
+2026-10-28T23:39:18.907Z estado restaurado: 1 salas
+▶ persistencia opcional del servidor (STATE_FILE)
+  ✔ una partida en curso sobrevive al reinicio y se puede terminar; los móviles se reconectan solos (1378.9231ms)
+2026-10-28T23:39:19.790Z estado restaurado: 1 salas
+  ✔ un comando aplicado justo antes del reinicio y reenviado después con el mismo id no se aplica dos veces (729.5518ms)
+2026-10-28T23:39:20.426Z estado restaurado: 1 salas
+  ✔ en la sala de espera: el código sigue sirviendo, la sesión del anfitrión vale y una sesión falsa no (723.2275ms)
+2026-10-28T23:39:21.359Z estado restaurado: 1 salas
+2026-10-28T23:39:22.100Z no se pudo leer el archivo de estado: Expected property name or '}' in JSON at position 1 (line 1 column 2)
+  ✔ tras una caída (archivo algo anterior a lo último que vieron los móviles) los clientes aceptan el estado restaurado (978.2596ms)
+  ✔ un archivo de estado ilegible no impide arrancar y no se sobrescribe sin cambios nuevos (438.2673ms)
+  ✔ el guardado final al apagar no se pierde si otro programa tiene abierto el archivo un momento (189.7953ms)
+  ✔ sin STATE_FILE no se escribe nada (comportamiento de siempre) (113.9218ms)
+✔ persistencia opcional del servidor (STATE_FILE) (4555.6801ms)
+▶ reconexión en los momentos delicados de la partida
+  ✔ el fugitivo está sin cobertura cuando le reclaman la captura: al volver ve la reclamación y puede confirmarla (1229.2189ms)
+  ✔ si no vuelve a tiempo, la reclamación caduca sin captura y al volver no queda nada pendiente (868.8025ms)
+  ✔ sin cobertura al terminar la cuenta atrás: al volver conoce su rol y el tiempo de huida, sin ver el de los rivales (618.4629ms)
+  ✔ el cazador sin cobertura cuando llega la pista: al volver la tiene en su vista (696.6467ms)
+  ✔ recargar la página en plena persecución: vuelve a la partida con la pista, y lo antiguo llega marcado como antiguo (293.9571ms)
+  ✔ una desconexión larga, con más eventos de los que se guardan, se recupera con la vista completa (1832.8957ms)
+✔ reconexión en los momentos delicados de la partida (5544.6225ms)
+▶ Mission Report
+  ✔ es igual para todos, coincide con el estado del servidor y se recupera tras reconectar (528.0192ms)
+✔ Mission Report (530.1903ms)
+▶ detrás de un túnel HTTPS (cabeceras simuladas)
+  ✔ la página servida desde el dominio público abre el WebSocket de ese mismo dominio (137.5994ms)
+  ✔ otra web no puede abrir el WebSocket, aunque llegue por el mismo túnel (76.428ms)
+  ✔ el envío de ubicación por HTTP exige el mismo origen y una sesión válida (132.0447ms)
+  ✔ /health solo da contadores: ni códigos de sala, ni nombres, ni ubicaciones (69.6148ms)
+✔ detrás de un túnel HTTPS (cabeceras simuladas) (425.2775ms)
+▶ envío nativo de la ubicación por HTTP (POST /api/loc)
+  ✔ en partida se registra con la hora del servidor; en la cuenta atrás se ignora sin cortar el envío (231.9038ms)
+  ✔ el límite de una lectura por segundo es por jugador y lo comparten WebSocket y HTTP (153.5012ms)
+  ✔ sesión falsa o secreto ajeno: 401 y, tras 20 fallos por minuto desde la misma dirección, 429 (146.7003ms)
+  ✔ peticiones mal formadas, enormes, de otro tipo o de otra web se rechazan sin afectar a la partida (70.5268ms)
+  ✔ capturado o partida terminada: 410 (el móvil deja de enviar); fuera de la sala: 401 (226.8537ms)
+  ✔ una captura se valida solo con lecturas llegadas por HTTP (pantallas bloqueadas) (112.329ms)
+✔ envío nativo de la ubicación por HTTP (POST /api/loc) (943.6708ms)
+ℹ tests 75
+ℹ suites 17
+ℹ pass 75
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 15347.2359

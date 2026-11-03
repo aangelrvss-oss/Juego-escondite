@@ -22,8 +22,21 @@ export async function testServer(hub = {}) {
     server,
     clock,
     wsUrl,
-    /** Adelanta el reloj del servidor y procesa los plazos vencidos. */
+    /**
+     * Adelanta el reloj del servidor y procesa los plazos vencidos. Como en la realidad (la aplicación
+     * envía un ping cada 10 s), quien tiene el WebSocket abierto da señales de vida cada 20 s: el periodo
+     * de gracia (D-057) solo afecta a quien está desconectado. `jump` adelanta sin señales.
+     */
     async advance(ms) {
+      const target = clock.t + ms;
+      while (clock.t < target) {
+        clock.t = Math.min(target, clock.t + 20_000);
+        server.pump();
+        server.hub.keepAliveConnected();
+      }
+      await settle();
+    },
+    async jump(ms) {
       clock.t += ms;
       server.pump();
       await settle();

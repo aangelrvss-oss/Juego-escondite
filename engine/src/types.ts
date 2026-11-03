@@ -12,17 +12,23 @@ export interface LatLng {
 }
 
 export interface ZoneVersion {
-  // Desfase respecto al inicio de ACTIVE. En el MVP solo hay una versión con 0.
+  // Desfase respecto al inicio de ACTIVE. La configuración solo admite una versión con 0; el plan de la
+  // zona dinámica (RoomState.zonePlan) tiene varias.
   fromOffsetMs: number;
   center: LatLng;
   radiusM: number;
 }
 
 export interface GameConfig {
+  // Modo de juego (D-057). Sin modo: Clásico (las salas y clientes anteriores no lo envían).
+  mode?: 'classic' | 'infection' | 'fox_hunt';
   durationMs: number; // duración de la fase ACTIVE
   headStartMs: number;
   pingIntervalMs: number;
   zone: ZoneVersion[];
+  // Zona dinámica (1/11/2026): cada 5 min encoge y se desplaza (engine/src/zone.ts). Sin el campo, zona
+  // fija, como en las salas y clientes anteriores.
+  dynamicZone?: boolean;
   meetingPoint: LatLng;
   safetyChecklistConfirmed: boolean;
 }
@@ -65,6 +71,19 @@ export interface Player {
   status: PlayerStatus;
   connected: boolean;
   disconnectedSince: number | null;
+  // Presencia (D-057): última señal de la aplicación (mensaje por WebSocket o lectura por HTTP), con la
+  // hora del servidor. A diferencia de `connected` (socket abierto), detecta también una página congelada.
+  lastSeenAt: number | null;
+  // Sin señal desde hace PRESENCE.awayAfterMs durante la partida: los demás lo ven «sin conexión».
+  away: boolean;
+  // Por qué salió de la partida: por su cuenta o por pasar PRESENCE.absenceTimeoutMs sin señal.
+  // after_end: salió de la sala tras el final (no abandonó la partida).
+  leftReason: 'left' | 'timeout' | 'after_end' | null;
+  // Infección: cuándo se convirtió en cazador, desde cuándo puede reclamar capturas y cuántas pistas se
+  // habían emitido ya (no recibe la última anterior a su conversión). null si no se ha convertido.
+  convertedAt?: number | null;
+  canTagFrom?: number | null;
+  pingsBeforeConversion?: number | null;
   samples: StoredSample[]; // de más antigua a más reciente
   outsideSince: number | null;
   exposed: boolean;
@@ -102,6 +121,8 @@ export interface Capture {
   hunterId: string | null;
   atOffsetMs: number; // desde el inicio de ACTIVE; sin coordenadas
   via: 'self' | 'claim';
+  // Infección: la captura convirtió al fugitivo en cazador.
+  converted?: boolean;
 }
 
 export interface PingEntry {
@@ -145,6 +166,10 @@ export interface RoomState {
   closeReason: string | null;
   // Versión de las reglas de la partida en curso o de la última (se fija al empezar).
   rulesVersion: string | null;
+  // Zona dinámica: plan de la partida (se calcula al empezar) y fases ya empezadas. Opcionales: un estado
+  // guardado antes del 1/11/2026 no los tiene (zona fija).
+  zonePlan?: ZoneVersion[] | null;
+  zonePhase?: number;
 }
 
 export type Audience =
@@ -164,6 +189,7 @@ export interface EngineEvent {
 export type Command =
   | { type: 'join'; name: string; deviceId: string }
   | { type: 'connection'; connected: boolean }
+  | { type: 'seen' }
   | { type: 'set_team_pref'; pref: TeamPref }
   | { type: 'assign_team'; targetId: string; pref: TeamPref }
   | { type: 'set_ready'; ready: boolean }
@@ -212,8 +238,11 @@ export type ErrorCode =
   | 'target_location_unstable'
   | 'hunter_outside_zone'
   | 'not_close_enough'
+  | 'tag_cooldown'
   | 'claim_not_found'
-  | 'rematch_window_closed';
+  | 'rematch_window_closed'
+  // La sala caducaría (6 h de vida) antes de que termine la partida y su periodo de revancha (V-06).
+  | 'room_expiring';
 
 export type CommandResult =
   | { ok: true; data?: Record<string, unknown> }

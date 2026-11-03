@@ -1,0 +1,11 @@
+ok  · pantalla de inicio abierta; modos seleccionables: Clásico2–20 jugadores | Infección4–20 jugadores | Caza del zorro3–20 jugadores
+ok  · sin Sardines ni «Próximamente»
+ok  · sala creada (código de 6 caracteres)
+ok  · el segundo navegador entra; el anfitrión ve: Prueba-A (tú) Anfitrión Esperando SorteoCazadorFugitivo / Prueba-B Esperando SorteoCazadorFugitivo ✕
+ok  · el anfitrión empieza la partida: cuenta atrás en los dos navegadores
+ok  · roles revelados en privado: CAZADOR / FUGITIVO
+ok  · mapa real: lienzo de MapLibre; sin respaldo; respuestas de MapTiler: 200
+ok  · el anfitrión termina la partida y aparece el informe
+ok  · errores de JavaScript: ninguno
+
+9/9 comprobaciones correctas

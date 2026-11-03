@@ -51,9 +51,11 @@ describe('desconexión y reconexión (AC-F1, AC-F2, T07, T08)', () => {
     const r = lobby.runners[0]!;
     r.disconnect();
     toActive(host);
+    const before = r.received.length;
     r.connect();
-    const last = r.received.at(-2);
-    assert.equal(last?.kind, 'snapshot');
+    // Lo primero que recibe es la instantánea (no hay eventos que repetir); después, los avisos de su
+    // propia reconexión (D-057: vuelve a tener conexión y deja de estar «sin conexión»).
+    assert.equal(r.received[before]?.kind, 'snapshot');
     assert.equal(r.snapshot?.phase, 'ACTIVE');
   });
 

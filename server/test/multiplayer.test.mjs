@@ -26,7 +26,8 @@ function assertNoLeaks(players, state) {
           if (v.teamPref !== null) assert.equal(state.players[v.id]?.teamPrefSetBy, me, `${p.name} ve una preferencia ajena`);
           if (v.team !== null) {
             assert.notEqual(msg.snapshot.phase, 'COUNTDOWN', `${p.name} ve un equipo en la cuenta atrás`);
-            assert.ok(v.id === me || mate(v.id), `${p.name} ve el equipo de un rival`);
+            // Al terminar, todos ven el equipo de todos (decisión del 29/10/2026); antes, nunca el de un rival.
+            if (msg.snapshot.phase !== 'FINISHED') assert.ok(v.id === me || mate(v.id), `${p.name} ve el equipo de un rival`);
           }
         }
       } else if (msg.t === 'event') {
@@ -129,6 +130,12 @@ describe('partida completa con cinco jugadores reales por WebSocket', () => {
     assert.equal((await ana.conn.command({ type: 'end_game' })).ok, true);
     await waitFor(() => players.every((p) => p.snap.phase === 'FINISHED'), 'final en todos');
     assertNoLeaks(players, state());
+    // Al terminar, todos ven el equipo real de todos, y la misma lista.
+    const finalTeams = (p) => JSON.stringify(p.snap.players.map((v) => [v.id, v.team]));
+    for (const p of players) {
+      for (const v of p.snap.players) assert.equal(v.team, state().players[v.id].team, `${p.name} ve el equipo de ${v.name} al final`);
+    }
+    assert.equal(new Set(players.map(finalTeams)).size, 1, 'los equipos del final son iguales para todos');
     assert.equal((await ana.conn.command({ type: 'rematch', swapRoles: false })).ok, true);
     for (const p of players.slice(1)) assert.equal((await p.conn.command({ type: 'join_rematch' })).ok, true);
     await waitFor(() => players.every((p) => p.snap.phase === 'LOBBY' && p.snap.gameNo === 2), 'revancha en la sala');

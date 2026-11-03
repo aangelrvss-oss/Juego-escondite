@@ -1,0 +1,6 @@
+classic ganan los fugitivos (time_up) capturas 6 pistas 9 errores 0
+150.8 s · ws de la interfaz cerrado; recibidos 493 · último hace 4237 ms
+infection ganan los fugitivos (time_up) capturas 7 pistas 9 errores 0
+299.3 s · ws de la interfaz cerrado; recibidos 493 · último hace 3534 ms
+fox_hunt ganan los cazadores (all_captured) capturas 1 pistas 1 errores 0
+errores de página []

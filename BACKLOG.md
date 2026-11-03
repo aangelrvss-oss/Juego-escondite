@@ -58,7 +58,8 @@ Estados:
 
 ## P1 · Pruebas reales con varios dispositivos y jugadores
 - [ ] **Analizar el CSV de la prueba física de H1** (guía §6). No está en el repositorio ni en este ordenador: lo aporta el propietario.
-- [ ] Partida con dos móviles en el navegador (`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`). Necesita autorización para el túnel HTTPS. Es la primera vez que se escanearía el QR con una cámara.
+- [~] Prueba real en la calle **preparada** (27/10): procedimiento, script de inicio y pruebas de las cabeceras del túnel. Pendiente de tu autorización y de hacerla.
+- [ ] Partida con dos móviles en el navegador (`mobile/PRUEBA_REAL_EN_CALLE.md`). Necesita autorización para el túnel HTTPS. Es la primera vez que se escanearía el QR con una cámara.
 - [ ] Partida con dos Android con la pantalla bloqueada (`mobile/PRUEBA_PARTIDA_ANDROID.md`). **Bloqueada:** no hay APK en este ordenador; hace falta recuperar la `0.3.0` (con la interfaz antigua) o autorizar JDK 21 y el SDK para compilar una nueva.
 - [ ] Puerta de la Fase 2 del Plan: dos partidas consecutivas completas sin reiniciar el servidor y sin contradicciones entre dispositivos.
 - [ ] Verificaciones previas sin coste (`TECHNICAL_SPIKE_PLAN.md` §7; el plan de la prueba técnica está diseñado y sin ejecutar).

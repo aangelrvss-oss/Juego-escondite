@@ -1,0 +1,2 @@
+gameplay-auditoria.webm {"duration":184,"advanced":true,"width":720,"height":1480,"error":null}
+gameplay-resumen.webm {"duration":44.2,"advanced":true,"width":720,"height":1480,"error":null}

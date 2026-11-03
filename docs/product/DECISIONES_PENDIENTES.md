@@ -10,12 +10,13 @@ Leyenda de la última columna del resumen: **Sí** = no se implementa nada sin a
 |---|---|---|---|
 | D-043 | Radio por equipos | El Plan sustituye a D-006, pero por pasos: primero un prototipo aislado de voz por WebRTC entre los miembros de cada equipo, sin grabar; mientras tanto, canal externo como plan B declarado | **Sí**: cambia D-006, pide micrófono y puede tener coste (servidor TURN) |
 | D-044 | PWA | Las dos cosas: web instalable (manifest y service worker mínimo) **y** app Android para jugar con la pantalla bloqueada | **Sí**: cambia D-005 |
-| D-045 | Siguiente modo | **Revisada con la guía (26/10, noche):** ningún modo nuevo hasta cerrar HUNT, y después elegir entre THE RACE e INFECTION por valor demostrado en las pruebas (guía), no por un orden fijo (Plan) | **Sí**: el Plan y la guía no coinciden |
+| D-045 | Siguiente modo · **Resuelta el 30/10/2026 (D-057): Infección y Caza del zorro en este ciclo; THE RACE y Sardines fuera** | **Revisada con la guía (26/10, noche):** ningún modo nuevo hasta cerrar HUNT, y después elegir entre THE RACE e INFECTION por valor demostrado en las pruebas (guía), no por un orden fijo (Plan) | **Sí**: el Plan y la guía no coinciden |
 | D-046 | Número de jugadores | Motor en 2–20; la interfaz deja de anunciar 20 y recomienda 4–10 hasta probarlo en la calle | **Parcial**: el cambio de texto es pequeño, pero decide qué se promete |
 | D-047 | Pistas y capturados | Pistas aproximadas (zona, no punto) y los capturados dejan de ver a los cazadores | **Sí**: cambia el equilibrio del juego |
 | D-035 | Disputas de captura | Procedimiento de `GAME_MODES_AND_RULES.md` §9.3, con «sin captura» como regla predeterminada | **Sí**: falta aprobar la regla predeterminada y la ventana de resolución |
 | (nueva) | Estados CHECKS, BRIEFING y PAUSED | Mantener CHECKS y BRIEFING como pasos de la sala, sin fases nuevas; PAUSED solo tras decidir quién pausa y qué pasa con los plazos | **Sí** para PAUSED |
 | D-053 | Pausar o cancelar (guía §7) | Cancelar ya existe («Terminar partida» del anfitrión y abandono). Pausa solo del anfitrión, que congela todos los plazos y avisa a todos; nunca automática | **Sí** |
+| D-055 | Proveedor de cartografía del mapa real | MapTiler para las pruebas (clave pública limitada y revocable); antes de un uso público, decidir proveedor, coste y condiciones (atribución, uso comercial), y si se autoaloja (Protomaps). Ver `mobile/MAPA.md` | **Sí**: coste, condiciones y privacidad (el proveedor ve la IP y la zona consultada) |
 | D-054 | Revisar las decisiones técnicas de las sesiones autónomas | Confirmarlas, salvo que quieras otra cosa en la pantalla encendida (D-051), por su coste de batería | **Sí** |
 
 ---
@@ -200,7 +201,7 @@ Guía: `docs/product/THE_OUTRUN_Guia_de_criterio_y_desarrollo.docx` (copia idén
 | Radio | Requisito fijo (PM-D-003) | Pregunta abierta: ¿compensa su complejidad? (§13) | D-006: sin radio en el MVP; no hay código | D-043 |
 | Siguiente modo | Orden fijo: THE RACE y después INFECTION (PM-D-007), INFECTION «prioridad alta» | Elegir por valor demostrado (P2) | D-030: Clásico primero | D-045 |
 | Pausa | Solo por incidencias del sistema (§2.3) | «Forma clara de pausar o cancelar» (§7) | Se puede terminar o abandonar; no hay pausa | D-053 |
-| Criterio de salida de HUNT | «Dos partidas consecutivas completas… sin reiniciar el backend» (F2) | «Partidas consecutivas… el protocolo debe fijar cuántas» (§5) | **No hay contradicción**: el número lo da el Plan. Los procedimientos de prueba deben adoptarlo | `PRUEBA_PARTIDA_NAVEGADOR.md`, actualizado |
+| Criterio de salida de HUNT | «Dos partidas consecutivas completas… sin reiniciar el backend» (F2) | «Partidas consecutivas… el protocolo debe fijar cuántas» (§5) | **No hay contradicción**: el número lo da el Plan. Los procedimientos de prueba deben adoptarlo | `PRUEBA_REAL_EN_CALLE.md`, actualizado |
 | Proceso | — | Proponer → autorizar → implementar (§11) | Las sesiones autónomas implementaron decisiones técnicas reversibles | D-054 |
 | Objetivos numéricos | — | «No fijar objetivos cuantitativos arbitrarios antes de obtener una primera línea base» (§9) | `PRODUCT_STRATEGY.md` §9 fija umbrales: ≤ 5 min hasta empezar, ≥ 90 % de partidas sin fallo, ≥ 40 % con revancha. Están marcados como hipótesis | Recomendación: tratarlos como referencias que se fijarán tras la primera línea base, no como criterios de éxito. Lo decides tú |
 

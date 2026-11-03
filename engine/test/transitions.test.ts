@@ -171,7 +171,7 @@ describe('configuración (AC-B1)', () => {
     ['durationMs', { durationMs: 5 * MINUTE }],
     ['headStartMs', { headStartMs: 11 * MINUTE }],
     ['pingIntervalMs', { pingIntervalMs: 1 * MINUTE }],
-    ['zone', { zone: [{ fromOffsetMs: 0, center: { lat: 40, lng: -3 }, radiusM: 100 }] }],
+    ['zone', { zone: [{ fromOffsetMs: 0, center: { lat: 40, lng: -3 }, radiusM: 40 }] }], // mínimo 50 m desde el 1/11/2026 (antes 150: este caso usaba 100)
     ['meetingPoint', { meetingPoint: { lat: 200, lng: 0 } }],
   ];
   for (const [field, overrides] of invalid) {
@@ -216,13 +216,27 @@ describe('abandono y anfitrión (§5.1–5.3)', () => {
     assert.equal(g.eventsOf('host_changed').length, 1);
   });
 
-  it('todos desconectados: la partida sigue y termina a su hora (AC-C8)', () => {
+  it('todos desconectados: la partida sigue sin ellos y termina a su hora si vuelven antes de 5 min (AC-C8, D-057)', () => {
+    const g = activeGame();
+    g.ok('h', { type: 'connection', connected: false });
+    g.ok('r1', { type: 'connection', connected: false });
+    g.advance(4 * MINUTE);
+    assert.equal(g.state.phase, 'ACTIVE');
+    g.ok('h', { type: 'connection', connected: true });
+    g.ok('r1', { type: 'connection', connected: true });
+    g.advance(20 * MINUTE);
+    assert.equal(g.state.phase, 'FINISHED');
+    assert.equal(g.state.outcome?.cause, 'time_up');
+  });
+
+  it('todos desconectados más de 5 min: quedan fuera y la partida termina sin ganador (D-057)', () => {
     const g = activeGame();
     g.ok('h', { type: 'connection', connected: false });
     g.ok('r1', { type: 'connection', connected: false });
     g.advance(20 * MINUTE);
     assert.equal(g.state.phase, 'FINISHED');
-    assert.equal(g.state.outcome?.cause, 'time_up');
+    assert.equal(g.state.outcome?.winner, null);
+    assert.ok(['hunters_abandoned', 'runners_abandoned'].includes(g.state.outcome?.cause ?? ''));
   });
 
   it('el anfitrión que se va de la sala de espera cede el puesto de inmediato', () => {

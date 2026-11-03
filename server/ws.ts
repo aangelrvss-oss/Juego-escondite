@@ -23,7 +23,10 @@ export interface WsConnection {
   send(text: string): void;
   close(code: number, reason: string): void;
   onMessage: (text: string) => void;
-  onClose: () => void;
+  /** `why` dice quién o qué cerró, para el diagnóstico: client_<código>, server_<código>,
+   * idle_timeout (sin datos del móvil en el plazo), network_closed (la conexión TCP se cortó),
+   * socket_error o send_buffer_full. */
+  onClose: (why: string) => void;
   readonly open: boolean;
 }
 
@@ -67,6 +70,7 @@ export function acceptWebSocket(socket: Duplex, key: string, head: Buffer, opts:
   let open = true;
   let idle: NodeJS.Timeout | undefined;
   let pinger: NodeJS.Timeout | undefined;
+  let clientCloseCode: number | null = null;
 
   const conn: WsConnection = {
     onMessage: () => {},
@@ -77,7 +81,7 @@ export function acceptWebSocket(socket: Duplex, key: string, head: Buffer, opts:
     send(text: string) {
       if (!open) return;
       if ((socket as Duplex & { writableLength: number }).writableLength > opts.maxBufferedBytes) {
-        terminate();
+        terminate('send_buffer_full');
         return;
       }
       socket.write(frame(0x1, Buffer.from(text, 'utf8')));
@@ -88,27 +92,27 @@ export function acceptWebSocket(socket: Duplex, key: string, head: Buffer, opts:
       payload.writeUInt16BE(code, 0);
       payload.write(reason, 2);
       socket.write(frame(0x8, payload));
-      finish();
+      finish(clientCloseCode === null ? `server_${code}` : `client_${clientCloseCode}`);
       socket.end();
     },
   };
 
-  function finish(): void {
+  function finish(why: string): void {
     if (!open) return;
     open = false;
     if (idle) clearTimeout(idle);
     if (pinger) clearInterval(pinger);
-    conn.onClose();
+    conn.onClose(why);
   }
 
-  function terminate(): void {
-    finish();
+  function terminate(why: string): void {
+    finish(why);
     socket.destroy();
   }
 
   function touch(): void {
     if (idle) clearTimeout(idle);
-    idle = setTimeout(terminate, opts.idleTimeoutMs);
+    idle = setTimeout(() => terminate('idle_timeout'), opts.idleTimeoutMs);
     idle.unref?.();
   }
 
@@ -144,6 +148,7 @@ export function acceptWebSocket(socket: Duplex, key: string, head: Buffer, opts:
       if (opcode === 0x8) {
         // Cierre del cliente: se responde con el mismo código si lo trae.
         const code = payload.length >= 2 ? payload.readUInt16BE(0) : 1000;
+        clientCloseCode = code;
         return conn.close(code === 1005 || code < 1000 || code >= 5000 ? 1000 : code, '');
       }
       if (opcode === 0x9) {
@@ -175,8 +180,8 @@ export function acceptWebSocket(socket: Duplex, key: string, head: Buffer, opts:
     }
     parse();
   });
-  socket.on('close', finish);
-  socket.on('error', terminate);
+  socket.on('close', () => finish('network_closed'));
+  socket.on('error', () => terminate('socket_error'));
   touch();
   if (opts.pingIntervalMs) {
     pinger = setInterval(() => {

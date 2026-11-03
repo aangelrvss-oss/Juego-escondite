@@ -1,0 +1,29 @@
+▶ simulador: tres modos con 10 participantes, motor real
+  ✔ classic: 10 participantes, roles del motor (3 cazadores) y la partida termina con un resultado del motor (23109.6574ms)
+  ✔ infection: 10 participantes, roles del motor (2 cazadores) y la partida termina con un resultado del motor (19916.1063ms)
+  ✔ fox_hunt: 10 participantes, roles del motor (9 cazadores) y la partida termina con un resultado del motor (7212.19ms)
+✔ simulador: tres modos con 10 participantes, motor real (50239.3797ms)
+▶ simulador: acciones de prueba
+  ✔ desconexión forzada: «sin conexión» a los 30 s, vuelve al restaurar; a los 5 min queda fuera (9393.3201ms)
+  ✔ pestaña suspendida (socket abierto, sin señales): «sin conexión» aunque el tiempo vaya acelerado (3271.9466ms)
+  ✔ pestaña duplicada: el servidor cierra la anterior con 4001, sigue una sola conexión y el jugador nunca aparece desconectado (78.5544ms)
+  ✔ captura inválida: el motor la rechaza; captura válida guiada: el motor la acepta y el fugitivo la confirma (3977.5522ms)
+  ✔ Infección: el capturado pasa a cazador y espera 60 s antes de poder capturar (4944.4226ms)
+  ✔ revancha real por comandos (Infección): sorteo nuevo con 10, sin restos de la partida anterior; registro con los textos del modo (22197.7264ms)
+  ✔ Caza del zorro: un único zorro, que ve a los cazadores (filtro real del servidor) (701.2204ms)
+  ✔ pausa: el reloj del servidor se detiene; finalizar: el anfitrión termina la partida sin ganador (2808.7248ms)
+  ✔ reiniciar: servidor nuevo sin salas, sesiones ni conexiones; la siguiente simulación no hereda participantes (138.4984ms)
+  ✔ interfaz: la sesión solo se entrega para quien juega desde ella, y nunca la del anfitrión (45.3591ms)
+✔ simulador: acciones de prueba (47559.021ms)
+▶ simulador: aislamiento
+  ✔ el servidor normal no tiene las rutas del simulador (18.8557ms)
+  ✔ el simulador rechaza acciones de otro origen y escucha solo en 127.0.0.1 (13.488ms)
+✔ simulador: aislamiento (32.5838ms)
+ℹ tests 15
+ℹ suites 3
+ℹ pass 15
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 98176.1998

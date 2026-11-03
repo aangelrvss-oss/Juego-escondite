@@ -10,7 +10,13 @@
 <link rel="stylesheet" href="css/game.css">
 </head>
 <body>
-<main id="app" class="screen"></main>
+<main class="screen">
+<div id="app" class="flow"></div>
+<section id="map-host" class="card map-host" hidden></section>
+<div id="app-after" class="flow"></div>
+</main>
+<!-- Anuncios para lectores de pantalla que no deben repetirse con cada redibujado. -->
+<p id="sr-live" class="sr-only" aria-live="assertive"></p>
 <script type="module" src="js/app.js"></script>
 </body>
 </html>

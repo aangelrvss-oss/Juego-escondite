@@ -1,0 +1,45 @@
+servidor http://127.0.0.1:61307
+OK   sin declarar que tiene 18 años o más no puede crear la sala
+OK   el anfitrión crea la sala y ve un código válido · 9YQPA4
+OK   hay botones «Compartir enlace», «Mostrar QR» y «Cambiar el código»
+OK   el QR de la interfaz contiene el enlace de invitación · http://127.0.0.1:61307/?sala=9YQPA4 (v3, máscara 1)
+OK   el enlace precarga el código en «Unirme»
+OK   el aviso de invitación muestra la sala
+OK   el parámetro se quita de la barra de direcciones · http://127.0.0.1:61307/
+OK   el invitado entra y ambos ven 2 jugadores
+OK   el invitado no ve «Cambiar el código»
+OK   tras confirmar, los dos ven el código nuevo · 9YQPA4 → BZCJDT
+OK   un código mal escrito muestra el aviso y no entra
+OK   el enlace antiguo ya no sirve («No existe ninguna sala…»)
+OK   con el código nuevo entra el tercero
+OK   antes de estar listo se explica que se comprobará el GPS
+OK   sin permiso de ubicación no puede declararse listo
+OK   quien no es anfitrión ve qué falta para empezar
+OK   cuando alguien se desconecta, todos ven quién es
+OK   el anfitrión puede expulsar a quien se ha quedado sin conexión
+OK   aviso de juego nocturno según la hora local (ahora 7 h)
+OK   todos ven las reglas de la partida (captura, zona, pistas, seguridad) antes de empezar
+OK   cuenta atrás y revelación privada del rol
+OK   la tarjeta del rol recuerda las normas de captura (AC-B4)
+OK   en el navegador, la pantalla se mantiene encendida durante la partida · La pantalla se mantiene encendida durante la partida: con ella apagada, el navegador no envía tu ubicación.
+OK   al recargar en plena partida no se repiten la tarjeta del rol ni los avisos antiguos ·  Conectado Persecución18:45 CAZADOR Próxima pista en1:45 Caza a los fugitivos. Usa las pistas. Mapa sin configurar: falta la clave del proveedor de mapas (mobile/MAPA.md). Se muestra el radar. Reinten
+OK   la reclamación de captura queda encima de la hoja «Me han pillado» y se puede responder
+OK   Mission Report igual en los tres móviles · Mission Report · Clásico · Partida 1 Ganan los cazadores Todos los fugitivos capturados Persecución1:15 Capturas1 Primera captura1:15 MomentosPrimera captura: B
+OK   el informe incluye duración y capturas
+OK   todos pueden compartir el resultado
+OK   tras recargar, el Mission Report se reconstruye igual
+OK   al terminar, deja de pedirse la pantalla encendida
+OK   la revancha empieza con todos en «Sorteo»
+OK   sin permiso de ubicación en la partida: aviso fijo y el indicador no dice que se comparte
+OK   al devolver el permiso y pulsar «Reintentar», vuelve a compartir la ubicación
+OK   durante la cuenta atrás se puede abandonar
+OK   desde la cuenta atrás se indica que se está compartiendo la ubicación
+OK   el primer toque pide confirmación y avisa de que deja de compartir la ubicación
+OK   al confirmar, sale de la partida y vuelve al inicio · estado left, lecturas 0
+OK   la partida sigue para los demás
+OK   si se retira el permiso en plena persecución, aparece el mismo aviso
+OK   la declaración de edad se recuerda en el móvil: no se vuelve a pedir
+OK   en un móvil de 360×740, ninguna de las 12 pantallas desborda ni tiene botones de menos de 44 px ni texto de menos de 12 px
+OK   sin errores de JavaScript en las tres páginas
+
+42/42 comprobaciones superadas

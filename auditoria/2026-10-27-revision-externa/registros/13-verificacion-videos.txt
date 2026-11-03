@@ -1,0 +1,4 @@
+gameplay-auditoria.webm {"duration":184.2,"advanced":true,"width":720,"height":1480,"error":null}
+gameplay-resumen.webm {"duration":44,"advanced":true,"width":720,"height":1480,"error":null}
+ffmpeg gameplay-auditoria: frame= 4604 fps=365 q=-0.0 Lsize=N/A time=00:03:04.16 bitrate=N/A speed=14.6x    
+ffmpeg gameplay-resumen: frame= 1101 fps=614 q=-0.0 Lsize=N/A time=00:00:44.04 bitrate=N/A speed=24.6x    

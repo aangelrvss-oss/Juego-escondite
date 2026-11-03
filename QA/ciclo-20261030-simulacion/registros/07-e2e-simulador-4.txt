@@ -1,0 +1,11 @@
+ok · panel abierto: rótulo de herramienta de desarrollo, sin desbordamiento (1)
+ok · 10 participantes (AVATAR_01…10) y la interfaz real de AVATAR_02 en partida; sin cartografía se avisa del plano de prueba (2)
+ok · velocidad ×10 con rótulo de tiempo acelerado; la pausa detiene el reloj del servidor y se reanuda (3)
+ok · desconexión forzada: «sin conexión» tras 30 s de juego, en la tabla y en la consola; al restaurar, «ha vuelto» (4)
+ok · captura inválida: la consola muestra el rechazo del motor (5)
+ok · Caza del zorro con 10: un solo zorro; la simulación anterior no deja salas (6)
+ok · a 360 px: sin desbordamiento horizontal (7)
+ok · reiniciar: servidor nuevo, sin salas, sesiones ni conexiones (8)
+ok · sin errores de JavaScript (9)
+
+9/9 comprobaciones correctas

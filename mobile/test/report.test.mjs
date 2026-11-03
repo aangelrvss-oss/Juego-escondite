@@ -86,7 +86,7 @@ test('texto para compartir: resultado, cifras y momentos, sin coordenadas ni equ
   assert.equal(
     text,
     [
-      'THE OUTRUN · Mission Report',
+      'THE OUTRUN · Mission Report · Clásico',
       'Ganan los cazadores — Todos los fugitivos capturados',
       'persecución 12:00 · 2 capturas · victoria a los 12:00',
       '• Primera captura: Caro a los 1:35',

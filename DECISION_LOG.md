@@ -444,3 +444,91 @@ La guía §11 pide «proponer → autorizar → implementar» en arquitectura, r
 - Además: un máximo de 5 salas por dirección, y que los eventos de hace más de 15 s no vuelvan a avisar.
 
 **Pendiente:** que el propietario las confirme o pida revertirlas. Todas están en commits separados y se pueden revertir una a una.
+
+### D-056 · Aprobada · Revancha con sorteo nuevo y equipos visibles al terminar (29/10/2026)
+Aprobada por el propietario para el primer playtest. Resuelve el punto de D-037 sobre la revancha y la pregunta abierta de la trazabilidad («decidir si se revelan los equipos al final»).
+- **Revancha:** cada revancha es un **sorteo nuevo**. Nadie arrastra su equipo: todas las preferencias vuelven a «Sorteo».
+  - El reparto se hace al pulsar «Empezar», antes de la cuenta atrás, con las reglas de siempre (`ceil(n/4)` cazadores y las asignaciones manuales del anfitrión).
+  - Solo un cambio de equipos pedido expresamente (`swapRoles`, que la interfaz no usa) fija el contrario.
+  - Código: `engine/src/engine.ts` (`rematch`).
+- **Equipos al terminar:** en FINISHED, todos ven el equipo de todos. En el resto de fases no cambia nada: cada uno ve el suyo y el de sus compañeros, y en la cuenta atrás ninguno (D-042).
+  - Código: `engine/src/view.ts` (`teamVisibleTo`).
+- **Correcciones menores aprobadas junto con esta decisión:**
+  - **Nombre de quien sale:** quien jugó la partida y sale sigue en la vista de FINISHED (estado `left`), así que el resultado conserva su nombre igual para todos.
+  - **Pista sin capturados:** el fugitivo capturado (o que abandona) sale de la última pista guardada; las pistas nuevas ya no lo incluían (GAME_STATE_MACHINE §5.3).
+  - **Intervalo de pistas:** tiene que ser menor que la duración de la persecución (`invalid_config`, campo `pingIntervalMs`), con un mensaje claro en la interfaz.
+- **Pruebas:**
+  - `engine/test/playtest-decisions.test.ts`;
+  - `server/test/playtest-decisions.test.mjs`;
+  - `mobile/e2e/playtest-ui.e2e.mjs`.
+
+### D-057 · Aprobada · Reconexión, Infección y Fox Hunt en este ciclo (30/10/2026)
+Aprobada por el propietario el 30/10/2026, tras el primer playtest físico con cinco personas y la auditoría del ciclo (`QA/ciclo-20261030/INFORME_AUDITORIA.md`). **Modifica D-030 y D-045:** el propietario pide implementar modos en este ciclo; THE RACE sigue fuera.
+
+**1. Presencia y periodo de gracia** (cambia AC-C8 y GAME_STATE_MACHINE §5.2: antes un desconectado seguía en juego indefinidamente).
+- **Señal de vida:** cualquier mensaje de la aplicación por WebSocket o una lectura nativa por `POST /api/loc`.
+  - No cuentan los pong de la pila de red: el navegador los contesta aunque la página esté congelada.
+- **A los 30 s sin señal**, en la huida o la persecución:
+  - todos ven al jugador «sin conexión», sin equipo, posición ni hora;
+  - al volver, «ha vuelto».
+- **A los 5 min sin señal** queda fuera de la partida, con las mismas consecuencias que abandonar:
+  - se cancelan sus reclamaciones;
+  - sale de la última pista;
+  - si el equipo se queda vacío, la partida termina sin ganador (`runners_abandoned` / `hunters_abandoned`).
+- **Qué se ve después:**
+  - el informe muestra «Sin conexión» en lugar de «Abandonó»;
+  - quien vuelve tarde ve una pantalla que se lo explica, recibe el final y puede unirse a la revancha.
+- **Excepciones:**
+  - el capturado (espectador) no queda fuera;
+  - si el final por tiempo coincide, el final va antes;
+  - tras reiniciar el servidor o detectar que estuvo suspendido, el plazo empieza de cero para todos.
+- **Las reglas de captura y de victoria no cambian.**
+
+**2. Infección** (parámetros que faltaban en GAME_MODES_AND_RULES §3, propuesta completa aprobada):
+- mínimo 4 jugadores;
+- cazadores iniciales `max(1, floor(n/4))`;
+- el convertido no puede capturar durante 60 s;
+- el convertido no recibe la última pista ya emitida, solo las siguientes;
+- si caen todos, ganan los cazadores, convertidos incluidos;
+- el informe muestra la cadena de contagio y el último superviviente.
+
+**3. Fox Hunt, variante «Mr. X»** (opción aprobada):
+- el zorro ve a los cazadores;
+- los cazadores reciben la posición exacta del zorro cada pocos minutos.
+- **Lectura concreta**, documentada aquí y no elegida en silencio:
+  - un único zorro (fugitivo) contra el resto (cazadores);
+  - el zorro ve en directo a los cazadores activos;
+  - los cazadores reciben su posición en cada pista, con el intervalo de la sala;
+  - los cazadores se ven entre sí;
+  - si capturan al zorro, ganan los cazadores; si se acaba el tiempo, gana el zorro;
+  - zona, exposición, captura y confirmación, como en Clásico;
+  - mínimo 3 jugadores.
+- **Consecuencia aceptada:** rompe en este modo la norma «los fugitivos nunca ven cazadores» (GAME_MODES_AND_RULES §6.5).
+- **Sardines** queda aplazado.
+
+**4. Pantalla de inicio:**
+- solo se muestran los modos jugables;
+- nada de «Próximamente»;
+- fuentes del sistema, sin fuente web.
+
+**Implementación y revisión (30/10/2026, mismo día):**
+- **Código:**
+  - presencia y periodo de gracia: `engine.ts` (`seen`, `away`, `absence_timeout`, `withdraw`) y `server/hub.ts` (`seen()`, `checkSuspended`);
+  - modos: `engine/src/modes.ts`;
+  - cliente: `net.js`, `app.js` y `game-view.js`.
+- **Cambios de detalle que siguen de la regla aprobada** (revisión independiente):
+  - **Pista y conversión:** la pista va a los cazadores activos en ese instante, así que un convertido en el mismo paso no la recibe.
+  - **Salir tras el final:** quien sale de la sala después del final no figura como «abandonó» (`leftReason: 'after_end'`).
+  - **Atribución en la espera:** una autodeclaración no se atribuye a un convertido en su espera.
+  - **Versión de reglas:** Clásico pasa a `clasico/2026-10-30`, porque el periodo de gracia puede cambiar el resultado.
+- **Fox Hunt:**
+  - con menos de 3 jugadores en la cuenta atrás, se vuelve a la sala;
+  - en modos con cazadores exactos, `swapRoles` da un sorteo nuevo.
+- **Pantalla de inicio:**
+  - modos jugables seleccionables;
+  - reglas del modo elegido;
+  - error junto a su campo;
+  - botones bloqueados mientras conecta;
+  - con invitación, un solo botón principal;
+  - se puede pegar el enlace entero en el código.
+- **Informe del ciclo:** `QA/ciclo-20261030/INFORME_CICLO.md`.

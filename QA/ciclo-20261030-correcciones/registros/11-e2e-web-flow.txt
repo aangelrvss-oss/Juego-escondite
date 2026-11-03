@@ -1,0 +1,29 @@
+servidor http://127.0.0.1:49628
+node:events:486
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: spawn ../QA/ciclo-20261030-correcciones/capturas/web-flow ENOENT
+    at ChildProcess._handle.onexit (node:internal/child_process:286:19)
+    at onErrorNT (node:internal/child_process:484:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21)
+Emitted 'error' event on ChildProcess instance at:
+    at ChildProcess._handle.onexit (node:internal/child_process:292:12)
+    at onErrorNT (node:internal/child_process:484:16)
+    at process.processTicksAndRejections (node:internal/process/task_queues:89:21) {
+  errno: -4058,
+  code: 'ENOENT',
+  syscall: 'spawn ../QA/ciclo-20261030-correcciones/capturas/web-flow',
+  path: '../QA/ciclo-20261030-correcciones/capturas/web-flow',
+  spawnargs: [
+    '--headless=new',
+    '--remote-debugging-port=0',
+    '--user-data-dir=C:\\Users\\aange\\AppData\\Local\\Temp\\outrun-web-flow-e2e-6040',
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--disable-extensions',
+    'about:blank'
+  ]
+}
+
+Node.js v24.12.0

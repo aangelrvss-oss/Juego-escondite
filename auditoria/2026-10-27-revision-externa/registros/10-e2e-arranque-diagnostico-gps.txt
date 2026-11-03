@@ -1,0 +1,5 @@
+ok · app con módulo nativo: arranca, se suscribe y «Comprobar de nuevo» llama a getProviderStatus
+ok · plugin nativo sin registrar: el error se ve en «Incidencias» y los botones siguen respondiendo
+ok · Capacitor no se puede cargar: se explica y los botones siguen respondiendo
+ok · Capacitor no responde: a los 5 s se explica y los botones siguen respondiendo
+Arranque: 4/4 escenarios correctos

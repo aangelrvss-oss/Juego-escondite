@@ -1,0 +1,28 @@
+  ✔ el mapa no existe fuera de la partida
+  ✔ sin mapa.config.json, la partida muestra el radar y explica por qué
+  ✔ con la clave rechazada (403) vuelve el radar con el motivo y la partida sigue
+  ✔ «Reintentar el mapa» carga MapLibre con WebGL en el navegador
+  ✔ se ve al compañero (Beto) y el punto de encuentro
+  ✔ la cazadora (Ana) no aparece en el mapa de un fugitivo
+  ✔ marcador propio con su círculo de precisión
+  ✔ la atribución del proveedor se ve sin plegar y sin tapar los botones
+  ✔ «Mi posición» activo con una lectura válida
+  ✔ la rueda (o el gesto) acerca el mapa
+  ✔ arrastrar con un dedo desplaza el mapa
+  ✔ pellizcar con dos dedos acerca el mapa
+  ✔ tras los gestos, 4 envíos de posiciones y muchos redibujados, el zoom se conserva
+  ✔ el mapa es el mismo (no se ha recreado)
+  ✔ el marcador propio es el mismo elemento
+  ✔ el marcador de Beto se ha movido con sus nuevas posiciones
+  ✔ a 360×740 nada desborda en horizontal y el mapa cabe
+  ✔ los botones del mapa miden al menos 44 px
+  ✔ sin conexión: el mapa lo indica y congela las posiciones
+  ✔ sin conexión: el mapa sigue siendo el mismo
+  ✔ al reconectar desaparece el aviso y el mapa sigue
+  ✔ la cazadora puede reclamar con el GPS del navegador
+  ✔ la captura se confirma desde el navegador y el mapa sigue (sin recrearse)
+  ✔ al terminar la partida el mapa se destruye y se oculta
+  ✔ ninguna petición a Internet fuera de la cartografía simulada
+  ✔ sin errores de JavaScript en la página
+
+26/26 comprobaciones del mapa en Chrome (chrome.exe)

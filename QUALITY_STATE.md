@@ -670,3 +670,81 @@ Ver D-052 y la tabla de trazabilidad de arriba.
 - No se sabe con certeza cuál fue la prueba del fallo único del 26/10: no se guardó su salida. Los dos patrones encontrados lo explican, pero no se puede confirmar.
 - La carrera conocida de `crash.test.mjs` (un guardado periódico entre la entrada de un jugador y la caída) sigue siendo posible. Es de probabilidad muy baja y no se ha observado.
 - Solo se ha probado en Windows 11. En Linux y macOS, el renombrado no falla así.
+
+## Túnel HTTPS real, comprobado desde el ordenador (27/10/2026, con autorización)
+- `cloudflared` 2026.10.5, instalado con winget (hash del instalador verificado por winget). Servidor arrancado con `server/iniciar-servidor.ps1`. Túnel rápido temporal hacia `http://127.0.0.1:8787`.
+- **A través de la dirección pública** (por Internet y Cloudflare, desde el ordenador):
+  - `/health` y la página responden por HTTPS;
+  - dos clientes reales (`net.js`), con el `Origin` del dominio público, abren `wss://…/ws` (18 ms de ida y vuelta), crean la sala y entran;
+  - configuran y empiezan; la cuenta atrás y la huida coinciden en los dos;
+  - cada uno ve solo su rol, y el final da el mismo resultado en los dos;
+  - con otro `Origin`, el WebSocket da **403**; con el propio, **101**.
+- **Cierre:** túnel y servidor detenidos; después, la dirección pública daba **HTTP 530** (el túnel ya no existe).
+- **No demuestra:** nada sobre móviles, datos móviles, GPS real, pantalla encendida, Safari ni Chrome en Android. Los clientes eran de Node en el mismo ordenador.
+
+## Diagnóstico de la prueba física (27/10/2026, noche, sin commit)
+
+- **Qué hay:** registro `DIAG_FILE` en el servidor e informe local (`server/informe-diagnostico.mjs`). Sin dependencias ni servicios externos.
+- **Comprobado** (`server/test/diagnostics.test.mjs`, 4 pruebas) con servidor real y clientes reales por WebSocket; reloj y ubicaciones SIMULADOS. La partida completa, de 4 jugadores, incluye:
+  - fases automáticas;
+  - una reclamación rechazada y otra confirmada;
+  - un corte con reanudación;
+  - el final;
+  - la revancha hasta la nueva cuenta atrás.
+
+  El registro contiene lo necesario para los puntos 1 a 5, 7 y 8 del análisis pedido. No contiene coordenadas, nombres, código de sala, identificadores, secretos ni la IP. También se prueba que, sin `DIAG_FILE`, no se registra nada.
+- **Pruebas de mutación:** dejar pasar el nombre y perder las fases que cambian por tiempo hacen fallar la prueba.
+- **No comprobado:**
+  - el arranque real con el script, porque no se abrió el servidor por indicación;
+  - Ctrl+C con generación automática del informe;
+  - una partida en la calle.
+- **Limitación:** el punto 6 (errores del cliente) y lo que muestra cada pantalla no llegan al servidor. Para eso haría falta un mensaje de diagnóstico desde el móvil, que se descartó para esta prueba por riesgo.
+
+## Mapa real (27/10/2026, noche, rama `mapa-real`, sin commit)
+
+- **Automático (Node):** `mobile/test/map-view.test.mjs`, 14 pruebas con MapLibre y DOM simulados. Cubren:
+  - geometría y configuración (se rechazan la clave de ejemplo y las URL sin https);
+  - que solo se dibuja lo autorizado (un fugitivo nunca ve a los cazadores ni las pistas);
+  - un solo mapa en 50 actualizaciones, marcadores reutilizados y cámara intacta;
+  - sin GPS, sin errores; desactualizado y sin conexión;
+  - nombres como texto;
+  - fallos: clave, estilo, tiempo de espera y WebGL;
+  - limpieza.
+- **Privacidad:** `brand-and-privacy.test.mjs` sigue exigiendo que la interfaz solo hable con el servidor propio, con una excepción cerrada: `map-view.js` solo puede conocer `https://api.maptiler.com` y leer `mapa.config.json`. Mutaciones comprobadas: con una segunda URL externa o con `innerHTML`, falla.
+- **Navegador real:** `mobile/e2e/map.e2e.mjs`, 22/22 en Chrome 360×740 por CDP, sin dependencias. Es una partida real con el servidor en memoria. **SIMULADOS:** el GPS, el reloj del servidor y la cartografía (un estilo local sin calles).
+  - Cualquier otra petición a Internet se bloquea y cuenta como fallo: ninguna.
+  - Mutación comprobada: con el mapa recreado en cada redibujado, falla.
+- **Suites:** motor 144, servidor 68, cliente 109 (antes 95) y demo 62; tipos sin errores. Las E2E de Playwright (`game.e2e.mjs`, `web-flow.e2e.mjs`) **no se han podido ejecutar**: Playwright no está instalado en este equipo.
+- **MapLibre:** 6.14.0, BSD-3-Clause. Se descartó la serie 5 por el aviso crítico GHSA-jrc7-96c5-q579. `npm audit` solo marca `uuid` (moderado, dentro de la herramienta de Capacitor, que no se distribuye).
+- **Sin comprobar:** cartografía real de MapTiler (sin clave), un móvil físico, gestos táctiles reales, batería y la app Android.
+
+## Validación del mapa y partida grabada (27/10/2026, noche, rama `mapa-real`, sin commit)
+
+- **Estado final:**
+  - motor 144, servidor 68, cliente 109 y demo 62; tipos sin errores;
+  - `web-flow.e2e` 41/41 (Chrome por CDP: **nunca necesitó Playwright**, el informe anterior se equivocaba);
+  - `game.e2e` 8/8 y 0 errores de página (Playwright 1.64.0, ahora dependencia de desarrollo de `mobile/`);
+  - `map.e2e` 26/26 y `layout.e2e` 6/6 (nueva).
+- **Corregido:**
+  - atribución de MapTiler plegada (debe estar siempre visible);
+  - 404 de `mapa.config.json` sin configurar (hacía fallar `game.e2e`);
+  - **desbordamiento horizontal de la sala de espera a 360 px, que ya existía** (35 px; 128 px con nombres largos), solo visible con la emulación móvil de Playwright: ni `web-flow` ni `map.e2e` lo detectaban;
+  - «PERSECUCIÓN» fuera de su recuadro en el Mission Report.
+  - Mutaciones comprobadas: sin las correcciones, `layout.e2e` falla.
+- **Abierto:** GPS del navegador sin renovarse tras corte y reconexión simulados en 2 de 18 ejecuciones de `map.e2e`. Causa sin confirmar (entorno o cliente); prioridad en la prueba con móviles.
+- **Grabación:** `mobile/e2e/gameplay-capture.mjs`, una partida simulada de 4 jugadores vista por la cazadora, con un mapa de calles **sintéticas**. Auditoría de 3:05 y resumen de 0:44, verificados (decodificados enteros y reproducidos en Chromium).
+- **Cartografía real: sin comprobar** (no hay clave).
+- **Móviles: sin probar.**
+- Evidencias: `C:\Users\aange\Downloads\outrun-evidencias-mapa-20261027\`.
+
+## Preparación de la prueba física (28/10/2026, madrugada, rama `mapa-real`, sin commit)
+
+- **Paquete completo:** `QA/` (`INFORME_PREPARACION_PRUEBA.md`, `RESULTADOS_PRUEBAS.md`, `REGISTRO_TRABAJO.md`, `ARRANQUE_PRUEBA.md`, `CHECKLIST_PRUEBA_FISICA.md`, `DECISIONES_PENDIENTES.md`, `capturas/`, `registros/`).
+- **Estado final:** motor 145, servidor 75 (+7 `capture-flow`), cliente 111 (+2 GPS) y demo 62; `web-flow` 41, `game` 8/8, `map` 29 (4 de 4), `layout` 6 y `boot` 4; tipos sin errores.
+- **Defectos reales corregidos:**
+  - el servidor no enviaba la lista vacía de posiciones (un capturado seguía dibujado);
+  - el refresco del GPS web podía bloquearse para siempre si el navegador no respondía. Ahora tiene un límite de peticiones colgadas y no admite lecturas más viejas que la última.
+  - Las dos pruebas fallaban antes de corregir.
+- **Interfaz:** acción del rol fija abajo, avisos que no tapan el reloj, leyenda del mapa, atribución arriba y nombres de la sala sin partir.
+- Una revisión independiente encontró 6 puntos menores, ya corregidos.
+- **Sin verificar:** cartografía real (no hay clave) y nada en teléfonos.

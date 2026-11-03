@@ -1,0 +1,16 @@
+﻿
+{
+ "mapaReal": true,
+ "radar": false,
+ "atribucion": "© MapTiler © OpenStreetMap contributors",
+ "leyenda": "TúTu equipoEncuentro",
+ "terminada": true,
+ "peticionesMapTiler": {
+  "200": 11
+ },
+ "erroresDeConsola": [
+  "Failed to load resource: the server responded with a status of 404 (Not Found)"
+ ]
+}
+
+

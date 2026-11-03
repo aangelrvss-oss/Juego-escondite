@@ -18,7 +18,7 @@ describe('tiempo autoritativo (AC-C2, AC-C3, T09)', () => {
     assert.equal(g.state.phase, 'FINISHED');
   });
 
-  it('un tick tardío procesa todos los plazos vencidos en orden cronológico', () => {
+  it('un tick tardío procesa todos los plazos vencidos en orden cronológico (también el periodo de gracia, D-057)', () => {
     const g = new Harness();
     g.join('r1', 'runner');
     g.ok('h', { type: 'set_team_pref', pref: 'hunter' });
@@ -31,8 +31,12 @@ describe('tiempo autoritativo (AC-C2, AC-C3, T09)', () => {
     assert.deepEqual(times, [...times].sort((a, b) => a - b));
     assert.deepEqual(
       step.events.map((e) => e.type).filter((t) => t !== 'ping_sent'),
-      ['role_revealed', 'role_revealed', 'head_start_started', 'hunt_started', 'ping', 'ping', 'ping', 'ping', 'game_finished'],
+      // Nadie da señales en 15 min: a los 30 s ambos quedan «sin conexión» y a los 5 min los dos quedan
+      // fuera de la partida a la vez (V-25: juntos, sin depender del orden de los ids; no queda nadie a
+      // quien pasar el anfitrión): sin nadie en juego, termina sin ganador.
+      ['role_revealed', 'role_revealed', 'head_start_started', 'player_presence', 'player_presence', 'hunt_started', 'ping', 'player_left', 'player_left', 'game_finished'],
     );
+    assert.deepEqual(step.state.outcome, { winner: null, cause: 'runners_abandoned' });
   });
 
   it('un comando que llega tras el final se evalúa después de cerrar la partida', () => {

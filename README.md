@@ -5,7 +5,7 @@ Proyecto de juego social de escondite y persecución en la vida real con geoloca
 **Estado:**
 - **H2:** partida multijugador con servidor autoritativo (`server/`) y cliente (`mobile/`, app Android y web).
   - Probada con 5 clientes reales y 5 navegadores en un ordenador; **todavía no se ha jugado con móviles reales**.
-  - La prueba con dos Android está preparada en [`mobile/PRUEBA_PARTIDA_ANDROID.md`](./mobile/PRUEBA_PARTIDA_ANDROID.md), y la de dos móviles en el navegador en [`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`](./mobile/PRUEBA_PARTIDA_NAVEGADOR.md). Ninguna se ha hecho.
+  - La prueba con dos Android está preparada en [`mobile/PRUEBA_PARTIDA_ANDROID.md`](./mobile/PRUEBA_PARTIDA_ANDROID.md), y la de dos móviles en el navegador en [`mobile/PRUEBA_REAL_EN_CALLE.md`](./mobile/PRUEBA_REAL_EN_CALLE.md). Ninguna se ha hecho.
 - **H1:** el diagnóstico GPS superó una prueba física preliminar en un Xiaomi 14T.
 - **S0:** completada en simulación.
 - Hay una **demo visual simulada**, sin GPS ni red.
@@ -67,6 +67,15 @@ npm run test:server          # pruebas del servidor con clientes reales por WebS
 ```
 
 Guía completa (túnel HTTPS, APK, crear y compartir sala, permisos, registros y limitaciones): [server/README.md](./server/README.md).
+
+## Simulador local de 10 jugadores (herramienta de desarrollo)
+
+```
+npm run sim:panel            # servidor de simulación propio; abre http://localhost:8790/sim/
+npm run test:sim-panel
+```
+
+Partida de 10 participantes con el servidor, el motor y la red del cliente reales, y la app real para el participante que juegues tú. El GPS, los bots y el reloj son simulados. Ver [sim/panel/README.md](./sim/panel/README.md).
 
 ## App móvil (H1 y H2)
 

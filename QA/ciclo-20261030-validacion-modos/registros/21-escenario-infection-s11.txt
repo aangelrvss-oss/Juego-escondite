@@ -1,0 +1,9 @@
+[partida 1] infection n=10 cazadores=2 (esperado 2) rulesVersion=infeccion/2026-10-30
+[partida 1] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=8
+[partida 1] captura inválida → Reclama la captura de AVATAR_01: rechazada por el motor (target_not_active); game_finished recibido por 10/10
+[revancha] fase=LOBBY gameNo=2 restos de conversión en la sala=8 reclamaciones=0
+[revancha] infection n=10 cazadores=2 (esperado 2) rulesVersion=infeccion/2026-10-30
+[revancha] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=8
+[revancha] captura inválida → Reclama la captura de AVATAR_09: rechazada por el motor (not_close_enough); game_finished recibido por 10/10
+posiciones: 3020 mensajes, 15408 elementos; pistas recibidas: 54
+RESULTADO: sin problemas

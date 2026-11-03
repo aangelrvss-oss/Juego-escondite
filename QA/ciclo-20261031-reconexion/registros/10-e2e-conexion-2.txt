@@ -1,0 +1,12 @@
+ok · al reclamar, el cazador ve «Esperando a que Beto confirme» (1)
+ok · tras recargar, el cazador sigue viendo su reclamación pendiente (2)
+ok · captura rechazada: los dos lo ven, el tercero no; el fugitivo sigue libre y el cazador puede volver a reclamar (3)
+ok · la pestaña anterior explica que la partida está abierta en otra y no muestra el mapa ni manda al inicio (4)
+ok · «Jugar en esta pestaña» recupera la partida (rol y estado intactos) y para la otra (5)
+ok · a los 30 s sin señales, los demás ven «Sin conexión: Caro» (sin equipo ni posición) (6)
+ok · a los 5 min queda fuera y todos lo saben; la partida sigue con Beto (7)
+ok · quien vuelve tarde ve que está fuera, por qué, y que verá el resultado (8)
+ok · el Mission Report es igual para los tres y dice «Sin conexión» para Caro (9)
+ok · sin errores en la consola de ninguna página (10)
+
+10/10 comprobaciones correctas

@@ -1,0 +1,9 @@
+ok · el anfitrión elige la Caza del zorro; el rol se llama «Zorro»; los demás ven el modo y sus reglas (1)
+ok · la tarjeta de rol dice ZORRO y explica que verá a los cazadores; la del cazador nombra al zorro (2)
+ok · durante la huida, el cazador lee «El zorro es Zoe» bajo el reloj (3)
+ok · el zorro ve a los dos cazadores en directo; los cazadores no lo ven (4)
+ok · la pista da a los cazadores la posición del zorro; el zorro ve que se ha enviado (5)
+ok · atrapar al zorro termina la partida: el mismo Mission Report para los tres (6)
+ok · sin errores en la consola de ninguna página (7)
+
+7/7 comprobaciones correctas

@@ -1,2 +1,5 @@
 # Generado por «npm run vendor» desde node_modules/@capacitor/core (tercero, MIT).
 www/vendor/
+
+# Configuración local del mapa (lleva la clave del proveedor): nunca al repositorio. Ver MAPA.md.
+www/mapa.config.json

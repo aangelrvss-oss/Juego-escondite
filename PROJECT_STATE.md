@@ -214,18 +214,32 @@ Pruebas al cerrar: motor 144, servidor 54, cliente 95, demo 62 y E2E en Chrome 4
 
 - **Fallo intermitente resuelto:** era un defecto real del servidor en Windows (el guardado del estado fallaba si otro programa leía el archivo y se podía perder al apagar) más una prueba frágil. Detalle y limitaciones en `QUALITY_STATE.md`.
 - **Auditoría de las decisiones autónomas (D-054):** ninguna contradice una decisión aprobada. Se recomienda mantenerlas todas; tres necesitan validarse con personas (`docs/product/DECISIONES_PENDIENTES.md`).
-- **Requisitos para la primera partida con dos móviles en el navegador** (`mobile/PRUEBA_PARTIDA_NAVEGADOR.md`):
+- **Requisitos para la primera partida con dos móviles en el navegador** (`mobile/PRUEBA_REAL_EN_CALLE.md`):
   1. Tu autorización para instalar `cloudflared` y abrir un túnel HTTPS durante la prueba. Expone el servidor a Internet mientras esté abierto.
   2. Dos móviles con un navegador actual (en iPhone, iOS 16.4 o superior para mantener la pantalla encendida) y datos móviles.
   3. Este ordenador encendido durante toda la prueba. El servidor está listo y las suites pasan.
   4. Dos personas (cuatro o más para empezar a observar la experiencia, con `docs/product/PROTOCOLO_SESIONES_JUGADORES.md`, que es un borrador).
 - **Requisitos para la prueba con la app Android** (`mobile/PRUEBA_PARTIDA_ANDROID.md`): lo mismo y, además, una APK. **No hay ninguna en este ordenador.** Hay dos opciones: recuperar la `0.3.0` (interfaz anterior al 26/10, compatible con el servidor según el código) o autorizar JDK 21 y el SDK de Android para compilar una nueva.
 
+## Preparación de la prueba real en la calle (27/10/2026, tarde)
+
+- **Procedimiento único:** `mobile/PRUEBA_REAL_EN_CALLE.md`, en 15 apartados. Sustituye al de navegador; el de Android se mantiene para la app.
+- **Arranque:** `server/iniciar-servidor.ps1`. Comprobado en este ordenador: comprobaciones, puerto ocupado sin tocar el programa ajeno, `HOST` mal puesto, arranque solo en 127.0.0.1, `/health` y la página.
+- **Arquitectura comprobada:** el cliente web usa su propio origen (`wss://<host-del-túnel>/ws`), sin direcciones codificadas. El servidor acepta el WebSocket y `/api/loc` cuando `Origin` y `Host` coinciden, que es lo que llega detrás de un túnel. Se comprueba con cabeceras simuladas en `server/test/tunnel.test.mjs`. **Sin túnel real.**
+- **Bloqueo único:** autorizar la instalación de `cloudflared` y el túnel temporal. Nada más impide la prueba.
+- **Diagnóstico de la prueba (27/10/2026, noche, sin commit):**
+  - Variable `DIAG_FILE`, que el script de arranque activa en `%USERPROFILE%\OutrunDiagnostico\`.
+  - Registra conexiones con su motivo de cierre, sesiones, fases (también las automáticas), comandos, eventos del juego, un resumen del GPS de cada jugador cada 30 s y los errores.
+  - Usa alias J1/S1, sin coordenadas, nombres, códigos ni IP.
+  - Al parar el servidor, `server/informe-diagnostico.mjs` genera el informe `.md`.
+  - **No recoge** nada de lo que solo pasa en el móvil.
+  - Pruebas: `server/test/diagnostics.test.mjs`.
+
 ## Siguiente acción concreta
 
 0. ~~Configurar la identidad de Git y hacer los commits.~~ Hecho: hay commits locales de todo el trabajo, sin push. Decidir si se publica la rama `recuperacion-h2` en GitHub (no se ha hecho).
 1. **Decidir D-043 a D-047** (radio, PWA, INFECTION, número de jugadores, pistas y espectadores), el procedimiento de D-035 (disputas) y si hace falta PAUSED. Son los bloqueos de producto que quedan para HUNT. Alternativas y recomendaciones: `docs/product/DECISIONES_PENDIENTES.md`.
-1b. **Prueba con dos móviles en el navegador** (sin APK, también con iPhone): `mobile/PRUEBA_PARTIDA_NAVEGADOR.md`. Necesita tu autorización para el túnel HTTPS.
+1b. **Prueba con dos móviles en el navegador** (sin APK, también con iPhone): `mobile/PRUEBA_REAL_EN_CALLE.md`. Necesita tu autorización para el túnel HTTPS.
 2. **Prueba con dos móviles:** seguir `mobile/PRUEBA_PARTIDA_ANDROID.md`.
    - Servidor y túnel HTTPS en tu ordenador.
    - APK `0.3.0-h2-bloqueo` en los dos Android.
@@ -242,3 +256,32 @@ Acciones anteriores:
 - ~~Desbloquear la compilación.~~ Hecho (sesión 9).
 - ~~Instalar el APK de la sesión 10 y hacer la "Prueba 0".~~ Sustituido por las pruebas de H1 (`mobile/PRUEBAS_XIAOMI_14T.md`), que usan el mismo núcleo y el mismo CSV.
 - Según el resultado (criterios de §6 del protocolo de S1): aprobar V2, o decidir V1 o un cambio de técnica.
+
+## Mapa real en la partida (27/10/2026, noche, rama `mapa-real`, sin commit)
+
+- **Qué:** en la huida y la persecución, el radar SVG se sustituye por un mapa MapLibre GL JS 6.14.0 con la cartografía de un proveedor (MapTiler), configurado en `mobile/www/mapa.config.json`, que está fuera de Git.
+  - Sin configuración, red o WebGL, vuelve el radar con el motivo y la opción «Reintentar el mapa».
+  - Las reglas, la visibilidad, el protocolo, el servidor y el motor **no cambian**.
+- **Arquitectura:** `index.html` tiene tres zonas: `#app`, `#map-host` (persistente) y `#app-after`.
+  - El redibujado completo (4 veces por segundo) no toca el mapa: se crea una vez por partida, solo se actualizan capas y marcadores, y se destruye al terminar.
+  - Módulo: `mobile/www/js/map-view.js`; modelo puro `mapModel` en `game-view.js`.
+- **Comprobado:**
+  - 14 pruebas en Node (MapLibre simulado);
+  - 22 comprobaciones en **Chrome real** con una partida real y cartografía **simulada** (`mobile/e2e/map.e2e.mjs`): no se recrea, conserva el zoom, solo lo autorizado, sin conexión, captura, limpieza y 360×740.
+- **No comprobado:** calles reales (falta la clave), gestos táctiles en un móvil, rendimiento y batería, y la app Android. Detalle: `mobile/MAPA.md`.
+- **Decisión pendiente D-055:** proveedor de cartografía, coste y condiciones.
+
+## Validación del mapa y vídeo de partida simulada (27/10/2026, noche, sin commit)
+
+- Todas las pruebas en verde, incluidas las E2E con Playwright, que ahora es dependencia de desarrollo de `mobile/`.
+- Tres defectos corregidos: la atribución de MapTiler, el 404 sin configuración y el desbordamiento a 360 px, que ya existía.
+- Un problema abierto: el GPS del navegador tras una reconexión, intermitente.
+- Hay vídeo de auditoría y resumen de una partida simulada, con calles sintéticas rotuladas como simulación.
+- **Siguiente:** configurar la clave de MapTiler y probar con dos móviles (lista en las evidencias: `REPRODUCIR_Y_PENDIENTES.md`).
+- Propuesta pendiente de decisión: la acción de captura siempre a mano durante la persecución (V-01, P1).
+
+## Preparación de la prueba física (28/10/2026, sin commit)
+
+- **LISTO CON LIMITACIONES · NO VERIFICADO FÍSICAMENTE.** Paquete en `QA/`: arranque, checklist de 25 casos y decisiones pendientes.
+- Corregidos dos defectos P1 reales (posiciones que no se borraban; refresco del GPS bloqueado) y la acción de captura bajo el mapa.
+- **Siguiente:** clave de MapTiler y prueba con dos teléfonos (`QA/CHECKLIST_PRUEBA_FISICA.md`).

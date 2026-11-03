@@ -54,7 +54,7 @@ Los umbrales marcados con [H] se recalibrarán tras la prueba técnica. **Ningú
 | AC-C5 | Los eventos llevan un `seq` que crece de forma estricta. El cliente ignora los `seq` ya aplicados | U, I |
 | AC-C6 | El resultado final lo calcula solo el servidor según la tabla de `GAME_STATE_MACHINE.md` §4. Hay una prueba por cada fila | U |
 | AC-C7 | **Dado** que el anfitrión lleva desconectado más de 120 s, **entonces** sus privilegios pasan al jugador conectado más antiguo y todos reciben `host_changed` | U, I |
-| AC-C8 | **Dado** que se desconectan todos los clientes, **entonces** la partida sigue en el servidor y termina por tiempo a su hora | I |
+| AC-C8 | **Dado** que se desconectan todos los clientes, **entonces** la partida sigue en el servidor y termina por tiempo a su hora. **Cambiado por D-057 (30/10/2026):** solo si vuelven antes de 5 min; si no, quedan fuera y la partida termina sin ganador | I |
 
 ## D. Ubicación y visibilidad
 

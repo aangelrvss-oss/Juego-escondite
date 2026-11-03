@@ -1,0 +1,9 @@
+[partida 1] classic n=10 cazadores=3 (esperado 3) rulesVersion=clasico/2026-10-30
+[partida 1] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=7
+[partida 1] captura inválida → Reclama la captura de AVATAR_09: rechazada por el motor (not_close_enough); game_finished recibido por 10/10
+[revancha] fase=LOBBY gameNo=2 restos de conversión en la sala=0 reclamaciones=0
+[revancha] classic n=10 cazadores=3 (esperado 3) rulesVersion=clasico/2026-10-30
+[revancha] fase=FINISHED outcome={"winner":"hunter","cause":"all_captured"} capturas=7
+[revancha] captura inválida → Reclama la captura de AVATAR_10: rechazada por el motor (not_close_enough); game_finished recibido por 10/10
+posiciones: 3180 mensajes, 12510 elementos; pistas recibidas: 30
+RESULTADO: sin problemas

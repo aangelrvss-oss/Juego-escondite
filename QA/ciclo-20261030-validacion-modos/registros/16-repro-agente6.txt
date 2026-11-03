@@ -1,0 +1,44 @@
+=== a6-01-fugitivo-sin-gps.ts
+reclamación: {"ok":false,"error":"target_location_stale"}
+r1 away: false expuesto: false status: active
+pista: disponibilidad de r1 = UNAVAILABLE
+resultado: {"winner":"runner","cause":"time_up"} fase: FINISHED
+equipo de r1 visto por h al final: runner
+=== a6-02-oraculo-de-proximidad.ts
+0 m -> not_close_enough
+40 m -> not_close_enough
+80 m -> not_close_enough
+120 m -> not_close_enough
+160 m -> not_close_enough
+200 m -> RECLAMACIÓN CREADA (está a <= 21 m)
+avisos tag_claimed recibidos por r1: 1 (solo el del acierto)
+sondeo a r2: {"ok":false,"error":"target_location_stale"}
+=== a6-03-abandono-bloquea-revancha.ts
+r2 tras abandonar: left leftRoom = false
+r2 en la revancha: invited
+volver a entrar: {"ok":false,"error":"already_joined"}
+tras expulsar al fantasma: {"ok":false,"error":"not_found"}
+=== a6-04-fantasma-en-informe.ts
+fase: LOBBY | a: left hunter jugó la partida 1
+jugadores del informe (partida 1): h:Ana:runner:active:null | a:Alba:hunter:left:left | b:Bea:runner:active:null | a2:Alba:hunter:active:null
+fantasma en la revancha: invited
+=== a6-05-vida-maxima-borra-resultado.ts
+fase: CANCELLED | closeReason: expired | últimos eventos: ping, ping_sent, game_finished, room_closed
+outcome conservado: {"winner":"runner","cause":"time_up"}
+=== a6-06-fallos-ajenos-bloquean-ubicacion.ts
+antes: gone
+después: rate_limited
+59 s después: rate_limited
+=== a6-07-asignaciones-invisibles-tras-traspaso.ts
+nuevo anfitrión: a
+lo que ve el nuevo anfitrión: a=oculto(Sorteo en la UI) b=oculto(Sorteo en la UI) c=oculto(Sorteo en la UI)
+empezar: {"ok":false,"error":"teams_unbalanced","detail":"fox_hunt"}
+=== a6-08-infeccion-cazadores-no-exactos.ts
+fase: ACTIVE | jugadores: 7 | cazadores: 2 | la regla daría: 1
+=== a6-09-reenvio-de-pistas-al-expulsado.ts
+Beto: left timeout | pistas reenviadas: 1 | con coordenadas: true
+=== a6-10-menores.ts
+A6-10 puntos de fugitivos pintados como compañeros cazadores: [ 'r2', 'r3' ]
+A6-11 fase tras 3 h 20 min sin que nadie haga nada en la sala: LOBBY
+A6-12 lo que ve r1 en plena persecución: h:¿? h2:¿? r1:runner r2:runner => los ¿? son cazadores
+A6-13 marcas de r1 tras 4 reclamaciones ignoradas: [] rechazos: 0

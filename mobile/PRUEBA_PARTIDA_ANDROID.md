@@ -12,7 +12,7 @@
 | Túnel HTTPS (`cloudflared`) | No instalado. **No autorizado** | Tu autorización para instalarlo y abrir el túnel durante la prueba. Expone el servidor a Internet mientras esté abierto |
 | Servidor | Listo: Node 24.12 en este ordenador. Las suites pasan (`QUALITY_STATE.md`) | — |
 | Dos Android | Xiaomi 14T y otro Android 12 o superior | Que estén disponibles |
-| Puerta de la Fase 2 del Plan | **Esta prueba no la cubre:** acaba con «Terminar partida» (sin ganador) | Para la puerta («dos partidas consecutivas completas»), usa `PRUEBA_PARTIDA_NAVEGADOR.md` o juega aquí dos partidas hasta su final normal |
+| Puerta de la Fase 2 del Plan | **Esta prueba no la cubre:** acaba con «Terminar partida» (sin ganador) | Para la puerta («dos partidas consecutivas completas»), usa `PRUEBA_REAL_EN_CALLE.md` o juega aquí dos partidas hasta su final normal |
 
 ## Qué se quiere saber
 
@@ -65,12 +65,12 @@ TRUST_PROXY=1 LOG=1 node server/main.ts
 - `TRUST_PROXY=1` hace que los límites por dirección usen la IP real de cada móvil, en vez de la del túnel, que es la misma para todos.
 - **No uses `HOST=0.0.0.0`:** el servidor solo debe escuchar en tu ordenador; el túnel se conecta a él.
 
-En Windows (PowerShell): `$env:TRUST_PROXY="1"; $env:LOG="1"; node server/main.ts`.
+En Windows (PowerShell): `$env:TRUST_PROXY="1"; $env:LOG="1"; node server/main.ts`. O, con comprobaciones previas, `.\server\iniciar-servidor.ps1 -Registro` (`PRUEBA_REAL_EN_CALLE.md` §4).
 
 ### 2. Abrir el túnel (terminal 2) y el registro de evidencias (terminal 3)
 
 ```bash
-cloudflared tunnel --url http://localhost:8787     # muestra https://<algo>.trycloudflare.com
+cloudflared tunnel --url http://127.0.0.1:8787     # muestra https://<algo>.trycloudflare.com
 node server/health-watch.mjs                        # cada 10 s: conexiones y lecturas por canal
 ```
 

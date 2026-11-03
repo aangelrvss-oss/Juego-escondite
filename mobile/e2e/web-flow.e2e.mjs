@@ -32,8 +32,13 @@ const check = (name, cond, detail = '') => {
 const clock = { t: Date.now() };
 const server = await startServer({ port: 0, host: '127.0.0.1', hub: { now: () => clock.t } });
 const advance = async (ms) => {
-  clock.t += ms;
-  server.pump();
+  // Como en la realidad (ping cada 10 s), quien tiene la página abierta da señales de vida durante el
+  // salto: el periodo de gracia (D-057) solo afecta a quien está desconectado de verdad.
+  for (const end = clock.t + ms; clock.t < end; ) {
+    clock.t = Math.min(end, clock.t + 20_000);
+    server.pump();
+    server.hub.keepAliveConnected();
+  }
   await sleep(300);
 };
 console.log('servidor', server.url);
@@ -77,6 +82,10 @@ try {
       if (msg.id && waiting.has(msg.id)) {
         waiting.get(msg.id)(msg);
         waiting.delete(msg.id);
+      } else if (msg.method === 'Fetch.requestPaused') {
+        // Prueba del flujo, no del mapa: nunca usa la mapa.config.json local (puede llevar una clave real).
+        const body = Buffer.from(JSON.stringify({ proveedor: 'ninguno' })).toString('base64');
+        send('Fetch.fulfillRequest', { requestId: msg.params.requestId, responseCode: 200, responseHeaders: [{ name: 'Content-Type', value: 'application/json' }], body });
       } else if (msg.method === 'Runtime.exceptionThrown') errors.push(msg.params.exceptionDetails.exception?.description ?? 'error');
       else if (msg.method === 'Runtime.consoleAPICalled' && msg.params.type === 'error') errors.push(JSON.stringify(msg.params.args.map((a) => a.value)));
     });
@@ -86,6 +95,7 @@ try {
         ws.send(JSON.stringify({ id, method, params }));
       });
     await send('Runtime.enable');
+    await send('Fetch.enable', { patterns: [{ urlPattern: '*mapa.config.json*' }] });
     // Pantalla de móvil pequeña (360×740, como la demo): el móvil es el objetivo prioritario (Plan §7.1).
     await send('Emulation.setDeviceMetricsOverride', { width: 360, height: 740, deviceScaleFactor: 2, mobile: true });
     await send('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
@@ -357,6 +367,16 @@ try {
   for (const p of [guest, late]) {
     await p.waitFor(`!!document.querySelector('[data-act="join_rematch"]')`, 'invitación a la revancha');
     await p.evaluate(click('[data-act="join_rematch"]'));
+  }
+  // La revancha es un sorteo nuevo (decisión del 29/10/2026): para que el abandono de Cris no acabe la
+  // partida (si le tocara ser el único cazador), la anfitriona repite a mano los roles de la primera.
+  await host.waitFor(`document.querySelectorAll('[data-assign]').length === 3 && ![...document.querySelectorAll('.pstate')].some((e) => e.textContent === 'Invitado')`, 'todos en la sala de la revancha');
+  check('la revancha empieza con todos en «Sorteo»', await host.evaluate(`[...document.querySelectorAll('[data-assign]')].every((s) => s.value === 'random')`));
+  for (const [name, pref] of [['Ana', 'hunter'], ['Beto', 'runner'], ['Cris', 'hunter']]) {
+    await host.evaluate(assign(name, pref));
+    const saved = () => Object.values(server.hub.roomStateByCode(code2)?.players ?? {}).find((p) => p.name === name && p.status === 'lobby')?.teamPref === pref;
+    for (let i = 0; i < 50 && !saved(); i++) await sleep(100);
+    if (!saved()) throw new Error(`timeout: rol de ${name} en la revancha`);
   }
   for (const p of [host, guest, late]) {
     await p.waitFor(`!!document.querySelector('[data-act="ready"]') && document.querySelector('[data-act="ready"]').textContent.includes('Estoy listo')`, 'sala de la revancha');

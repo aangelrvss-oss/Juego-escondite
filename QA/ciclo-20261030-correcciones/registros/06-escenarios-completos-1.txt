@@ -1,0 +1,16 @@
+classic: {"g1":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":7,"invalid":{"hunter":"AVATAR_07","runner":"AVATAR_03","distanceM":196,"result":{"ok":false,"error":"not_close_enough"}}},"g2":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":7,"invalid":{"hunter":"AVATAR_01","runner":"AVATAR_06","distanceM":193,"result":{"ok":false,"error":"not_close_enough"}}},"positionsMsgs":2920,"positionsItems":11580,"pings":30}
+▶ Escenarios completos con 10 participantes: partida + revancha (C20)
+  ✔ classic (semilla 7): lo que recibe cada cliente cumple las reglas del modo (29413.8911ms)
+infection: {"g1":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":8,"invalid":{"hunter":"AVATAR_06","runner":"AVATAR_09","distanceM":202,"result":{"ok":false,"error":"not_close_enough"}}},"g2":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":8,"invalid":{"hunter":"AVATAR_02","runner":"AVATAR_10","distanceM":197,"result":{"ok":false,"error":"not_close_enough"}}},"positionsMsgs":3150,"positionsItems":16240,"pings":67}
+  ✔ infection (semilla 7): lo que recibe cada cliente cumple las reglas del modo (31537.361ms)
+fox_hunt: {"g1":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":1,"invalid":{"hunter":"AVATAR_01","runner":"AVATAR_02","distanceM":150,"result":{"ok":false,"error":"not_close_enough"}}},"g2":{"outcome":{"winner":"hunter","cause":"all_captured"},"captures":1,"invalid":{"hunter":"AVATAR_01","runner":"AVATAR_02","distanceM":156,"result":{"ok":false,"error":"not_close_enough"}}},"positionsMsgs":1280,"positionsItems":10368,"pings":18}
+  ✔ fox_hunt (semilla 7): lo que recibe cada cliente cumple las reglas del modo (13781.7688ms)
+✔ Escenarios completos con 10 participantes: partida + revancha (C20) (74734.2442ms)
+ℹ tests 3
+ℹ suites 1
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 74982.8245

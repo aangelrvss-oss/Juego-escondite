@@ -1,0 +1,48 @@
+SIM-INF-01 resultado={"winner":"hunter","cause":"all_captured"} capturas=8 fuera_de_cadena=AVATAR_02,AVATAR_06,AVATAR_04,AVATAR_10,AVATAR_09
+▶ SIM-INF · 10 participantes
+  ✔ SIM-INF-01 partida completa con bots: 2 cazadores iniciales, toda captura convierte, ningún convertido captura en su espera, final coherente (16081.9707ms)
+SIM-INF-02 AVATAR_08 infectó a AVATAR_03
+  ✔ SIM-INF-02 conversión guiada: rol, espera, visibilidad filtrada por el servidor y reclamación en la espera rechazada (3869.5292ms)
+  ✔ SIM-INF-03 «Me han pillado» atribuido a un convertido en su espera → sin autor; pasado 1 min → con autor (4926.5899ms)
+  ✖ SIM-INF-04 dos cazadores reclaman al mismo fugitivo a la vez: una reclamación válida y un already_pending; una sola conversión (2657.3727ms)
+  ✔ SIM-INF-05 convertido desconectado: sin conexión a 30 s, sigue cazador, vuelve antes de 5 min; otro convertido queda fuera a los 5 min (12211.8571ms)
+  ✔ SIM-INF-06 último fugitivo sin conexión 5 min → sin ganador (runners_abandoned) (8358.0574ms)
+  ✔ SIM-INF-07 todos se declaran infectados → ganan los cazadores («Todos infectados»), con la cadena (2528.9346ms)
+  ✔ SIM-INF-08 los dos cazadores iniciales se van; queda un convertido en su espera → la partida sigue; si se va él → hunters_abandoned (15487.7727ms)
+SIM-INF-09 restos de conversión en LOBBY: 8
+  ✔ SIM-INF-09 revancha tras Infección: estado de conversión y espera; sorteo nuevo con 2 cazadores (2490.3427ms)
+  ✔ SIM-INF-10 tiempo agotado con supervivientes → ganan los supervivientes (20469.3487ms)
+✖ SIM-INF · 10 participantes (89084.2222ms)
+ℹ tests 10
+ℹ suites 1
+ℹ pass 9
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 89454.5905
+
+✖ failing tests:
+
+test at ..\..\AppData\Local\Temp\claude\C--Users-aange\e108e3b2-532d-48d6-89f2-6b46f764d244\scratchpad\agente3\sim-infeccion-escenarios.test.mjs:110:3
+✖ SIM-INF-04 dos cazadores reclaman al mismo fugitivo a la vez: una reclamación válida y un already_pending; una sola conversión (2657.3727ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    [
+      false,
+  +   false
+  -   true
+    ]
+  
+      at TestContext.<anonymous> (file:///C:/Users/aange/AppData/Local/Temp/claude/C--Users-aange/e108e3b2-532d-48d6-89f2-6b46f764d244/scratchpad/agente3/sim-infeccion-escenarios.test.mjs:124:12)
+      at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+      at async Test.run (node:internal/test_runner/test:1113:7)
+      at async Suite.processPendingSubtests (node:internal/test_runner/test:788:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: [ false, false ],
+    expected: [ false, true ],
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

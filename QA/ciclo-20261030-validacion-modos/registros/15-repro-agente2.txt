@@ -1,0 +1,24 @@
+=== a2-1-join-fantasma.test.mjs
+✔ A2-1: welcome perdido en el join → jugador fantasma y dispositivo bloqueado (187.7005ms)
+ℹ pass 1
+ℹ fail 0
+=== a2-2-pendientes-tras-sesion-perdida.test.mjs
+✔ A2-2: un comando de la sala anterior se aplica en la sala nueva (843.9213ms)
+ℹ pass 1
+ℹ fail 0
+=== a2-3-presencia-adelantada.test.mjs
+✔ A2-3: lastSeenAt se queda en la primera señal de una ráfaga de 5 s (212.3072ms)
+ℹ pass 1
+ℹ fail 0
+=== a2-4-cmd-nulo.test.mjs
+2026-10-30T18:56:52.162Z error interno al procesar un mensaje: TypeError Cannot read properties of null (reading 'type')
+✔ A2-4: cmd null con sesión cierra la conexión con 1011 en lugar de responder invalid_command (114.2211ms)
+ℹ pass 1
+ℹ fail 0
+=== a2-5-suspension-corta.test.mjs
+✖ A2-5: 45 s de suspensión del servidor → todos «sin conexión» (no se perdona) (4184.3953ms)
+ℹ pass 0
+ℹ fail 1
+✖ failing tests:
+✖ A2-5: 45 s de suspensión del servidor → todos «sin conexión» (no se perdona) (4184.3953ms)
+  Error: timeout esperando: FALLO: todos «sin conexión» de golpe

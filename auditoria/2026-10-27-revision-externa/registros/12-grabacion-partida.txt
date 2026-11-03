@@ -1,0 +1,27 @@
+   2.7 s · Pantalla inicial
+   5.9 s · Sala creada: configuración del anfitrión
+  10.5 s · Configuración: zona de 400 m, 10 min, pistas cada 2 min
+  18.7 s · Sala de espera con cuatro jugadores
+  21.4 s · Todos listos: el anfitrión puede empezar
+  23.0 s · Cuenta atrás
+  28.0 s · Rol revelado: CAZADOR
+  33.2 s · Huida: mapa con la zona; los fugitivos no se ven
+  39.3 s · Huida: el compañero cazador (Bruno) aparece en el mapa
+  50.1 s · Persecución
+  52.7 s · Sin conexión: aviso y posiciones congeladas
+  60.2 s · Conexión recuperada
+  76.5 s · Primera pista: posiciones de los fugitivos en el mapa
+  80.1 s · Lista de la última pista
+  84.7 s · Reclamación lejos de Diego: el servidor la rechaza
+ 129.1 s · Ana llega junto a Carla
+ 131.8 s · Reclamación enviada: esperando a que Carla confirme
+ 136.4 s · Carla confirma: captura
+ 177.6 s · Mission Report: ganan los cazadores
+ 181.2 s · Final: revancha disponible para el anfitrión
+
+Vídeo de auditoría: C:\Users\aange\Downloads\outrun-auditoria-20261027-videos\gameplay-auditoria.webm (~183 s)
+Resumen: C:\Users\aange\Downloads\outrun-auditoria-20261027-videos\gameplay-resumen.webm (9 tramos, ~42 s)
+Errores de página: 3 · peticiones externas bloqueadas: 0
+WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED
+WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED
+WebSocket connection to 'ws://127.0.0.1:50727/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED

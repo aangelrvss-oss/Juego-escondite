@@ -1,0 +1,12 @@
+﻿ok · con 10 min de persecución no se ofrece un intervalo de pistas sin ninguna pista (1)
+ok · la carta del rol dice cuánto dura la huida (2)
+ok · en la huida, cada rol sabe qué pasa al llegar a 0:00 (3)
+ok · cazador y fugitivo ven la cuenta atrás de la próxima pista (y el cazador, que la primera llega sola) (4)
+ok · el fugitivo recibe «Pista en 1 min» y la cuenta atrás se pone en alerta (5)
+ok · la pista llega al cazador con número, antigüedad y explicación; el fugitivo ve que se ha enviado (6)
+ok · reclamación con plazo grande y sin la acción de debajo; tras la captura, la pista ya no la muestra (7)
+ok · Mission Report (ganan los cazadores): igual para todos, con el resultado personal aparte (8)
+ok · Mission Report (ganan los fugitivos por tiempo): igual para todos (9)
+ok · «Salir de la sala» lleva al inicio; el informe de los demás es el mismo antes y después de recargar (10)
+ok · sin errores de JavaScript en las tres páginas (11)
+Interfaz del playtest: 11/11 comprobaciones
