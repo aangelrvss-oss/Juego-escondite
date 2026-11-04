@@ -1,0 +1,20 @@
+[   1 s] ✔ configurar Clásico, 250 m, zona dinámica, 10 min
+[   1 s] ✔ empezar
+[   6 s] ✔ roles: Ana cazadora, Beto y Caro fugitivos · hunter,runner,runner
+[   6 s] … huida de 2 min en tiempo real
+[ 126 s] ✔ empieza la persecución para todos a la vez
+[ 132 s] ✔ captura a ~95 m: el servidor la rechaza · not_close_enough
+[ 136 s] ✔ captura a 8 m: el servidor la valida y pide confirmación
+[ 137 s] ✔ Beto confirma y queda capturado (lo ven los tres)
+[ 137 s] ✔ la captura queda registrada por el servidor
+[ 137 s] … esperando la fase 1 de la zona (5:00 de persecución, tiempo real)
+[ 426 s] ✔ fase 1 a los 5:00 exactos de persecución, para los tres · 300 s, 300 s, 300 s
+[ 426 s] ✔ aviso de fase con el destino (213 m) · {"phase":1,"radiusM":213,"endsAt":1793750295405,"last":true}
+[ 428 s] ✔ los tres reciben el mismo plan de zona (con el destino de la fase)
+[ 428 s] ✔ los tres calculan el mismo círculo a la misma hora · 249.7 m
+[ 428 s] … Ana camina hasta Caro (~95 m a 1,5 m/s)
+[ 496 s] ✔ captura de Caro tras acercarse andando
+[ 497 s] ✔ la partida termina para todos: ganan los cazadores (todos capturados) · {"winner":"hunter","cause":"all_captured"}
+[ 497 s] ✔ un único aviso de final por cliente
+
+15/15 comprobaciones · partida completa contra https://the-outrun.onrender.com · 498 s

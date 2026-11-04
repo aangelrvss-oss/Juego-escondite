@@ -1,0 +1,21 @@
+  ✔ /health responde · 297 ms · {"ok":true,"rooms":0,"sessions":0,"clients":0,"locWs":0,"locHttp":0}
+  ✔ la página principal carga · HTTP 200
+  ✔ sirve el cliente con zona dinámica y radios 50–1.000 m
+  ✔ sirve vendor/maplibre-gl/maplibre-gl.js · HTTP 200
+  ✔ sirve vendor/maplibre-gl/maplibre-gl-worker.js · HTTP 200
+  ✔ sirve vendor/capacitor-core.js · HTTP 200
+  ✔ configuración del mapa presente · proveedor maptiler (clave de 20 caracteres)
+  ✔ 3 conexiones WebSocket abiertas · wss://…/ws
+  ✔ crear sala y unirse desde 3 clientes distintos · código de 6 caracteres
+  ✔ el servidor acepta 250 m con zona dinámica y todos la reciben
+  ✔ el servidor rechaza un radio fuera de rango (30 m)
+  ✔ empieza la partida
+  ✔ todos ven la cuenta atrás y el plan de zona
+  ✔ cada uno ve su rol (1 cazadora, 2 fugitivos) · hunter,runner,runner
+  ✔ la cazadora no ve el equipo de los fugitivos
+  ✔ sincronización: un fugitivo recibe la posición de su compañero
+  ✔ privacidad: el fugitivo no recibe la posición de la cazadora
+  ✔ desconexión y reconexión: vuelve con la misma identidad y rol
+  ✔ terminar la partida: todos ven el final
+
+19/19 comprobaciones contra https://the-outrun.onrender.com

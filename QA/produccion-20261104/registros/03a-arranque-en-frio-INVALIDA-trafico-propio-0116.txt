@@ -1,0 +1,14 @@
+00:03:53 despierto (referencia): /health HTTP 200 en 230 ms · página 200 en 55 ms · WebSocket abierto y responde en 166 ms · DESPIERTO
+         cuerpo: {"ok":true,"rooms":3,"sessions":9,"clients":0,"locWs":525,"locHttp":0} · cabeceras: {"content-type":"application/json","rndr-id":"dfafdd9c-2519-4400","server":"cloudflare","x-render-origin-server":"Render"}
+00:03:54 despierto (segunda medida): /health HTTP 200 en 49 ms · página 200 en 116 ms · WebSocket abierto y responde en 156 ms · DESPIERTO
+         cuerpo: {"ok":true,"rooms":3,"sessions":9,"clients":1,"locWs":525,"locHttp":0} · cabeceras: {"content-type":"application/json","rndr-id":"1f983def-d247-48cb","server":"cloudflare","x-render-origin-server":"Render"}
+00:03:54 Esperando 16 min sin ningún tráfico desde aquí…
+00:19:54 tras 16 min sin uso: /health HTTP 200 en 174 ms · página 200 en 59 ms · WebSocket abierto y responde en 195 ms · DESPIERTO
+         cuerpo: {"ok":true,"rooms":2,"sessions":6,"clients":0,"locWs":525,"locHttp":0} · cabeceras: {"content-type":"application/json","rndr-id":"37012b0f-7c62-4294","server":"cloudflare","x-render-origin-server":"Render"}
+00:19:54 justo después: /health HTTP 200 en 55 ms · página 200 en 59 ms · WebSocket abierto y responde en 166 ms · DESPIERTO
+         cuerpo: {"ok":true,"rooms":2,"sessions":6,"clients":1,"locWs":525,"locHttp":0} · cabeceras: {"content-type":"application/json","rndr-id":"d9cbd6c6-d5de-4789","server":"cloudflare","x-render-origin-server":"Render"}
+
+El servicio seguía despierto: alguien lo usó durante la espera, o Render no lo durmió. Repetir en un momento sin uso.
+
+# INVÁLIDA: a las 01:16:17 (hora local; 00:16 UTC) este mismo ordenador cargó la página de producción
+# (comparación de la pantalla de inicio), dentro de la ventana de 16 min sin tráfico. Se repite en 03-arranque-en-frio.txt.

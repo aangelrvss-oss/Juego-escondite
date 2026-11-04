@@ -1,0 +1,10 @@
+[   1 s] ✔ configurar Clásico, 250 m, zona dinámica, 10 min
+[   2 s] ✔ empezar
+[   7 s] ✔ roles: Ana cazadora, Beto y Caro fugitivos · hunter,runner,runner
+[   7 s] … huida de 2 min en tiempo real
+[ 127 s] ✔ empieza la persecución para todos a la vez
+[ 133 s] ✔ captura a ~95 m: el servidor la rechaza · not_close_enough
+[ 133 s] ✖ captura a 8 m: el servidor la valida y pide confirmación · rate_limited
+[ 153 s] ✖ la partida se completa (tiempo agotado: Beto capturado tras confirmar)
+
+5/7 comprobaciones · partida completa contra https://the-outrun.onrender.com · 153 s

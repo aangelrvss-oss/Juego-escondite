@@ -1,0 +1,13 @@
+[  8.2 s] corte de red de 5 s (Beto y Ana)
+[ 13.2 s] ✔ 5 s: el cliente no da la conexión por muerta (sin reconexión innecesaria) · 0.0:connecting 0.0:open
+[ 13.2 s] ✔ 5 s: el servidor no marca a nadie «sin conexión»
+[ 15.2 s] ✔ 5 s: tras volver la red, la misma conexión sigue funcionando
+[ 15.2 s] corte de red de 35 s (sin aviso de cierre)
+[ 45.2 s] ✔ 35 s: el cliente detecta la conexión muerta y pasa a «reconectando» · a los 30.0 s (25 s de silencio + 5 s de sonda, con el ping cada 10 s)
+[ 45.2 s] ✔ 35 s: el servidor marca a Beto «sin conexión» (D-057, 30 s sin señal) · a los 30.0 s
+[ 53.1 s] ✔ 35 s: al volver la red, reconecta solo y recupera la sesión · 2.9 s después de volver la red · 45.1:reconnecting 53.1:open
+[ 53.1 s] ✔ 35 s: misma identidad, mismo rol y misma partida · fase HEAD_START
+[ 53.3 s] ✔ comando enviado sin red: llega al volver y se aplica una sola vez · {"ok":true}
+[ 53.3 s] ✔ estado completo tras reconectar: Beto ve el final
+
+9/9 comprobaciones (cortes de red reales, servidor y net.js reales)

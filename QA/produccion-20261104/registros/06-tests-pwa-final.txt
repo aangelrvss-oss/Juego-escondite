@@ -1,0 +1,13 @@
+== tsc exit=0
+== motor+sim
+ℹ tests 277
+ℹ pass 277
+ℹ fail 0
+== servidor
+ℹ tests 136
+ℹ pass 136
+ℹ fail 0
+== cliente
+ℹ tests 165
+ℹ pass 165
+ℹ fail 0
