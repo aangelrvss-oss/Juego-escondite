@@ -207,3 +207,49 @@ describe('acciones de captura que esperaban durante un corte', () => {
     assert.equal(resent[0].cmd.type, 'set_ready');
   });
 });
+
+// AF-08 (segunda auditoría, 04/11/2026): un comando sin respuesta no puede dejar un botón esperando para
+// siempre (p. ej. un error del servidor sin id, o un corte que no termina). Se responde `no_response`.
+describe('AF-08 · un comando sin respuesta no espera para siempre', () => {
+  function quickConnection() {
+    const { all, FakeWebSocket } = fakeSockets();
+    const conn = new GameConnection({ url: 'ws://prueba.invalid/ws', storage: memoryStorage(), WebSocketImpl: FakeWebSocket, commandTimeoutMs: 150 });
+    conn.start();
+    all[0].open();
+    all[0].deliver({ t: 'welcome', playerId: 'p_a', code: 'AAAAAA', secret: 's1' });
+    return { conn, all };
+  }
+
+  it('error del servidor sin id (no_session): la promesa se resuelve con no_response', async () => {
+    const { conn, all } = quickConnection();
+    const pending = conn.command({ type: 'start' });
+    all[0].deliver({ t: 'error', error: 'no_session' });
+    const r = await Promise.race([pending, settle(1_000).then(() => 'colgada')]);
+    assert.deepEqual(r, { ok: false, error: 'no_response' });
+    assert.equal(conn.pending.size, 0);
+    conn.close();
+  });
+
+  it('corte largo: no_response, y al reconectar no se reenvía el comando caducado', async () => {
+    const { conn, all } = quickConnection();
+    const pending = conn.command({ type: 'set_ready', ready: true });
+    const [id] = sentCmdIds(all[0]);
+    all[0].drop(1006);
+    assert.deepEqual(await Promise.race([pending, settle(1_000).then(() => 'colgada')]), { ok: false, error: 'no_response' });
+    await waitFor(() => all.length > 1, 'reconexión');
+    all.at(-1).open();
+    all.at(-1).deliver({ t: 'welcome', playerId: 'p_a', code: 'AAAAAA' });
+    assert.equal(sentCmdIds(all.at(-1)).includes(id), false);
+    conn.close();
+  });
+
+  it('con respuesta a tiempo, el plazo no cambia nada', async () => {
+    const { conn, all } = quickConnection();
+    const pending = conn.command({ type: 'set_ready', ready: true });
+    const [id] = sentCmdIds(all[0]);
+    all[0].deliver({ t: 'result', id, result: { ok: true } });
+    assert.deepEqual(await pending, { ok: true });
+    await settle(250);
+    conn.close();
+  });
+});

@@ -1,0 +1,182 @@
+{
+  "quality": 0.78,
+  "total": 391792,
+  "rows": [
+    {
+      "out": "inicio",
+      "src": "QA/produccion-20261104/capturas-pwa/inicio-produccion.png",
+      "y": 0,
+      "h": 960,
+      "cropH": 960,
+      "w": 720,
+      "outH": 839,
+      "srcSize": "824x3232",
+      "bytes": 36306
+    },
+    {
+      "out": "sala-codigo",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-infeccion/01-sala-3-Ana.png",
+      "y": 120,
+      "h": 760,
+      "cropH": 760,
+      "w": 720,
+      "outH": 760,
+      "srcSize": "720x6440",
+      "bytes": 18548
+    },
+    {
+      "out": "preparacion",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-infeccion/01-sala-3-Ana.png",
+      "y": 2085,
+      "h": 815,
+      "cropH": 815,
+      "w": 720,
+      "outH": 815,
+      "srcSize": "720x6440",
+      "bytes": 32270
+    },
+    {
+      "out": "cuenta-atras",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-game/03-cuenta-Dani.png",
+      "y": 225,
+      "h": 720,
+      "cropH": 720,
+      "w": 720,
+      "outH": 629,
+      "srcSize": "824x1830",
+      "bytes": 20074
+    },
+    {
+      "out": "rol-cazador",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-game/04-rol-Ana.png",
+      "y": 650,
+      "h": 530,
+      "cropH": 530,
+      "w": 720,
+      "outH": 463,
+      "srcSize": "824x1830",
+      "bytes": 14884
+    },
+    {
+      "out": "rol-fugitivo",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-game/04-rol-Caro.png",
+      "y": 650,
+      "h": 530,
+      "cropH": 530,
+      "w": 720,
+      "outH": 463,
+      "srcSize": "824x1830",
+      "bytes": 13616
+    },
+    {
+      "out": "pista",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-playtest-ui/05-pista-Ana.png",
+      "y": 140,
+      "h": 1060,
+      "cropH": 1060,
+      "w": 720,
+      "outH": 1060,
+      "srcSize": "720x3166",
+      "bytes": 32252
+    },
+    {
+      "out": "captura",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-game/05-reclamacion-Caro.png",
+      "y": 1320,
+      "h": 480,
+      "cropH": 480,
+      "w": 720,
+      "outH": 419,
+      "srcSize": "824x1830",
+      "bytes": 14288
+    },
+    {
+      "out": "zona",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/zona/z2-fase1-mitad.png",
+      "y": 440,
+      "h": 860,
+      "cropH": 860,
+      "w": 720,
+      "outH": 860,
+      "srcSize": "720x1480",
+      "bytes": 20184
+    },
+    {
+      "out": "final",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-playtest-ui/07-final-cazadores-Ana.png",
+      "y": 160,
+      "h": 980,
+      "cropH": 980,
+      "w": 720,
+      "outH": 980,
+      "srcSize": "720x2840",
+      "bytes": 31966
+    },
+    {
+      "out": "conexion",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-map/4-sin-conexion.png",
+      "y": 130,
+      "h": 880,
+      "cropH": 880,
+      "w": 720,
+      "outH": 880,
+      "srcSize": "720x2034",
+      "bytes": 31286
+    },
+    {
+      "out": "ubicacion",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-map/4-sin-conexion.png",
+      "y": 1400,
+      "h": 390,
+      "cropH": 390,
+      "w": 720,
+      "outH": 390,
+      "srcSize": "720x2034",
+      "bytes": 19276
+    },
+    {
+      "out": "zorro-cazador",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-zorro/02-rol-Beto.png",
+      "y": 400,
+      "h": 680,
+      "cropH": 680,
+      "w": 720,
+      "outH": 680,
+      "srcSize": "720x2242",
+      "bytes": 21062
+    },
+    {
+      "out": "zorro-fugitivo",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-zorro/03-zorro-ve-Zoe.png",
+      "y": 480,
+      "h": 980,
+      "cropH": 980,
+      "w": 720,
+      "outH": 980,
+      "srcSize": "720x2504",
+      "bytes": 29334
+    },
+    {
+      "out": "zorro-pista",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-zorro/04-pista-Ana.png",
+      "y": 140,
+      "h": 1070,
+      "cropH": 1070,
+      "w": 720,
+      "outH": 1070,
+      "srcSize": "720x3118",
+      "bytes": 32728
+    },
+    {
+      "out": "infeccion-convertido",
+      "src": "QA/ciclo-20261101-zona-dinamica/capturas/e2e-infeccion/02-infectado-Beto.png",
+      "y": 440,
+      "h": 580,
+      "cropH": 580,
+      "w": 720,
+      "outH": 580,
+      "srcSize": "720x2754",
+      "bytes": 23718
+    }
+  ]
+}

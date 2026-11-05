@@ -1,0 +1,350 @@
+{
+  "nombre": "04-sala-20j",
+  "fecha": "2026-11-04T17:27:01.734Z",
+  "maquina": {
+    "node": "v24.12.0",
+    "plataforma": "win32"
+  },
+  "parametros": {
+    "salas": 1,
+    "jugadores": 20,
+    "total": 20,
+    "activoS": 60,
+    "reinicio": "no",
+    "puerto": 8814
+  },
+  "resumen": {
+    "arranqueServidorMs": 282,
+    "salasEmpezadas": 1,
+    "huidaRealS": 120,
+    "healthActivo": {
+      "ok": true,
+      "rooms": 1,
+      "sessions": 20,
+      "clients": 20,
+      "locWs": 3563,
+      "locHttp": 0
+    },
+    "reconexionClientes": {
+      "jugadores": 20,
+      "recuperados": 20,
+      "mismaIdentidad": 20,
+      "sesionPerdida": 0,
+      "motivosPerdida": [],
+      "faseTrasRecuperar": [
+        "ACTIVE"
+      ],
+      "msHastaTodos": 941,
+      "n": 20,
+      "p50ms": 798,
+      "p95ms": 941,
+      "p99ms": 941,
+      "maxms": 941
+    },
+    "finalMsHastaTodos": 11,
+    "finalVistoPor": "20/20",
+    "healthTrasFinal": {
+      "ok": true,
+      "rooms": 1,
+      "sessions": 20,
+      "clients": 20,
+      "locWs": 3963,
+      "locHttp": 0
+    },
+    "healthTrasCerrarClientes": {
+      "ok": true,
+      "rooms": 1,
+      "sessions": 20,
+      "clients": 0,
+      "locWs": 3963,
+      "locHttp": 0
+    }
+  },
+  "porFase": {
+    "arranque": {
+      "duracionS": 2,
+      "muestras": 1,
+      "cpuMediaPct1Nucleo": 9.4,
+      "cpuMaxPct1Nucleo": 9.4,
+      "rssMaxMB": 70.1,
+      "heapMaxMB": 13,
+      "retrasoBucleP99MaxMs": 19.05,
+      "retrasoBucleMaxMs": 22.07,
+      "msgEntrantesPorS": 0,
+      "msgSalientesPorS": 0,
+      "kBSalientesPorS": 0,
+      "kBEntrantesPorS": 0,
+      "rttPing": {}
+    },
+    "reposo": {
+      "duracionS": 3,
+      "muestras": 3,
+      "cpuMediaPct1Nucleo": 0,
+      "cpuMaxPct1Nucleo": 0,
+      "rssMaxMB": 70.9,
+      "heapMaxMB": 13,
+      "retrasoBucleP99MaxMs": 20.2,
+      "retrasoBucleMaxMs": 24.05,
+      "msgEntrantesPorS": 0,
+      "msgSalientesPorS": 0,
+      "kBSalientesPorS": 0,
+      "kBEntrantesPorS": 0,
+      "rttPing": {}
+    },
+    "entrada": {
+      "duracionS": 5,
+      "muestras": 5,
+      "cpuMediaPct1Nucleo": 0.9,
+      "cpuMaxPct1Nucleo": 3.1,
+      "rssMaxMB": 73.2,
+      "heapMaxMB": 13.4,
+      "retrasoBucleP99MaxMs": 33.29,
+      "retrasoBucleMaxMs": 40.17,
+      "msgEntrantesPorS": 30.8,
+      "msgSalientesPorS": 277.7,
+      "kBSalientesPorS": 451.1,
+      "kBEntrantesPorS": 2.3,
+      "rttPing": {
+        "n": 20,
+        "p50ms": 16,
+        "p95ms": 26,
+        "p99ms": 26,
+        "maxms": 26
+      }
+    },
+    "huida": {
+      "duracionS": 120,
+      "muestras": 119,
+      "cpuMediaPct1Nucleo": 6.5,
+      "cpuMaxPct1Nucleo": 29.8,
+      "rssMaxMB": 138.1,
+      "heapMaxMB": 39.6,
+      "retrasoBucleP99MaxMs": 271.06,
+      "retrasoBucleMaxMs": 271.06,
+      "msgEntrantesPorS": 21.8,
+      "msgSalientesPorS": 6.4,
+      "kBSalientesPorS": 7.9,
+      "kBEntrantesPorS": 1.6,
+      "rttPing": {
+        "n": 240,
+        "p50ms": 1,
+        "p95ms": 2,
+        "p99ms": 2,
+        "maxms": 3
+      }
+    },
+    "activo": {
+      "duracionS": 61,
+      "muestras": 61,
+      "cpuMediaPct1Nucleo": 14.2,
+      "cpuMaxPct1Nucleo": 26.4,
+      "rssMaxMB": 202.8,
+      "heapMaxMB": 62.8,
+      "retrasoBucleP99MaxMs": 241.96,
+      "retrasoBucleMaxMs": 241.96,
+      "msgEntrantesPorS": 22.7,
+      "msgSalientesPorS": 6.9,
+      "kBSalientesPorS": 7.1,
+      "kBEntrantesPorS": 1.7,
+      "rttPing": {
+        "n": 120,
+        "p50ms": 1,
+        "p95ms": 564,
+        "p99ms": 564,
+        "maxms": 564
+      }
+    },
+    "reconexion": {
+      "duracionS": 1,
+      "muestras": 1,
+      "cpuMediaPct1Nucleo": 18.7,
+      "cpuMaxPct1Nucleo": 18.7,
+      "rssMaxMB": 201.7,
+      "heapMaxMB": 10.7,
+      "retrasoBucleP99MaxMs": 29.07,
+      "retrasoBucleMaxMs": 140.77,
+      "msgEntrantesPorS": 41.3,
+      "msgSalientesPorS": 1105.4,
+      "kBSalientesPorS": 1039.2,
+      "kBEntrantesPorS": 2.8,
+      "rttPing": {
+        "n": 20,
+        "p50ms": 1,
+        "p95ms": 20,
+        "p99ms": 20,
+        "maxms": 20
+      }
+    },
+    "estable": {
+      "duracionS": 20,
+      "muestras": 20,
+      "cpuMediaPct1Nucleo": 13.1,
+      "cpuMaxPct1Nucleo": 18.7,
+      "rssMaxMB": 203.4,
+      "heapMaxMB": 62.1,
+      "retrasoBucleP99MaxMs": 77.73,
+      "retrasoBucleMaxMs": 186.12,
+      "msgEntrantesPorS": 23,
+      "msgSalientesPorS": 7,
+      "kBSalientesPorS": 7.2,
+      "kBEntrantesPorS": 1.7,
+      "rttPing": {
+        "n": 40,
+        "p50ms": 1,
+        "p95ms": 1,
+        "p99ms": 1,
+        "maxms": 1
+      }
+    },
+    "final": {
+      "duracionS": 3,
+      "muestras": 3,
+      "cpuMediaPct1Nucleo": 0,
+      "cpuMaxPct1Nucleo": 0,
+      "rssMaxMB": 203.4,
+      "heapMaxMB": 26.2,
+      "retrasoBucleP99MaxMs": 20.68,
+      "retrasoBucleMaxMs": 38.44,
+      "msgEntrantesPorS": 20.2,
+      "msgSalientesPorS": 13.6,
+      "kBSalientesPorS": 27.9,
+      "kBEntrantesPorS": 1.5,
+      "rttPing": {}
+    },
+    "cierre": {
+      "duracionS": 3,
+      "muestras": 3,
+      "cpuMediaPct1Nucleo": 0,
+      "cpuMaxPct1Nucleo": 0,
+      "rssMaxMB": 204.4,
+      "heapMaxMB": 30.8,
+      "retrasoBucleP99MaxMs": 23.22,
+      "retrasoBucleMaxMs": 23.79,
+      "msgEntrantesPorS": 0,
+      "msgSalientesPorS": 0,
+      "kBSalientesPorS": 0,
+      "kBEntrantesPorS": 0,
+      "rttPing": {}
+    },
+    "fin": {
+      "duracionS": 2,
+      "muestras": 1,
+      "cpuMediaPct1Nucleo": 0,
+      "cpuMaxPct1Nucleo": 0,
+      "rssMaxMB": 204.4,
+      "heapMaxMB": 30.9,
+      "retrasoBucleP99MaxMs": 16.16,
+      "retrasoBucleMaxMs": 16.29,
+      "msgEntrantesPorS": 0,
+      "msgSalientesPorS": 0,
+      "kBSalientesPorS": 0,
+      "kBEntrantesPorS": 0,
+      "rttPing": {}
+    }
+  },
+  "latenciasComandos": {
+    "create": {
+      "n": 1,
+      "p50ms": 5,
+      "p95ms": 5,
+      "p99ms": 5,
+      "maxms": 5
+    },
+    "join": {
+      "n": 19,
+      "p50ms": 11,
+      "p95ms": 26,
+      "p99ms": 26,
+      "maxms": 26
+    },
+    "cmd_configure": {
+      "n": 1,
+      "p50ms": 5,
+      "p95ms": 5,
+      "p99ms": 5,
+      "maxms": 5
+    },
+    "cmd_set_team_pref": {
+      "n": 20,
+      "p50ms": 9,
+      "p95ms": 13,
+      "p99ms": 13,
+      "maxms": 13
+    },
+    "cmd_set_ready": {
+      "n": 20,
+      "p50ms": 21,
+      "p95ms": 38,
+      "p99ms": 38,
+      "maxms": 38
+    },
+    "cmd_start": {
+      "n": 1,
+      "p50ms": 5,
+      "p95ms": 5,
+      "p99ms": 5,
+      "maxms": 5
+    },
+    "cmd_claim_tag": {
+      "n": 80,
+      "p50ms": 8,
+      "p95ms": 132,
+      "p99ms": 180,
+      "maxms": 180
+    },
+    "cmd_end_game": {
+      "n": 1,
+      "p50ms": 11,
+      "p95ms": 11,
+      "p99ms": 11,
+      "maxms": 11
+    }
+  },
+  "errores": {
+    "cmd_claim_tag_not_close_enough": 80
+  },
+  "mensajesRecibidosPorTipo": {
+    "pong": 440,
+    "welcome": 40,
+    "snapshot": 965,
+    "event": 1535,
+    "result": 123,
+    "positions": 800
+  },
+  "retrasoBucleCliente": {
+    "p99Ms": 20.77,
+    "maxMs": 588.25
+  },
+  "getProcess": {
+    "muestrasProceso": [
+      {
+        "fase": "huida",
+        "at": 1793813052976,
+        "cpuS": 0.671875,
+        "workingSetMB": 84.1
+      },
+      {
+        "fase": "huida",
+        "at": 1793813063333,
+        "cpuS": 0.875,
+        "workingSetMB": 83.2
+      },
+      {
+        "fase": "activo",
+        "at": 1793813177861,
+        "cpuS": 14.6875,
+        "workingSetMB": 202.2
+      },
+      {
+        "fase": "activo",
+        "at": 1793813188186,
+        "cpuS": 16,
+        "workingSetMB": 202.2
+      }
+    ],
+    "pid": 13396
+  },
+  "salidaServidor": [
+    "THE OUTRUN escuchando en http://127.0.0.1:8814 (WebSocket en /ws, estado en /health)"
+  ]
+}

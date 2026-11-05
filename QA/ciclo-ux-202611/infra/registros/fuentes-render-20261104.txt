@@ -1,0 +1,60 @@
+Fuentes oficiales de Render consultadas el 04/11/2026 (~17:20 hora local) con Firecrawl (lectura en vivo, maxAge 0).
+Extractos textuales (en inglés, tal como aparecen en la página).
+
+[1] https://render.com/docs/free  («Deploy for Free – Render Docs»)
+  - "Render spins down a Free web service that goes 15 minutes without receiving any inbound traffic. This includes both
+     HTTP requests and WebSocket messages from existing connections."
+  - "A Free web service spins back up whenever it next receives an HTTP request or new WebSocket connection. This process
+     takes about one minute. Render displays a loading page to connecting browsers while a service is spinning up."
+  - "Whenever a service spins down, any changes to its local filesystem are lost"
+  - "Free web services have an ephemeral filesystem ... lost every time the service redeploys, restarts, or spins down."
+  - "Paid services can preserve local filesystem changes by attaching a persistent disk, but Free web services cannot."
+  - "Render grants 750 Free instance hours to each workspace per calendar month ... spun-down services don't consume Free
+     instance hours ... If you consume all of your Free instance hours ... Render suspends all of your Free web services
+     until the start of the next month."
+  - "If you consume all of your outbound bandwidth during a given month, Render bills you for a supplementary amount.
+     If you haven't added a payment method, Render instead suspends all of your Free services for the remainder of the month."
+  - "Render might restart a Free web service at any time."
+  - No admite: "Scaling beyond a single instance", "Persistent disks", "Edge caching", "one-off jobs", "Shell access".
+  - "Free instances have important limitations ... Do not use them for production applications."
+
+[2] https://render.com/docs/compute-plans  («Render Compute Plans»)
+  | CPU     | RAM    | Plan ID     | Legacy Plan Name |
+  | 0.1 CPU | 512 MB | free        |                  |
+  | 0.5 CPU | 512 MB | 0.5c-512mb  | starter          |
+  | 1 CPU   | 2 GB   | 1c-2g       | standard         |
+
+[3] https://render.com/pricing  («Pricing | Render»), tabla Compute:
+  | Free (limitations apply) | $0/month  | 512 MB RAM | free       |
+  | Less than 1 CPU          | $7/month  | 512 MB RAM | 0.5c-512mb |
+  | 1 CPU                    | $25/month | 2 GB RAM   | 1c-2g      |
+  Discos persistentes: $0.25 por GB y mes (respuesta del extractor de la página; no verificado en el texto literal).
+  Planes de espacio de trabajo: Hobby $0/mes + cómputo; Pro $25/mes + cómputo (respuesta del extractor; NO VERIFICADO literalmente).
+
+[4] https://render.com/docs/outbound-bandwidth  («Outbound Bandwidth»)
+  | Workspace plan | Included bandwidth |
+  | Hobby          | 5 GB               |
+  | Pro            | 25 GB              |
+  Facturable: "WebSocket responses sent from your web services to browsers and other clients over the public internet".
+  Precios por GB que aparecen en la página: "$0.15 per GB" y "$0.03 per GB" (el extractor no dice a qué tramo
+  corresponde cada uno: NO VERIFICADO cuál aplica al exceso).
+
+[5] https://render.com/docs/disks  («Persistent Disks»)
+  - "You can attach a persistent disk to a paid Render web service"
+  - "You can't scale a service to multiple instances if it has a disk attached."
+  - "Adding a disk to a service prevents zero-downtime deploys ... Render stops the existing instance before bringing up the
+     new instance. This instance swap takes a few seconds, during which your service is unavailable."
+
+No consultado / no verificado: tratamiento exacto de X-Forwarded-For por el proxy de Render (si sobrescribe o añade
+el valor enviado por el cliente). (El periodo de gracia de SIGTERM se verificó después: ver [6].)
+
+[6] https://render.com/docs/deploys  («Deploying on Render»), consultado el 04/11/2026
+  - Despliegue sin corte: "After 60 seconds, Render sends a SIGTERM signal to your app's process on the original instance."
+  - "If your service is still running after its configured shutdown delay (default 30 seconds), Render sends your
+     application a SIGKILL signal."
+  - "You can't customize the shutdown delay for a service with a persistent disk." Máximo configurable: 300 s
+     (maxShutdownDelaySeconds en render.yaml).
+
+Búsqueda sobre X-Forwarded-For en render.com: solo un artículo de ejemplo (https://render.com/articles/how-render-handles-ddos-attacks)
+que usa x-forwarded-for.split(',')[0] como clave de límite; no hay documentación que diga si el proxy SOBRESCRIBE una
+cabecera X-Forwarded-For o CF-Connecting-IP enviada por el cliente. => NO VERIFICADO.

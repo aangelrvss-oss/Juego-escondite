@@ -1,0 +1,278 @@
+{
+ "Pablo": {
+  "myId": "p_R2Je5IvrUKEX",
+  "snap": {
+   "roomId": "room_lnCCdzkKJgU7",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_R2Je5IvrUKEX",
+   "serverNow": 1793812363037,
+   "countdownEnd": 1793812218012,
+   "headStartEnd": 1793812338012,
+   "gameEnd": 1793812938012,
+   "nextPingAt": null,
+   "activeStart": 1793812338012,
+   "finishedAt": 1793812363031,
+   "rulesVersion": "zorro/2026-10-30",
+   "players": [
+    {
+     "id": "p_R2Je5IvrUKEX",
+     "name": "Pablo",
+     "team": "hunter",
+     "teamPref": "hunter",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_rLOCLHBbhbZv",
+     "name": "Rosa",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_EIseCsYIOmUx",
+     "name": "Sara",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "fox_hunt",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_EIseCsYIOmUx",
+     "hunterId": "p_rLOCLHBbhbZv",
+     "atOffsetMs": 25019,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Rosa": {
+  "myId": "p_rLOCLHBbhbZv",
+  "snap": {
+   "roomId": "room_lnCCdzkKJgU7",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_R2Je5IvrUKEX",
+   "serverNow": 1793812363037,
+   "countdownEnd": 1793812218012,
+   "headStartEnd": 1793812338012,
+   "gameEnd": 1793812938012,
+   "nextPingAt": null,
+   "activeStart": 1793812338012,
+   "finishedAt": 1793812363031,
+   "rulesVersion": "zorro/2026-10-30",
+   "players": [
+    {
+     "id": "p_R2Je5IvrUKEX",
+     "name": "Pablo",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_rLOCLHBbhbZv",
+     "name": "Rosa",
+     "team": "hunter",
+     "teamPref": "hunter",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_EIseCsYIOmUx",
+     "name": "Sara",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "fox_hunt",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_EIseCsYIOmUx",
+     "hunterId": "p_rLOCLHBbhbZv",
+     "atOffsetMs": 25019,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Sara": {
+  "myId": "p_EIseCsYIOmUx",
+  "snap": {
+   "roomId": "room_lnCCdzkKJgU7",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_R2Je5IvrUKEX",
+   "serverNow": 1793812363037,
+   "countdownEnd": 1793812218012,
+   "headStartEnd": 1793812338012,
+   "gameEnd": 1793812938012,
+   "nextPingAt": null,
+   "activeStart": 1793812338012,
+   "finishedAt": 1793812363031,
+   "rulesVersion": "zorro/2026-10-30",
+   "players": [
+    {
+     "id": "p_R2Je5IvrUKEX",
+     "name": "Pablo",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_rLOCLHBbhbZv",
+     "name": "Rosa",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_EIseCsYIOmUx",
+     "name": "Sara",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "fox_hunt",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_EIseCsYIOmUx",
+     "hunterId": "p_rLOCLHBbhbZv",
+     "atOffsetMs": 25019,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ }
+}

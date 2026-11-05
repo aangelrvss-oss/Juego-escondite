@@ -1,5 +1,38 @@
 # Estado del proyecto
 
+## Estado a 05/11/2026 (cierre del ciclo UX; lo de abajo queda como histórico)
+
+- **Rama:** `mapa-real`. Este cierre publica en un solo commit el ciclo UX y las correcciones de la segunda auditoría. Hash, push y estado de Render: `QA/ciclo-ux-202611/CIERRE_CORRECCIONES_Y_DESPLIEGUE.md`.
+- **Corregido:**
+  - AF-01 y AF-02: «listo» por jugador (D-062).
+  - AF-10: la guía no tapa la cuenta atrás ni el rol (D-064).
+  - AF-09: imágenes de la guía.
+  - AF-11: informe anterior conservado (D-063).
+  - AF-07 y AF-08: límite por dirección y plazo de los comandos (D-065).
+  - AF-12: GPS del anfitrión al empezar.
+  - E2E P4: fallo del test.
+- **Pendiente:**
+  - La prueba física con varios móviles (Android e iPhone).
+  - AF-06 (`structuredClone`).
+  - AF-04: Render gratuito pierde las salas al reiniciar o desplegar.
+- **Nada de esto se ha probado aún en móviles reales.**
+
+## Estado a 04/11/2026 (ciclo UX; sustituye a las líneas de cabecera de abajo, que quedan como histórico)
+
+- **Rama:** `mapa-real`. Último commit publicado: `7d8b5a9` (identidad PWA), igual que `origin/mapa-real`.
+- **Producción:** https://the-outrun.onrender.com (Render gratuito; se despliega solo desde `mapa-real`).
+  - PWA instalable, comprobada por el propietario en un Xiaomi 14T.
+  - Prueba de humo: 19/19 contra producción.
+  - Arranque en frío: 22,4 s.
+- **Cambios locales sin commit:** sala guiada y política de «Estoy listo» (D-058, D-059), guía visual (D-060), Mission Report ampliado e historial local (D-061).
+  - Todas las suites pasan: motor y simulador 299, servidor 136, cliente 208.
+  - Informe: `QA/ciclo-ux-202611/INFORME_CICLO_UX.md`.
+- **Capacidad (medida solo en local):**
+  - el plan gratuito da para una sala de 10–15 jugadores (extrapolación);
+  - las salas se pierden al suspenderse el servicio o al desplegar;
+  - hay 3 defectos de servidor y red pendientes de decisión (`BACKLOG.md`, ciclo UX).
+- **Sigue faltando:** una partida física completa con varios móviles.
+
 **Última actualización:** 26/10/2026, noche (dos sesiones autónomas: 19:41-20:20 y 22:43-23:30; robustez, GPS, privacidad, reconexión, caídas del servidor y juego en el navegador; **todo en commits locales, sin push**)
 **Rama:** `recuperacion-h2` (local, sobre `4c190a0`; `origin` sigue en `ccr-f1962362-hvwb9i` = `4c190a0`)
 **Referencia de producto:** Plan Maestro v1.0 (PDF fuera del repositorio). Trazabilidad en `docs/product/PLAN_MAESTRO_TRAZABILIDAD.md`; sus contradicciones con este registro están en `DECISION_LOG.md` (D-043 a D-047), **sin resolver**.

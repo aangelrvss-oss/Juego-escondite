@@ -1,0 +1,15 @@
+17:27:01 — fase arranque
+17:27:02 servidor propio pid 13808 en http://127.0.0.1:8815 (arranque 218 ms)
+17:27:03 — fase reposo
+17:27:06 — fase entrada
+17:27:06 salas empezadas 5/5
+17:27:12 — fase huida
+17:29:12 — fase activo
+17:30:12 — fase reconexion
+17:30:14 reconexión: {"jugadores":50,"recuperados":50,"mismaIdentidad":50,"sesionPerdida":0,"motivosPerdida":[],"faseTrasRecuperar":["ACTIVE"],"msHastaTodos":1273,"n":50,"p50ms":887,"p95ms":1192,"p99ms":1273,"maxms":1273}
+17:30:14 — fase estable
+17:30:36 — fase reinicio_sin-estado
+17:32:07 AVISO: tiempo agotado esperando recuperacion_reinicio_sin-estado
+17:32:07 reinicio: {"jugadores":50,"recuperados":0,"mismaIdentidad":0,"sesionPerdida":20,"motivosPerdida":["bad_session"],"faseTrasRecuperar":[],"msHastaTodos":null,"modo":"sin-estado","servidorCaidoMs":285,"arranqueNuevoMs":259,"nuevoPid":33952}
+17:32:07 — fase estable2
+17:32:17 — fase final

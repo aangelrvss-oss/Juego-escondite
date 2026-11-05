@@ -24,6 +24,10 @@ const PROBE_MS = 5_000;
 // ejecutarse ahora). Menos que los 30 s que dura una reclamación. El resto de comandos se reenvía igual.
 const TIMELY_COMMANDS = new Set(['claim_tag', 'respond_tag', 'self_tag']);
 const STALE_ACTION_MS = 20_000;
+// AF-08: un comando sin respuesta (un error del servidor sin id, un corte largo, un mensaje descartado) no
+// puede dejar un botón esperando para siempre: pasado este plazo se responde `no_response` y ya no se reenvía
+// al reconectar. Si el servidor llegó a ejecutarlo, el resultado se ve igual en la instantánea.
+const COMMAND_TIMEOUT_MS = 20_000;
 
 function memoryStorage() {
   const m = new Map();
@@ -79,11 +83,12 @@ export function toWsUrl(input) {
 }
 
 export class GameConnection {
-  constructor({ url, storage = defaultStorage(), WebSocketImpl = globalThis.WebSocket, now = () => Date.now() } = {}) {
+  constructor({ url, storage = defaultStorage(), WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), commandTimeoutMs = COMMAND_TIMEOUT_MS } = {}) {
     this.url = url;
     this.storage = storage;
     this.WebSocketImpl = WebSocketImpl;
     this.now = now;
+    this.commandTimeoutMs = commandTimeoutMs;
     this.status = 'idle'; // idle | connecting | open | reconnecting | closed
     this.session = this.#loadSession();
     this.snapshot = null;
@@ -446,6 +451,9 @@ export class GameConnection {
       if (this.status === 'closed' || this.status === 'idle') return resolve({ ok: false, error: this.replaced ? 'replaced' : 'offline' });
       this.pending.set(id, { cmd, resolve, at: this.now() });
       this.#raw({ t: 'cmd', id, cmd });
+      this.#timer(() => {
+        if (this.pending.delete(id)) resolve({ ok: false, error: 'no_response' });
+      }, this.commandTimeoutMs);
     });
   }
 

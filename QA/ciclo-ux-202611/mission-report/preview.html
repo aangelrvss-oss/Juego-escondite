@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Mission Report · vista previa</title>
+<!-- Vista previa del Mission Report (QA, ciclo UX 11/2026): la misma estructura y estilos que la app
+     (index.html) con una instantánea FINISHED real de instantaneas/. Se sirve desde la raíz del repositorio.
+     Parámetros: ?caso=clasico-todos-capturados&jugador=Ana&historial=1 -->
+<link rel="stylesheet" href="../../../mobile/www/css/tokens.generated.css">
+<link rel="stylesheet" href="../../../mobile/www/css/game.css">
+<link rel="stylesheet" href="../../../mobile/www/css/report.css">
+</head>
+<body>
+<main class="screen">
+<div id="app" class="flow"></div>
+</main>
+<script type="module">
+import { missionReportScreen } from '../../../mobile/www/js/report-view.js';
+import { recordGame } from '../../../mobile/www/js/stats.js';
+
+const q = new URLSearchParams(location.search);
+const data = await fetch(`instantaneas/${q.get('caso') ?? 'clasico-todos-capturados'}.json`).then((r) => r.json());
+const who = q.get('jugador') ?? Object.keys(data)[0];
+const { myId, snap } = data[who];
+let stats = null;
+if (q.get('historial') === '1') {
+  // Historial de ejemplo en un almacenamiento de memoria: todas las partidas guardadas, vistas por su primer jugador.
+  const m = new Map();
+  const storage = { getItem: (k) => m.get(k) ?? null, setItem: (k, v) => m.set(k, v) };
+  for (const caso of ['clasico-todos-capturados', 'clasico-anfitrion', 'infeccion-todos', 'zorro-atrapado', 'zorro-abandona']) {
+    const d = await fetch(`instantaneas/${caso}.json`).then((r) => (r.ok ? r.json() : null));
+    const p = d && Object.values(d)[0];
+    if (p) recordGame(storage, p.snap, p.myId);
+  }
+  stats = recordGame(storage, snap, myId).stats;
+}
+document.getElementById('app').innerHTML = `<header class="top"><b>THE OUTRUN</b></header>${missionReportScreen(snap, { myId, nameOf: (id) => snap.players.find((p) => p.id === id)?.name ?? 'Alguien', stats })}`;
+document.body.dataset.listo = '1';
+</script>
+</body>
+</html>

@@ -86,7 +86,10 @@ describe('C4 · V-07: los fallos ajenos por dirección no bloquean una sesión v
       for (let i = 0; i < RATE.attemptsPerMinute; i++) x.send({ t: 'join', code: `ZZZZZ${'ABCDEFGHJK'[i]}`, name: 'x', installId: 'x' });
     }
     assert.equal(env.hub.uploadLocation(IP, { playerId, secret, ...reading }), 'gone', 'sesión válida: no 429');
-    // La protección contra fuerza bruta se mantiene para las sesiones inválidas.
+    // AF-07: los códigos falsos ya no gastan el presupuesto de sesiones (antes aquí se esperaba 429).
+    assert.equal(env.hub.uploadLocation(IP, { playerId, secret: 'x'.repeat(43), ...reading }), 'bad_session');
+    // La protección contra fuerza bruta se mantiene para las sesiones inválidas, con su propio presupuesto.
+    for (let i = 1; i < RATE.sessionFailuresPerMinutePerIp; i++) env.hub.uploadLocation(IP, { playerId, secret: `x${i}`, ...reading });
     assert.equal(env.hub.uploadLocation(IP, { playerId, secret: 'x'.repeat(43), ...reading }), 'rate_limited');
     assert.equal(env.hub.uploadLocation(IP, { playerId: 'p_inventado', secret, ...reading }), 'rate_limited');
     // Desde otra dirección, una sesión inválida aún no está frenada.
@@ -99,7 +102,7 @@ describe('C4 · V-07: los fallos ajenos por dirección no bloquean una sesión v
       const { players, state } = startedRoom(env, mode, mode === 'infection' ? 4 : 3);
       const p = players[1];
       const ip = '10.0.1.2';
-      for (let i = 0; i < RATE.failuresPerMinutePerIp; i++) env.hub.uploadLocation(ip, { playerId: p.id, secret: 'z'.repeat(43), lat: 0, lng: 0, acc: 5, age: 0 });
+      for (let i = 0; i < RATE.sessionFailuresPerMinutePerIp; i++) env.hub.uploadLocation(ip, { playerId: p.id, secret: 'z'.repeat(43), lat: 0, lng: 0, acc: 5, age: 0 });
       assert.equal(env.hub.uploadLocation(ip, { playerId: p.id, secret: 'z'.repeat(43), lat: 0, lng: 0, acc: 5, age: 0 }), 'rate_limited');
       const { secret } = p.welcome();
       assert.equal(env.hub.uploadLocation(ip, { playerId: p.id, secret, lat: CENTER.lat, lng: CENTER.lng, acc: 8, age: 0 }), 'accepted');

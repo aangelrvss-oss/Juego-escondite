@@ -1,0 +1,32 @@
+
+1. Salas activas por dirección (servidor con la configuración por defecto)
+   create nº 1: "welcome"
+   create nº 2: "welcome"
+   create nº 3: "welcome"
+   create nº 4: "welcome"
+   create nº 5: "welcome"
+   create nº 6: {"t":"error","error":"too_many_rooms"}
+   tras cerrar las 6 conexiones (las salas siguen en la sala de espera hasta 30 min): {"ok":true,"rooms":5,"sessions":5,"clients":0,"locWs":0,"locHttp":0}
+
+6. Fallos por dirección (20/min): reanudaciones con sesión inexistente desde la misma dirección
+   jugador legítimo en su sala: sí
+   respuestas a 22 reanudaciones inválidas: {"bad_session":20,"rate_limited":2}
+   crear sala nueva desde la misma dirección justo después: {"t":"error","error":"rate_limited"}
+   reanudación VÁLIDA del jugador legítimo tras el corte: errores=["rate_limited"], instantáneas recibidas en 15 s=0, estado de la conexión=open
+   (net.js no vuelve a intentar la reanudación mientras el socket siga abierto: queda conectado pero sin sesión)
+
+2. Máximo global de salas (MAX_ROOMS_PER_IP=1000 para que no actúe el límite por dirección)
+   101 creaciones: {"welcome":100,"server_full":1}
+   /health: {"ok":true,"rooms":100,"sessions":100,"clients":101,"locWs":0,"locHttp":0}
+
+3. Máximo de conexiones WebSocket simultáneas (1.010 intentos)
+   abiertas: 1000 · rechazadas: 10
+   /health: {"ok":true,"rooms":100,"sessions":100,"clients":1000,"locWs":0,"locHttp":0}
+
+4. Tamaño máximo de mensaje
+   mensaje de ~5.000 bytes: código de cierre 1009
+   mensaje de ~3.000 bytes con un campo de más: respuesta {"t":"error","error":"bad_message"}, cierre null
+
+5. Límite de mensajes por conexión
+   60 pings de golpe: 30 pongs
+   400 pings de golpe: 30 pongs, código de cierre 4008

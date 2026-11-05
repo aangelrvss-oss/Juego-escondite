@@ -1,0 +1,278 @@
+{
+ "Hugo": {
+  "myId": "p_VupzPTwQycfY",
+  "snap": {
+   "roomId": "room_lQAJ-1j9ktjQ",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_VupzPTwQycfY",
+   "serverNow": 1793812368161,
+   "countdownEnd": 1793812218006,
+   "headStartEnd": 1793812338006,
+   "gameEnd": 1793812938006,
+   "nextPingAt": null,
+   "activeStart": 1793812338006,
+   "finishedAt": 1793812368047,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_VupzPTwQycfY",
+     "name": "Hugo",
+     "team": "hunter",
+     "teamPref": "hunter",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_QFuJQVwyuVTv",
+     "name": "Inés",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_tkTR3CCKiaoD",
+     "name": "Juan",
+     "team": "runner",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_QFuJQVwyuVTv",
+     "hunterId": "p_VupzPTwQycfY",
+     "atOffsetMs": 20031,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": null,
+    "cause": "ended_by_host"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Inés": {
+  "myId": "p_QFuJQVwyuVTv",
+  "snap": {
+   "roomId": "room_lQAJ-1j9ktjQ",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_VupzPTwQycfY",
+   "serverNow": 1793812368161,
+   "countdownEnd": 1793812218006,
+   "headStartEnd": 1793812338006,
+   "gameEnd": 1793812938006,
+   "nextPingAt": null,
+   "activeStart": 1793812338006,
+   "finishedAt": 1793812368047,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_VupzPTwQycfY",
+     "name": "Hugo",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_QFuJQVwyuVTv",
+     "name": "Inés",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_tkTR3CCKiaoD",
+     "name": "Juan",
+     "team": "runner",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_QFuJQVwyuVTv",
+     "hunterId": "p_VupzPTwQycfY",
+     "atOffsetMs": 20031,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": null,
+    "cause": "ended_by_host"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Juan": {
+  "myId": "p_tkTR3CCKiaoD",
+  "snap": {
+   "roomId": "room_lQAJ-1j9ktjQ",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_VupzPTwQycfY",
+   "serverNow": 1793812368161,
+   "countdownEnd": 1793812218006,
+   "headStartEnd": 1793812338006,
+   "gameEnd": 1793812938006,
+   "nextPingAt": null,
+   "activeStart": 1793812338006,
+   "finishedAt": 1793812368047,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_VupzPTwQycfY",
+     "name": "Hugo",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_QFuJQVwyuVTv",
+     "name": "Inés",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_tkTR3CCKiaoD",
+     "name": "Juan",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_QFuJQVwyuVTv",
+     "hunterId": "p_VupzPTwQycfY",
+     "atOffsetMs": 20031,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": null,
+    "cause": "ended_by_host"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ }
+}

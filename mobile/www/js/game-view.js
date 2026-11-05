@@ -285,7 +285,10 @@ export function missionReport(snap, nameOf = (id) => id) {
     }
     if (o.cause === 'time_up' && o.winner === 'runner') highlights.push('El zorro aguantó hasta el final');
   } else {
-    if (captures.length > 0) highlights.push(`Primera captura: ${nameOf(captures[0].runnerId)} a los ${clock(captures[0].atOffsetMs)}`);
+    // Con una sola captura que acaba la partida, «primera» y «decisiva» eran la misma línea dos veces.
+    if (captures.length > 0 && !(o.cause === 'all_captured' && captures.length === 1)) {
+      highlights.push(`Primera captura: ${nameOf(captures[0].runnerId)} a los ${clock(captures[0].atOffsetMs)}`);
+    }
     if (o.cause === 'all_captured' && captures.length > 0) {
       const last = captures[captures.length - 1];
       highlights.push(`Captura decisiva: ${nameOf(last.runnerId)}${last.hunterId ? ` por ${nameOf(last.hunterId)}` : ''} a los ${clock(last.atOffsetMs)}`);
@@ -296,11 +299,24 @@ export function missionReport(snap, nameOf = (id) => id) {
     highlights.push(`${infection ? 'Más infecciones' : 'Más capturas'}: ${nameOf(ranking[0][0])} (${ranking[0][1]})`);
   }
   const winnerText = { hunter: 'Ganan los cazadores', runner: infection ? 'Ganan los supervivientes' : fox ? 'Gana el zorro' : 'Ganan los fugitivos' };
+  const cause = (infection && o.cause === 'all_captured' ? 'Todos infectados' : fox ? FOX_WIN_TEXT[o.cause] ?? WIN_TEXT[o.cause] : WIN_TEXT[o.cause]) ?? '';
+  // La captura que da la victoria (solo si la partida acabó por capturas): la última registrada.
+  const decisive = o.cause === 'all_captured' && captures.length > 0 ? captures[captures.length - 1] : null;
+  const survival = reportSurvival(snap, nameOf);
   return {
     mode: modeInfo(snap.config).name,
+    modeId: modeInfo(snap.config).id,
     winner: o.winner ? winnerText[o.winner] : 'Sin ganador',
-    cause: (infection && o.cause === 'all_captured' ? 'Todos infectados' : fox ? FOX_WIN_TEXT[o.cause] ?? WIN_TEXT[o.cause] : WIN_TEXT[o.cause]) ?? '',
+    winnerTeam: o.winner ?? null, // al terminar, los equipos ya son públicos (decisión del 29/10/2026)
+    cause,
+    causeId: o.cause,
     durationMs: duration,
+    totalMs: totalDuration(snap),
+    firstCaptureMs: captures.length > 0 ? captures[0].atOffsetMs : null,
+    decisive: decisive ? { runner: nameOf(decisive.runnerId), hunter: decisive.hunterId ? nameOf(decisive.hunterId) : null, atMs: decisive.atOffsetMs } : null,
+    survival,
+    survivors: survival.filter((s) => s.until === 'end').map((s) => s.name),
+    moments: reportMoments(captures, { duration, cause, decisive, nameOf }),
     timeToVictoryMs: o.cause === 'all_captured' && captures.length > 0 ? captures[captures.length - 1].atOffsetMs : null,
     captureCount: captures.length,
     selfDeclared: captures.filter((c) => c.via === 'self').length,
@@ -325,6 +341,78 @@ export function contagionGroups(captures) {
     groups.get(key).victims.push(c.runnerId);
   }
   return [...groups.values()];
+}
+
+/**
+ * Duración total de la partida (huida + persecución), con la hora del servidor: desde que empezó la huida
+ * (`headStartEnd` − la huida configurada) hasta el final. null si la instantánea no trae esos datos (p. ej.,
+ * una guardada antes de existir el campo). Vale también si terminó durante la huida.
+ */
+export function totalDuration(snap) {
+  const end = snap?.finishedAt;
+  const hsEnd = snap?.headStartEnd;
+  const hs = snap?.config?.headStartMs;
+  if (![end, hsEnd, hs].every((v) => typeof v === 'number' && Number.isFinite(v))) return null;
+  return Math.max(0, end - (hsEnd - hs));
+}
+
+/**
+ * Supervivencia de cada fugitivo (en Infección, de cada uno que empezó como fugitivo), contada desde el
+ * inicio de la persecución, como las capturas: hasta su captura (`until: 'captured'`) o hasta el final
+ * (`until: 'end'`). Quien abandonó o quedó sin conexión sin ser capturado va con `ms: null`
+ * (`until: 'left'`): la instantánea no dice cuándo salió y no se inventa. Si la partida terminó en la huida,
+ * los que siguen libres van con `ms: null`. Orden: más tiempo libre primero.
+ */
+export function reportSurvival(snap, nameOf = (id) => id) {
+  if (!snap || snap.phase !== 'FINISHED' || !snap.outcome) return [];
+  const captures = [...(snap.captures ?? [])].sort((a, b) => a.atOffsetMs - b.atOffsetMs);
+  const chase = snap.activeStart !== null && snap.activeStart !== undefined && typeof snap.finishedAt === 'number'
+    ? Math.max(0, snap.finishedAt - snap.activeStart)
+    : null;
+  const ids = captures.map((c) => c.runnerId);
+  for (const p of snap.players ?? []) {
+    const played = p.status === 'active' || p.status === 'captured' || p.status === 'left';
+    if (p.team === 'runner' && played && !ids.includes(p.id)) ids.push(p.id);
+  }
+  const byId = new Map((snap.players ?? []).map((p) => [p.id, p]));
+  const list = [...new Set(ids)].map((id) => {
+    const c = captures.find((x) => x.runnerId === id);
+    const p = byId.get(id);
+    if (c) return { id, name: nameOf(id), ms: c.atOffsetMs, until: 'captured', converted: c.converted === true };
+    if (p?.status === 'left' && p.leftReason !== 'after_end') return { id, name: nameOf(id), ms: null, until: 'left', converted: false };
+    return { id, name: nameOf(id), ms: chase, until: 'end', converted: false };
+  });
+  const rank = (s) => (s.ms === null ? -1 : s.ms + (s.until === 'end' ? 1 : 0)); // libre al final antes que capturado a la vez
+  return list.sort((a, b) => rank(b) - rank(a));
+}
+
+/**
+ * Momentos de la partida para la cronología del informe, en orden: inicio de la persecución, cada captura
+ * (marcada como primera, decisiva o última cuando lo es) y el final. Todo sale de la instantánea oficial.
+ * `atMs` es el desfase desde el inicio de la persecución (null si la partida terminó en la huida).
+ */
+function reportMoments(captures, { duration, cause, decisive, nameOf }) {
+  const moments = [];
+  if (duration !== null) moments.push({ kind: 'start', atMs: 0, tags: [], text: 'Empieza la persecución' });
+  captures.forEach((c, i) => {
+    const tags = [];
+    if (i === 0) tags.push('first');
+    if (c === decisive) tags.push('decisive');
+    else if (i === captures.length - 1 && i > 0) tags.push('last');
+    const what = c.converted ? 'Infección' : 'Captura';
+    moments.push({
+      kind: 'capture',
+      atMs: c.atOffsetMs,
+      tags,
+      runner: nameOf(c.runnerId),
+      hunter: c.hunterId ? nameOf(c.hunterId) : null,
+      via: c.via,
+      converted: c.converted === true,
+      text: `${what} de ${nameOf(c.runnerId)}${c.hunterId ? ` por ${nameOf(c.hunterId)}` : ''}`,
+    });
+  });
+  moments.push({ kind: 'end', atMs: duration, tags: [], text: duration === null ? `Final durante la huida: ${cause}` : `Final: ${cause}` });
+  return moments;
 }
 
 /**
@@ -498,6 +586,18 @@ export function revealOpen(reveal, snap, nowPerf) {
 }
 
 /**
+ * ¿Puede seguir abierta la guía (AF-10)? Se cierra sola al cambiar de fase o de partida (empieza la cuenta
+ * atrás, la huida, la persecución, el final o la revancha), durante la cuenta atrás y mientras se ve la
+ * tarjeta del rol: nunca tapa un momento que el jugador no puede perderse. Lo que pasa en la partida no
+ * depende de la guía, así que cerrarla no pierde nada.
+ */
+export function guideStaysOpen(prevSnap, snap, reveal, nowPerf) {
+  if (!snap) return true;
+  if (prevSnap && (prevSnap.phase !== snap.phase || prevSnap.gameNo !== snap.gameNo)) return false;
+  return snap.phase !== 'COUNTDOWN' && !revealOpen(reveal, snap, nowPerf);
+}
+
+/**
  * Hoja abierta tras una instantánea: «¿Quién te ha pillado?» solo vale en la persecución. El motor borra las
  * reclamaciones al terminar sin avisar (`tag_claim_resolved`), y la hoja no debe reabrirse en la revancha.
  */
@@ -505,14 +605,17 @@ export function sheetAfterSnapshot(sheet, snap) {
   return sheet === 'selftag' && snap?.phase !== 'ACTIVE' ? null : sheet;
 }
 
-/** Aviso al volver a la sala desde la cuenta atrás (`countdown_aborted`): por qué y qué hacer. */
-export function countdownAbortText(reason) {
+/**
+ * Aviso al volver a la sala desde la cuenta atrás (`countdown_aborted`): por qué y qué hacer. El anfitrión de
+ * la sala guiada no tiene «Estoy listo»: él vuelve a empezar con «Empezar partida».
+ */
+export function countdownAbortText(reason, { host = false } = {}) {
   const why = reason === 'aborted_by_host'
     ? 'El anfitrión ha cancelado el inicio.'
     : reason === 'team_empty'
       ? 'Se ha cancelado el inicio: alguien ha salido y faltan jugadores.'
       : 'Se ha cancelado el inicio.';
-  return `${why} Vuelve a pulsar «Estoy listo» para empezar otra vez.`;
+  return host ? `${why} Cuando estéis listos, pulsa «Empezar partida» otra vez.` : `${why} Vuelve a pulsar «Estoy listo» para empezar otra vez.`;
 }
 
 /**
@@ -676,11 +779,12 @@ export function codeFromLink(href) {
  * salido bien (Plan Maestro §2.1 paso 4 y §4.1: explicar por qué se pide la ubicación y no fingir que
  * se puede validar sin ella).
  */
-export function gpsCheckError(code) {
+export function gpsCheckError(code, button = 'Estoy listo') {
   if (code === 'permission_missing') {
-    return 'Para jugar hace falta permitir la ubicación: el servidor la usa para validar capturas y la zona, y solo durante la partida. Actívala y vuelve a pulsar «Estoy listo».';
+    return `Para jugar hace falta permitir la ubicación: el servidor la usa para validar capturas y la zona, y solo durante la partida. Actívala y vuelve a pulsar «${button}».`;
   }
-  if (code === 'timeout') return 'Todavía no hay una posición GPS fiable. Sal al aire libre, espera unos segundos y vuelve a pulsar «Estoy listo».';
+  if (code === 'timeout') return `Todavía no hay una posición GPS fiable. Sal al aire libre, espera unos segundos y vuelve a pulsar «${button}».`;
+  if (code === 'position_unavailable') return `Sin señal: el móvil no consigue tu ubicación ahora mismo. Sal al aire libre, espera unos segundos y vuelve a pulsar «${button}».`;
   return 'No se pudo activar la ubicación de este móvil. Revisa que esté encendida y vuelve a intentarlo.';
 }
 
@@ -688,19 +792,215 @@ export function gpsCheckError(code) {
  * Qué impide empezar, en el orden en que lo exige el motor. Lo ven todos (Plan Maestro §7, sala de
  * espera: es un error «no indicar quién está desconectado o qué impide empezar»). Al anfitrión se le
  * dice qué hacer; a los demás, qué falta. Los desconectados se nombran aparte de los que no están listos.
+ *
+ * `atStart` (sala guiada, ciclo UX 11/2026): la lista de seguridad y el «listo» del anfitrión se confirman
+ * en la hoja de «Empezar partida», así que no son bloqueos de la sala (salvo que el anfitrión se haya
+ * quedado sin conexión: eso sí lo tienen que saber los demás).
  */
-export function startBlockers(snap, { forHost = true } = {}) {
+export function startBlockers(snap, { forHost = true, atStart = false } = {}) {
   const out = [];
   if (!snap.config) out.push(forHost ? 'Fija la zona de juego.' : 'El anfitrión aún no ha fijado la zona de juego.');
-  else if (!snap.config.safetyChecklistConfirmed) out.push(forHost ? 'Confirma la lista de seguridad.' : 'El anfitrión aún no ha confirmado la lista de seguridad.');
+  else if (!snap.config.safetyChecklistConfirmed && !atStart) out.push(forHost ? 'Confirma la lista de seguridad.' : 'El anfitrión aún no ha confirmado la lista de seguridad.');
   const lobby = snap.players.filter((p) => p.status === 'lobby');
   const mode = modeInfo(snap.config);
   if (lobby.length < mode.minPlayers) out.push(mode.minPlayers > 2 ? `${mode.name} necesita al menos ${mode.minPlayers} jugadores.` : 'Hacen falta al menos 2 jugadores.');
   const offline = lobby.filter((p) => !p.connected);
   if (offline.length > 0) out.push(`Sin conexión: ${offline.map((p) => p.name).join(', ')}.`);
-  const notReady = lobby.filter((p) => p.connected && !p.ready);
-  if (notReady.length > 0) out.push(`Falta que estén listos: ${notReady.map((p) => p.name).join(', ')}.`);
+  const notReady = lobby.filter((p) => p.connected && !p.ready && !(atStart && p.id === snap.hostId));
+  // En la sala guiada nadie puede confirmar antes de que exista la zona: no se pide lo que aún no se puede hacer.
+  if (notReady.length > 0 && !(atStart && !snap.config)) out.push(`Falta que estén listos: ${notReady.map((p) => p.name).join(', ')}.`);
   return out;
+}
+
+// ------------------------------------------------------------------ sala guiada (ciclo UX 11/2026)
+
+/** Lista de seguridad que el anfitrión confirma al empezar (antes, una casilla suelta en la configuración). */
+export const SAFETY_CHECKLIST = Object.freeze([
+  'Zona sin calzadas, vías ni obras: nadie cruza corriendo.',
+  'Captura con un toque suave, nunca empujones.',
+  'Todos los jugadores son mayores de 18 años.',
+  'Punto de encuentro acordado para el final o si algo va mal.',
+]);
+
+const metresText = (m) => (m >= 1000 ? `${(m / 1000).toLocaleString('es-ES', { maximumFractionDigits: 1 })} km` : `${m} m`);
+
+/**
+ * Resumen legible de la configuración, una fila por concepto, con lo importante explicado en una frase
+ * (qué es la huida, las pistas, la zona que se cierra). null sin configuración.
+ */
+export function configSummary(config) {
+  if (!config) return null;
+  const mode = modeInfo(config);
+  const min = (ms) => `${Math.round(ms / 60_000)} min`;
+  const radius = config.zone?.[0]?.radiusM;
+  const rows = [
+    { key: 'mode', label: 'Modo', value: mode.name, note: mode.line },
+    {
+      key: 'zone',
+      label: 'Zona',
+      value: `${metresText(radius)} de radio${config.dynamicZone ? ', se cierra cada 5 min' : ''}`,
+      note: config.dynamicZone
+        ? 'Centrada en el punto de encuentro. Cada 5 min encoge y se desplaza: quien quede fuera queda a la vista.'
+        : 'Centrada en el punto de encuentro. Salir de ella te deja a la vista de los cazadores.',
+    },
+    { key: 'head', label: 'Huida', value: min(config.headStartMs), note: 'Ventaja para esconderse; los cazadores esperan en la salida.' },
+    { key: 'duration', label: 'Persecución', value: min(config.durationMs), note: 'Tiempo de caza después de la huida.' },
+    {
+      key: 'ping',
+      label: 'Pistas',
+      value: `cada ${min(config.pingIntervalMs)}`,
+      note: config.mode === 'fox_hunt' ? 'Los cazadores reciben la posición exacta del zorro.' : 'Los cazadores reciben la posición de los fugitivos.',
+    },
+  ];
+  return rows;
+}
+
+/**
+ * Estado de un jugador en la sala, con su motivo: «Listo», «Falta confirmar», «Sin conexión», «Invitado».
+ * El anfitrión no pulsa «Estoy listo»: se confirma al empezar (`tone` para el estilo de la fila).
+ */
+export function playerReadiness(p, snap) {
+  if (p.status === 'invited') return { text: 'Invitado', tone: 'wait', reason: 'Aún no se ha unido a la revancha.' };
+  if (!p.connected) return { text: 'Sin conexión', tone: 'off', reason: 'Tiene que volver a abrir la partida.' };
+  if (p.ready) return { text: 'Listo', tone: 'ready', reason: 'GPS comprobado.' };
+  if (p.id === snap.hostId) return { text: 'Anfitrión', tone: 'host', reason: 'Se confirma al empezar la partida.' };
+  return { text: 'Falta confirmar', tone: 'wait', reason: snap.config ? 'Tiene que pulsar «Estoy listo».' : 'Esperando a que se fije la zona.' };
+}
+
+/**
+ * Progreso de la sala: cuántos de los jugadores que tienen que pulsar «Estoy listo» lo han hecho. El
+ * anfitrión no cuenta (lo confirma al empezar); los invitados a la revancha tampoco, hasta que se unan.
+ */
+export function readyProgress(snap) {
+  const others = snap.players.filter((p) => p.status === 'lobby' && p.id !== snap.hostId);
+  const ready = others.filter((p) => p.ready && p.connected).length;
+  const total = others.length;
+  const text = total === 0 ? 'Aún no ha entrado nadie' : `${ready} de ${total} ${total === 1 ? 'listo' : 'listos'}`;
+  return { ready, total, text, ratio: total ? ready / total : 0 };
+}
+
+/**
+ * Pasos visibles de la sala guiada y su estado ('done' | 'current' | 'todo'). Solo uno es el actual: el
+ * primero sin hacer. Anfitrión: invitar, configurar, esperar a que estén listos, empezar. Jugador: zona
+ * fijada, «Estoy listo», esperar al resto, empezar (lo hace el anfitrión).
+ */
+export function lobbySteps(snap, myId) {
+  const isHost = snap.hostId === myId;
+  const lobby = snap.players.filter((p) => p.status === 'lobby');
+  const others = lobby.filter((p) => p.id !== snap.hostId);
+  const enough = lobby.length >= modeInfo(snap.config).minPlayers;
+  const othersReady = others.length > 0 && others.every((p) => p.ready && p.connected);
+  const self = snap.players.find((p) => p.id === myId);
+  const steps = isHost
+    ? [
+        { id: 'config', label: 'Configurar', done: Boolean(snap.config) },
+        { id: 'invite', label: 'Invitar', done: enough },
+        { id: 'ready', label: 'Listos', done: enough && othersReady },
+        { id: 'start', label: 'Empezar', done: false },
+      ]
+    : [
+        { id: 'config', label: 'Zona fijada', done: Boolean(snap.config) },
+        { id: 'ready', label: 'Estoy listo', done: Boolean(self?.ready) },
+        { id: 'wait', label: 'Resto listo', done: enough && lobby.every((p) => p.id === snap.hostId || (p.ready && p.connected)) },
+        { id: 'start', label: 'Empieza', done: false },
+      ];
+  let current = false;
+  return steps.map(({ done, ...s }) => {
+    if (done) return { ...s, state: 'done' };
+    if (current) return { ...s, state: 'todo' };
+    current = true;
+    return { ...s, state: 'current' };
+  });
+}
+
+/**
+ * Botón «Estoy listo» de un jugador. Sin zona fijada no se puede pulsar: el primer `configure` quitaría
+ * el «listo» igualmente (motor: cambio material), así que se explica que hay que esperar.
+ */
+export function readyButton(snap, myId, { locating = false } = {}) {
+  const self = snap.players.find((p) => p.id === myId);
+  if (!snap.config) return { label: 'Espera a que el anfitrión fije la zona', disabled: true, primary: false };
+  if (locating) return { label: 'Comprobando tu GPS…', disabled: true, primary: true };
+  if (self?.ready) return { label: 'No estoy listo', disabled: false, primary: false };
+  return { label: 'Estoy listo', disabled: false, primary: true };
+}
+
+const R_EARTH_M = 6_371_008.8;
+function distanceM(a, b) {
+  const rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad;
+  const dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R_EARTH_M * Math.asin(Math.min(1, Math.sqrt(h)));
+}
+
+/** Desplazamiento a partir del cual el motor considera que la zona ha cambiado (engine.ts, MATERIAL_MOVE_M). */
+export const MATERIAL_MOVE_M = 50;
+
+/**
+ * Qué ha cambiado de forma material entre dos configuraciones, en palabras del jugador (misma regla que
+ * el motor, que es quien quita el «listo»: aquí solo se explica). [] si nada material. `prev` es la que
+ * aceptó el jugador al marcarse listo (D-062), no la anterior: varios recentrados pequeños suman.
+ */
+export function configChanges(prev, next) {
+  if (!prev || !next) return [];
+  const out = [];
+  if ((prev.mode ?? 'classic') !== (next.mode ?? 'classic')) out.push('el modo');
+  const pz = prev.zone ?? [];
+  const nz = next.zone ?? [];
+  const zoneRules = pz.length !== nz.length || nz.some((z, i) => z.radiusM !== pz[i].radiusM || z.fromOffsetMs !== pz[i].fromOffsetMs);
+  const movedZone = !zoneRules && nz.some((z, i) => distanceM(pz[i].center, z.center) >= MATERIAL_MOVE_M);
+  const movedMeeting = prev.meetingPoint && next.meetingPoint && distanceM(prev.meetingPoint, next.meetingPoint) >= MATERIAL_MOVE_M;
+  if (zoneRules || Boolean(prev.dynamicZone) !== Boolean(next.dynamicZone) || movedZone || movedMeeting) out.push('la zona');
+  if (prev.headStartMs !== next.headStartMs) out.push('la huida');
+  if (prev.durationMs !== next.durationMs) out.push('la persecución');
+  if (prev.pingIntervalMs !== next.pingIntervalMs) out.push('las pistas');
+  return out;
+}
+
+/**
+ * Configuración que aceptó este jugador (D-062): la vigente en la primera instantánea que lo muestra
+ * listo, y se conserva mientras siga listo en la sala (el motor la guarda igual, readyRef). El anfitrión
+ * acepta cada cambio que hace él mismo. null si no está listo.
+ */
+export function acceptedConfig(prevAccepted, snap, myId) {
+  const self = snap?.players.find((p) => p.id === myId);
+  if (!snap || snap.phase !== 'LOBBY' || !snap.config || !self?.ready) return null;
+  if (snap.hostId === myId) return snap.config;
+  return prevAccepted ?? snap.config;
+}
+
+/**
+ * Aviso para un jugador al que el motor acaba de quitar el «listo» porque el anfitrión ha cambiado la
+ * partida (se deduce de las instantáneas: el protocolo no cambia). Se compara con lo que aceptó
+ * (`accepted`, acceptedConfig) y no con la instantánea anterior. null si no es el caso (por ejemplo,
+ * si se ha desmarcado él mismo).
+ */
+export function readyResetNotice(prevSnap, nextSnap, myId, accepted = prevSnap?.config) {
+  if (!prevSnap || !nextSnap || prevSnap.phase !== 'LOBBY' || nextSnap.phase !== 'LOBBY') return null;
+  if (prevSnap.gameNo !== nextSnap.gameNo || nextSnap.hostId === myId) return null;
+  const before = prevSnap.players.find((p) => p.id === myId);
+  const after = nextSnap.players.find((p) => p.id === myId);
+  if (!before?.ready || after?.ready !== false || !nextSnap.config) return null;
+  const from = accepted ?? prevSnap.config;
+  const changes = configChanges(from, nextSnap.config);
+  if (changes.length === 0) return null;
+  const list = changes.length === 1 ? changes[0] : `${changes.slice(0, -1).join(', ')} y ${changes.at(-1)}`;
+  return `El anfitrión ha cambiado ${list} desde que te marcaste listo. Revisa la partida y vuelve a pulsar «Estoy listo».`;
+}
+
+/** Resumen breve para la hoja de «Empezar partida»: modo, zona, tiempos y jugadores. */
+export function startSummary(snap) {
+  const cfg = snap.config;
+  if (!cfg) return [];
+  const lobby = snap.players.filter((p) => p.status === 'lobby').length;
+  const min = (ms) => Math.round(ms / 60_000);
+  return [
+    { label: 'Modo', value: modeInfo(cfg).name },
+    { label: 'Zona', value: `${metresText(cfg.zone[0].radiusM)}${cfg.dynamicZone ? ', se cierra cada 5 min' : ''}` },
+    { label: 'Tiempos', value: `${min(cfg.headStartMs)} min de huida + ${min(cfg.durationMs)} min de persecución, pistas cada ${min(cfg.pingIntervalMs)} min` },
+    { label: 'Jugadores', value: `${lobby}` },
+  ];
 }
 
 /**

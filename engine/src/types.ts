@@ -68,6 +68,9 @@ export interface Player {
   teamPrefSetBy: string | null;
   team: Team | null;
   ready: boolean;
+  // Configuración que aceptó al marcarse listo (D-062). null o ausente si no está listo; un estado guardado
+  // antes no la tiene (se toma la configuración vigente).
+  readyRef?: ReadyRef | null;
   status: PlayerStatus;
   connected: boolean;
   disconnectedSince: number | null;
@@ -170,6 +173,18 @@ export interface RoomState {
   // guardado antes del 1/11/2026 no los tiene (zona fija).
   zonePlan?: ZoneVersion[] | null;
   zonePhase?: number;
+  // Política de «listo» (D-058, D-062): revisión de las reglas (modo, tiempos, pistas, radio, versiones de
+  // zona). Sube con cada cambio de reglas; el «listo» de cada jugador recuerda la revisión que aceptó.
+  // Opcional: un estado guardado antes no la tiene (equivale a 0).
+  configRev?: number;
+}
+
+// Lo que aceptó un jugador al pulsar «Estoy listo» (D-062): la revisión de las reglas y dónde estaban la
+// zona y el punto de encuentro. Los recentrados se miden contra esto, no contra el anterior.
+export interface ReadyRef {
+  rev: number;
+  centers: LatLng[];
+  meetingPoint: LatLng;
 }
 
 export type Audience =

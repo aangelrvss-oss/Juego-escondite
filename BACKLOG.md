@@ -13,6 +13,45 @@ Estados:
 - `[~]` hecho sin evidencia suficiente (por ejemplo, solo en simulación o en el navegador del ordenador);
 - `[x]` hecho y verificado con la evidencia adecuada al tipo de afirmación (guía §3 y §14).
 
+## Cierre del ciclo UX · 05/11/2026 (detalle en `QA/ciclo-ux-202611/CIERRE_CORRECCIONES_Y_DESPLIEGUE.md`)
+Correcciones de la segunda auditoría (`AUDITORIA_FINAL_PREVIA_PRUEBA_FISICA_R2.md`). Las de abajo («Ciclo UX · 04/11») quedan como histórico.
+- [~] AF-01: el «listo» se mide desde lo que aceptó cada jugador, y `start` lo vuelve a comprobar (D-062). Verificado con pruebas del motor y del cliente con el motor real; falta la prueba física.
+- [~] AF-02: el aviso de «listo» perdido dice qué ha cambiado desde lo que aceptó el jugador.
+- [~] AF-10: la guía se cierra sola al empezar la cuenta atrás, al cambiar de fase y con la tarjeta del rol (D-064).
+- [~] AF-09: `sala-codigo.webp` y `final.webp` rehechas con capturas de la interfaz actual. Las otras 14 se revisaron y están al día.
+- [~] AF-11: el último Mission Report se guarda en el móvil y la revancha pide confirmación (D-063).
+- [~] AF-07 y AF-08: el límite por dirección ya no bloquea reanudaciones válidas ni crear sala, y los comandos sin respuesta terminan a los 20 s (D-065).
+- [~] AF-12: el GPS del anfitrión se vuelve a comprobar al empezar si la lectura tiene más de 2 min.
+- [x] E2E P4: era un fallo del test (el cazador abandonaba durante la cuenta atrás); corregido el test.
+- [ ] **P0 · Prueba física con varios móviles** (protocolo en `AUDITORIA_FINAL_PREVIA_PRUEBA_FISICA_R2.md` §9 e instrucciones en el informe de cierre).
+- [ ] **P1 · AF-06:** las dos copias de la sala con `structuredClone` por comando. No se toca en este ciclo: cambia el aislamiento del estado del motor. Recomendación: no clonar `samples` en profundidad o usar copia al escribir, con pruebas de inmutabilidad.
+- [ ] **P1 · AF-04:** Render gratuito sin disco: un push, un reinicio o una suspensión borran las salas. No hacer push durante una partida.
+- [ ] **P2:** «atrás» de Android (AF-15), safe areas de la hoja de inicio y de la guía (AF-16), deduplicar capturas en las estadísticas (AF-17) y apodos en el texto de compartir (AF-19, decisión de producto).
+
+## Ciclo UX · 04/11/2026 (detalle en `QA/ciclo-ux-202611/INFORME_CICLO_UX.md`)
+- [~] Sala guiada y política de «Estoy listo» (D-058, D-059). **Solo emulación en Chrome con servidor local; sin commit ni despliegue.**
+- [~] Guía rápida visual a petición (D-060). Solo emulación.
+- [~] Mission Report ampliado e historial solo en el móvil (D-061). Solo emulación.
+- [ ] **P0 · Servidor y red (zonas protegidas: decide el propietario).**
+  - CPU: `applyCommand` clona la sala dos veces por comando, también con cada ubicación (en local, 20 jugadores = 14 % de un núcleo).
+  - El límite `failuresPerMinutePerIp` bloquea las reanudaciones válidas tras un reinicio.
+  - `net.js`: `command()` no se resuelve si el servidor responde con un error, y un `rate_limited` al reanudar no avisa.
+- [ ] **P1 · Despliegue y alojamiento.**
+  - Desplegar desde una rama de publicación o desactivar el auto-deploy de `mapa-real`.
+  - Para eventos: Starter siempre activo con disco y `STATE_FILE` (unos 7,25 $/mes; requiere autorización).
+- [ ] **P1 · Validar con móviles reales:**
+  - la sala guiada con alguien que no conoce el juego;
+  - el autocentrado con GPS real;
+  - un corte de red de 45 s (A16 del QA);
+  - la guía en una pantalla pequeña.
+- [ ] **P2:**
+  - límite de conexiones por dirección y comprobar cómo trata Render `X-Forwarded-For`;
+  - compresión y caché de estáticos (1,78 MiB);
+  - conservar el último Mission Report al proponer la revancha;
+  - en Infección, unificar «captura» e «infección» en los textos;
+  - captura del aviso de permiso denegado para la guía;
+  - anticipar en la sala `teams_unbalanced` y `room_expiring`.
+
 ## P0 · Auditoría y coherencia documental
 - [x] Auditoría frente al Plan Maestro, matriz de trazabilidad y contradicciones registradas (D-043 a D-047; `PLAN_MAESTRO_TRAZABILIDAD.md`).
 - [x] Alternativas y recomendaciones de las decisiones pendientes (`docs/product/DECISIONES_PENDIENTES.md`).

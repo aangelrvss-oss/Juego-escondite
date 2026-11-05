@@ -95,7 +95,12 @@ export const RATE = {
   claimMinIntervalMs: 3_000, // reclamaciones de captura: evita sondear distancias a ráfagas
   attemptsPerMinute: 10, // create/join/resume por conexión
   // Salas activas por dirección: HubOptions.maxRoomsPerIp (por defecto 5).
-  failuresPerMinutePerIp: 20, // códigos o sesiones incorrectos por dirección
+  failuresPerMinutePerIp: 20, // códigos de sala incorrectos por dirección (frena adivinar códigos)
+  // Sesiones incorrectas por dirección (resume y /api/loc). Presupuesto aparte y mucho más alto (AF-07):
+  // tras un reinicio sin estado guardado, todos los móviles de una misma Wi-Fi fallan a la vez al
+  // reanudar, y eso no debe impedirles crear ni unirse a la sala nueva. Adivinar una sesión es inviable
+  // (identificador de 72 bits y secreto de 256 bits aleatorios); este límite solo acota el trabajo.
+  sessionFailuresPerMinutePerIp: 300,
 } as const;
 
 // Resultado de un comando visto por el cliente: los del motor más los límites del servidor.
@@ -204,7 +209,8 @@ export class Hub {
   // Avisos «removed» retenidos mientras se procesa un comando de un cliente (ver `command`).
   private removalNotices: Client[] | null = null;
   private readonly clients = new Set<Client>();
-  private readonly failures = new Map<string, number[]>();
+  private readonly failures = new Map<string, number[]>(); // códigos de sala incorrectos
+  private readonly sessionFailures = new Map<string, number[]>(); // sesiones incorrectas
   private readonly accepted = { ws: 0, http: 0 }; // lecturas registradas por el motor, por canal
   private nextPositionsAt: number;
   private changes = 0; // aumenta con cada cambio de salas o sesiones (para saber cuándo guardar)
@@ -381,23 +387,31 @@ export class Hub {
     return false;
   }
 
-  private tooManyFailures(ip: string): boolean {
+  /** Fallos de la dirección en el último minuto, en el registro dado (códigos o sesiones). */
+  private tooManyFailures(ip: string, log = this.failures, limit: number = RATE.failuresPerMinutePerIp): boolean {
     const now = this.now();
-    const recentFailures = (this.failures.get(ip) ?? []).filter((t) => t > now - 60_000);
-    this.failures.set(ip, recentFailures);
-    return recentFailures.length >= RATE.failuresPerMinutePerIp;
+    const recentFailures = (log.get(ip) ?? []).filter((t) => t > now - 60_000);
+    log.set(ip, recentFailures);
+    return recentFailures.length >= limit;
   }
 
-  private recordFailure(ip: string): void {
-    const list = this.failures.get(ip) ?? [];
+  private recordFailure(ip: string, log = this.failures): void {
+    const list = log.get(ip) ?? [];
     list.push(this.now());
-    this.failures.set(ip, list);
+    log.set(ip, list);
+  }
+
+  /** Sesión incorrecta (resume o /api/loc): 'rate_limited' si la dirección ya agotó su presupuesto. */
+  private sessionFailure(ip: string): 'bad_session' | 'rate_limited' {
+    if (this.tooManyFailures(ip, this.sessionFailures, RATE.sessionFailuresPerMinutePerIp)) return 'rate_limited';
+    this.recordFailure(ip, this.sessionFailures);
+    return 'bad_session';
   }
 
   private countAttempt(client: Client): boolean {
     const now = this.now();
     client.attempts = client.attempts.filter((t) => t > now - 60_000);
-    if (client.attempts.length >= RATE.attemptsPerMinute || this.tooManyFailures(client.ip)) return false;
+    if (client.attempts.length >= RATE.attemptsPerMinute) return false;
     client.attempts.push(now);
     return true;
   }
@@ -433,7 +447,11 @@ export class Hub {
       case 'create':
       case 'join':
       case 'resume':
-        if (!this.countAttempt(client)) {
+        // El límite de fallos por dirección solo frena las uniones (lo único que permite adivinar: el
+        // código de 6 caracteres). Crear no adivina nada (lo limitan maxRoomsPerIp y el cubo de mensajes) y
+        // la reanudación se autentica primero, como /api/loc (V-07): los fallos ajenos desde la misma Wi-Fi
+        // no dejan al grupo sin poder crear la sala nueva, entrar en ella ni reanudar (AF-07).
+        if ((msg.t === 'join' && this.tooManyFailures(client.ip)) || !this.countAttempt(client)) {
           this.send(client, { t: 'error', error: 'rate_limited' });
           return;
         }
@@ -506,7 +524,7 @@ export class Hub {
 
   private resume(client: Client, msg: Extract<ClientMessage, { t: 'resume' }>): void {
     const room = this.authenticate(msg.playerId, msg.secret);
-    if (!room) return this.fail(client, 'bad_session');
+    if (!room) return this.send(client, { t: 'error', error: this.sessionFailure(client.ip) });
     if (client.playerId && client.playerId !== msg.playerId) return this.send(client, { t: 'error', error: 'already_in_room' });
     const previous = this.connections.get(msg.playerId);
     if (previous && previous !== client) {
@@ -651,13 +669,13 @@ export class Hub {
     // Primero la sesión: el límite de fallos por dirección solo frena a quien no tiene una válida. Si se
     // comprobara antes, los fallos de otros desde la misma dirección (misma Wi-Fi, CGNAT del operador)
     // dejarían sin ubicación a todo el grupo (V-07). Adivinar una sesión sigue siendo inviable (secreto
-    // de 32 bytes aleatorios) y los intentos con sesión inválida siguen limitados por dirección.
+    // de 32 bytes aleatorios) y los intentos con sesión inválida siguen limitados por dirección, con el
+    // presupuesto de sesiones (no el de códigos: AF-07).
     const room = this.authenticate(upload.playerId, upload.secret);
     if (!room) {
-      if (this.tooManyFailures(ip)) return 'rate_limited';
-      this.recordFailure(ip);
-      this.record('loc_http_refused', () => ({ outcome: 'bad_session' }));
-      return 'bad_session';
+      const outcome = this.sessionFailure(ip);
+      if (outcome === 'bad_session') this.record('loc_http_refused', () => ({ outcome }));
+      return outcome;
     }
     // El servicio nativo envía con la pantalla bloqueada: es la aplicación, viva, aunque no haya WebSocket.
     this.seen(upload.playerId);
@@ -843,7 +861,8 @@ export class Hub {
       this.broadcastPositions(now);
       this.nextPositionsAt = now + this.opts.positionsIntervalMs;
       // Limpieza del registro de fallos por dirección: solo importa el último minuto.
-      for (const [ip, list] of this.failures) if (!list.some((t) => t > now - 60_000)) this.failures.delete(ip);
+      for (const log of [this.failures, this.sessionFailures])
+        for (const [ip, list] of log) if (!list.some((t) => t > now - 60_000)) log.delete(ip);
     }
   }
 

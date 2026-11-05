@@ -1,0 +1,303 @@
+[
+  {
+    "id": "A0 primera visita: la guía no se abre sola",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A1 crear sala muestra el código",
+    "ok": true,
+    "detail": "X4PNEE"
+  },
+  {
+    "id": "A2 autocentrado: la configuración aparece sin pulsar nada",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A3 unirse por código",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A4 enlace ?sala= rellena el código",
+    "ok": true,
+    "detail": "X4PNEE"
+  },
+  {
+    "id": "A4b unirse por enlace",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A5 nombre con HTML se muestra escapado (sin <i>)",
+    "ok": true,
+    "detail": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">Tiene que pulsar «Estoy listo».</small>"
+  },
+  {
+    "id": "A6 el QR se genera (svg en la hoja)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A7 dos jugadores listos (visto por el anfitrión)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "A8 compartir enlace incluye ?sala=",
+    "ok": true,
+    "detail": [
+      {
+        "via": "share",
+        "title": "THE OUTRUN",
+        "text": "Únete a mi partida de THE OUTRUN con el código X4PNEE",
+        "url": "http://127.0.0.1:8842/?sala=X4PNEE"
+      }
+    ]
+  },
+  {
+    "id": "A9 QR/compartir/recentrar 20 m no quitan el «listo»",
+    "ok": true,
+    "detail": [
+      {
+        "name": "Ana Host",
+        "state": "Anfitrión",
+        "off": false,
+        "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">Se confirma al empezar la partida.</small>"
+      },
+      {
+        "name": "Beto",
+        "state": "Listo",
+        "off": false,
+        "html": "Beto<small class=\"preason\">GPS comprobado.</small>"
+      },
+      {
+        "name": "<i>Zo</i>\"&'x",
+        "state": "Listo",
+        "off": false,
+        "html": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">GPS comprobado.</small>"
+      }
+    ]
+  },
+  {
+    "id": "A10 INFO deriva por recentrados en e2e (ver test engine/test/qa-preparacion-deriva.test.ts)",
+    "ok": true,
+    "detail": "Falta confirmar"
+  },
+  {
+    "id": "A11 empezar con alguien no listo: error en la hoja, sigue en la sala",
+    "ok": true,
+    "detail": "Todos tienen que estar conectados y listos."
+  },
+  {
+    "id": "A12 al editar con jugadores listos, aviso de que perderán el «listo»",
+    "ok": false,
+    "detail": ""
+  },
+  {
+    "id": "A13 cambio material (radio) quita el «listo» a los demás",
+    "ok": true,
+    "detail": [
+      {
+        "name": "Ana Host",
+        "state": "Listo",
+        "off": false,
+        "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">GPS comprobado.</small>"
+      },
+      {
+        "name": "Beto",
+        "state": "Falta confirmar",
+        "off": false,
+        "html": "Beto<small class=\"preason\">Tiene que pulsar «Estoy listo».</small>"
+      },
+      {
+        "name": "<i>Zo</i>\"&'x",
+        "state": "Falta confirmar",
+        "off": false,
+        "html": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">Tiene que pulsar «Estoy listo».</small>"
+      }
+    ]
+  },
+  {
+    "id": "A14 …y no al anfitrión (si ya estaba listo)",
+    "ok": true,
+    "detail": {
+      "hostRowAfter": "Listo",
+      "now": {
+        "name": "Ana Host",
+        "state": "Listo",
+        "off": false,
+        "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">GPS comprobado.</small>"
+      }
+    }
+  },
+  {
+    "id": "A15 el jugador ve qué cambió («la zona»)",
+    "ok": true,
+    "detail": "El anfitrión ha cambiado la zona. Revisa la partida y vuelve a pulsar «Estoy listo»."
+  },
+  {
+    "id": "A16 corte de red de p3: vuelve y sigue listo; Beto no se ve afectado",
+    "ok": false,
+    "detail": {
+      "sawOff": false,
+      "r3": [
+        {
+          "name": "Ana Host",
+          "state": "Listo",
+          "off": false,
+          "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">GPS comprobado.</small>"
+        },
+        {
+          "name": "Beto",
+          "state": "Listo",
+          "off": false,
+          "html": "Beto<small class=\"preason\">GPS comprobado.</small>"
+        },
+        {
+          "name": "<i>Zo</i>\"&'x",
+          "state": "Sin conexión",
+          "off": true,
+          "html": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">Tiene que volver a abrir la partida.</small>"
+        }
+      ]
+    }
+  },
+  {
+    "id": "A17 cerrar y reabrir la pestaña de p3: misma plaza y sigue listo",
+    "ok": true,
+    "detail": [
+      {
+        "name": "Ana Host",
+        "state": "Listo",
+        "off": false,
+        "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">GPS comprobado.</small>"
+      },
+      {
+        "name": "Beto",
+        "state": "Listo",
+        "off": false,
+        "html": "Beto<small class=\"preason\">GPS comprobado.</small>"
+      },
+      {
+        "name": "<i>Zo</i>\"&'x",
+        "state": "Listo",
+        "off": false,
+        "html": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">GPS comprobado.</small>"
+      }
+    ]
+  },
+  {
+    "id": "A18 volver de segundo plano: p2 sigue conectado y listo",
+    "ok": true,
+    "detail": "Conectado"
+  },
+  {
+    "id": "A19 recarga del anfitrión: misma configuración, los demás siguen listos, sin recentrar",
+    "ok": true,
+    "detail": {
+      "cfgBefore": "ModoClásicoZona250 m de radio, se cierra cada 5 minHuida2 minPersecución20 minPistascada 3 min",
+      "cfgAfter": "ModoClásicoZona250 m de radio, se cierra cada 5 minHuida2 minPersecución20 minPistascada 3 min",
+      "r5": [
+        {
+          "name": "Ana Host",
+          "state": "Listo",
+          "off": false,
+          "html": "Ana Host <em>(tú)</em> <span class=\"tag\">Anfitrión</span><small class=\"preason\">GPS comprobado.</small>"
+        },
+        {
+          "name": "Beto",
+          "state": "Listo",
+          "off": false,
+          "html": "Beto<small class=\"preason\">GPS comprobado.</small>"
+        },
+        {
+          "name": "<i>Zo</i>\"&'x",
+          "state": "Listo",
+          "off": false,
+          "html": "&lt;i&gt;Zo&lt;/i&gt;\"&amp;'x<small class=\"preason\">GPS comprobado.</small>"
+        }
+      ]
+    }
+  },
+  {
+    "id": "D1 sala sin desbordamiento horizontal a 412px (host)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en sala (host)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D1 sala sin desbordamiento horizontal a 360px (p2)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en sala (p2)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D1 sala sin desbordamiento horizontal a 320px (p3)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en sala (p3)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en la hoja de empezar",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "A20 Infección con 3 jugadores: «Empezar» bloqueado y explica el mínimo de 4",
+    "ok": true,
+    "detail": "Para empezar faltaInfección necesita al menos 4 jugadores.Falta que estén listos: Beto, <i>Zo</i>\"&'x. Empezar partida"
+  },
+  {
+    "id": "A21 cambio de modo: el jugador ve «el modo»",
+    "ok": true,
+    "detail": "El anfitrión ha cambiado el modo. Revisa la partida y vuelve a pulsar «Estoy listo»."
+  },
+  {
+    "id": "A22 Clásico: la hoja de empezar arranca la partida (doble toque sin error)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D3 errores de consola/página (host)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D3 errores de consola/página (p2)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D3 errores de consola/página (p3)",
+    "ok": false,
+    "detail": [
+      "console: WebSocket connection to 'ws://127.0.0.1:8842/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "console: WebSocket connection to 'ws://127.0.0.1:8842/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "console: WebSocket connection to 'ws://127.0.0.1:8842/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED",
+      "console: WebSocket connection to 'ws://127.0.0.1:8842/ws' failed: Error in connection establishment: net::ERR_INTERNET_DISCONNECTED"
+    ]
+  }
+]

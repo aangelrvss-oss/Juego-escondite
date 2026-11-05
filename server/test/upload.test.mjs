@@ -78,12 +78,13 @@ describe('envío nativo de la ubicación por HTTP (POST /api/loc)', () => {
     assert.deepEqual([s.locWs, s.locHttp], [1, 1]);
   });
 
-  it('sesión falsa o secreto ajeno: 401 y, tras 20 fallos por minuto desde la misma dirección, 429', async () => {
+  it('sesión falsa o secreto ajeno: 401 y, tras agotar el presupuesto de sesiones por minuto desde la misma dirección, 429', async () => {
     const { players } = await countdown();
     const [ana, beto] = players;
     assert.equal(await upload({ ...reading(ana, 0), secret: sessionOf(beto).secret }), 401, 'secreto de otro jugador');
     assert.equal(await upload({ ...reading(ana, 0), playerId: 'p_inventado' }), 401);
-    for (let i = 2; i < RATE.failuresPerMinutePerIp; i++) assert.equal(await upload({ ...reading(ana, 0), secret: `x${i}` }), 401);
+    // AF-07: las sesiones falsas tienen su propio presupuesto por dirección (antes compartían los 20 de códigos).
+    for (let i = 2; i < RATE.sessionFailuresPerMinutePerIp; i++) assert.equal(await upload({ ...reading(ana, 0), secret: `x${i}` }), 401);
     assert.equal(await upload({ ...reading(ana, 0), secret: 'x-otra' }), 429, 'la dirección queda bloqueada un minuto para sesiones falsas');
     // V-07 (ciclo 30/10/2026): los fallos ajenos desde la misma dirección (Wi-Fi o CGNAT compartidas) no
     // bloquean a quien tiene sesión válida. Antes esperaba 429 aquí, que era justo el fallo.

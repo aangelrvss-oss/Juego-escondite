@@ -1,0 +1,19 @@
+[
+  {
+    "id": "S1 con un jugador listo, «Cambiar» avisa de que perderá el «listo»",
+    "ok": true,
+    "detail": "s pistas envían a los cazadores la posición de los fugitivos; la zona se cierra cada 5 min. Cambiar el modo, la zona o los tiempos quita el «listo» a los demás: tendrán que confirmarlo otra vez. Hecho"
+  },
+  {
+    "id": "S2 tras el corte de red, Beto vuelve solo (≤ 30 s) y sigue listo",
+    "ok": true,
+    "detail": {
+      "seenOffAt": null,
+      "backAt": 542,
+      "statusAfter": [
+        "12ms:Reconectando…",
+        "537ms:Conectado"
+      ]
+    }
+  }
+]

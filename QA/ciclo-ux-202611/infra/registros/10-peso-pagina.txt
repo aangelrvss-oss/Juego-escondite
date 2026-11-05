@@ -1,0 +1,19 @@
+200       1171  /  cache=no-store enc=-
+200        837  /css/tokens.generated.css  cache=no-store enc=-
+200      34540  /css/game.css  cache=no-store enc=-
+200      90051  /js/app.js  cache=no-store enc=-
+404          0  /js/diagnostic.html  cache=null enc=-
+200       2255  /js/brand.generated.js  cache=no-store enc=-
+200      59671  /js/game-view.js  cache=no-store enc=-
+200       8605  /js/location.js  cache=no-store enc=-
+200      18219  /js/net.js  cache=no-store enc=-
+200      10613  /js/qr.js  cache=no-store enc=-
+200      16548  /js/map-view.js  cache=no-store enc=-
+200       2467  /js/radar.js  cache=no-store enc=-
+200       7552  /js/location-bridge.js  cache=no-store enc=-
+200    1078892  /vendor/maplibre-gl/maplibre-gl.js  cache=no-store enc=-
+200      24138  /vendor/capacitor-core.js  cache=no-store enc=-
+
+Total servido (HTTP 200): 1355559 bytes = 1.29 MiB en 14 archivos
+Nota: el worker de MapLibre (maplibre-gl-worker.js) se descarga aparte si el mapa lo pide; se suma abajo.
+worker: HTTP 200, 508314 bytes → total con worker 1.78 MiB

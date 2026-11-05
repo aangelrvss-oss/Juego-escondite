@@ -7,7 +7,7 @@ import { Harness, config } from './helpers.ts';
 // Plan Maestro §2.3, estado BRIEFING: «roles y reglas quedan fijados; no se permiten cambios que
 // alteren una ventaja». En este motor no hay una fase BRIEFING aparte: las reglas se fijan al pulsar
 // «Empezar». Aquí se comprueba que, desde ese momento, nada de lo que decide la partida cambia, y que
-// en la sala de espera cualquier cambio de reglas obliga a todos a aceptarlas otra vez.
+// en la sala de espera cualquier cambio de reglas obliga a los demás a aceptarlas otra vez.
 
 function startedGame(): Harness {
   const g = new Harness();
@@ -60,14 +60,17 @@ describe('reglas y roles fijados desde «Empezar» (BRIEFING del Plan)', () => {
     });
   }
 
-  it('en la sala de espera, cambiar las reglas quita el «listo» a todos: nadie empieza con reglas que no ha visto', () => {
+  // Política de preparación (ciclo UX 11/2026, engine/test/preparacion.test.ts): el anfitrión que cambia
+  // las reglas ya las conoce y conserva su «listo»; los demás tienen que aceptarlas otra vez.
+  it('en la sala de espera, cambiar las reglas quita el «listo» a los demás: nadie empieza con reglas que no ha visto', () => {
     const g = new Harness();
     g.join('r1', 'runner');
     g.ok('h', { type: 'configure', config: config() });
     g.readyAll();
     assert.ok(Object.values(g.state.players).every((p) => p.ready));
     g.ok('h', { type: 'configure', config: config({ pingIntervalMs: 5 * 60_000 }) });
-    assert.ok(Object.values(g.state.players).every((p) => !p.ready));
+    assert.equal(g.state.players.r1?.ready, false);
+    assert.equal(g.state.players.h?.ready, true, 'el anfitrión que hace el cambio no tiene que confirmarlo');
     assert.equal(g.cmd('h', { type: 'start' }).ok, false, 'no se puede empezar hasta que vuelvan a estar listos');
   });
 });

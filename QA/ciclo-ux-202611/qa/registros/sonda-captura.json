@@ -1,0 +1,20 @@
+[
+  {
+    "id": "S3 reclamar a Ana Host llega a su pantalla",
+    "ok": true,
+    "detail": [
+      "Caro ha entrado",
+      "¡Empieza la persecución!"
+    ]
+  },
+  {
+    "id": "S3 reclamar a Caro llega a su pantalla",
+    "ok": false,
+    "detail": [
+      "Caro ha entrado",
+      "¡Empieza la persecución!",
+      "Captura: Ana Host",
+      "Demasiados intentos seguidos. Espera unos segundos."
+    ]
+  }
+]

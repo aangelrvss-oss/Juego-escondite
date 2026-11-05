@@ -1,0 +1,76 @@
+/* THE OUTRUN · guía visual (js/guide.js). Autocontenida: todo con prefijo .guide- y los tokens de
+   tokens.generated.css. Reutiliza .btn, .btn-primary y .btn-outline de game.css para los botones. */
+
+.guide-overlay {
+  position: fixed; inset: 0; z-index: 30;
+  display: grid; place-items: center;
+  padding: max(12px, env(safe-area-inset-top, 0px)) 12px max(12px, env(safe-area-inset-bottom, 0px));
+  background: rgba(10, 11, 13, 0.92);
+  overscroll-behavior: contain;
+}
+.guide-panel {
+  width: 100%; max-width: 480px; max-height: 100%;
+  display: grid; grid-template-rows: auto minmax(0, 1fr) auto auto;
+  background: var(--surface); color: var(--text);
+  border: 1px solid var(--line-strong); border-radius: var(--r-lg);
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+/* Sin animación de entrada: app.js vuelve a pintar el overlay en cada paso y la repetiría. */
+
+.guide-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 6px 6px 16px; border-bottom: 1px solid var(--line); }
+.guide-kicker { display: flex; flex-wrap: wrap; gap: 2px 8px; margin: 0; font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+.guide-count { color: var(--brand); white-space: nowrap; }
+.guide-close {
+  flex: none; min-width: 48px; min-height: 48px; border: 0; border-radius: var(--r-md);
+  background: var(--surface-2); color: var(--text); font-size: 18px; font-weight: 800; line-height: 1; cursor: pointer;
+}
+.guide-close:hover { background: var(--surface-3); }
+
+/* Lo único que se desplaza: con la pantalla baja, la cabecera y los botones siguen a la vista. */
+.guide-body { overflow-y: auto; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; padding: 12px 16px 4px; display: grid; gap: 10px; align-content: start; }
+.guide-figure { margin: 0; border-radius: var(--r-md); overflow: hidden; background: var(--bg); border: 1px solid var(--line); display: grid; place-items: center; }
+.guide-img { display: block; width: 100%; height: auto; max-height: min(46vh, 400px); object-fit: contain; }
+.guide-noimg { min-height: 120px; }
+.guide-noimg span { font-size: 56px; font-weight: 900; font-style: italic; color: var(--brand); }
+.guide-title { margin: 2px 0 0; font-size: 21px; line-height: 1.2; font-weight: 900; letter-spacing: -0.01em; outline: none; }
+.guide-text { margin: 0; font-size: 16px; line-height: 1.45; color: var(--text); }
+.guide-note { margin: 0; padding: 8px 10px; border-left: 3px solid var(--brand); border-radius: var(--r-sm); background: var(--surface-2); font-size: 14px; color: var(--muted); }
+
+/* Puntos de progreso: 12 objetivos de 44 px no caben en una fila de 320 px, así que van en dos de seis. */
+.guide-dots { display: grid; grid-template-columns: repeat(6, minmax(44px, 1fr)); padding: 4px 10px 0; }
+.guide-dot { min-height: 44px; min-width: 44px; padding: 0; border: 0; background: transparent; display: grid; place-items: center; cursor: pointer; border-radius: var(--r-sm); }
+.guide-dot span { width: 12px; height: 12px; border-radius: 50%; border: 2px solid var(--faint); transition: transform 150ms ease, background-color 150ms ease; }
+.guide-dot.is-done span { background: var(--faint); }
+.guide-dot.is-current span { background: var(--brand); border-color: var(--brand); transform: scale(1.35); }
+.guide-dot:hover span { border-color: var(--text); }
+
+.guide-nav { display: grid; grid-template-columns: 1fr 1.4fr; gap: 10px; padding: 8px 16px 14px; }
+.guide-nav .btn { min-height: 48px; }
+.guide-nav .btn-outline { background: var(--surface); }
+
+.guide-overlay :focus-visible { outline: 3px solid var(--text); outline-offset: 2px; }
+/* El título recibe el foco al abrir (para los lectores de pantalla); no es un control. */
+.guide-overlay .guide-title:focus, .guide-overlay .guide-title:focus-visible { outline: none; }
+
+/* Pantallas bajas (p. ej. 360×640 con la barra del navegador): imagen más pequeña y menos aire. */
+@media (max-height: 680px) {
+  .guide-img { max-height: 34vh; }
+  .guide-body { padding-top: 10px; gap: 8px; }
+  .guide-title { font-size: 19px; }
+  .guide-text { font-size: 15px; }
+  .guide-nav { padding-bottom: 10px; }
+}
+@media (max-height: 520px) {
+  .guide-img { max-height: 40vh; }
+  .guide-dots { display: none; } /* el indicador «Paso X de N» y Anterior/Siguiente bastan */
+}
+@media (max-width: 340px) {
+  .guide-overlay { padding-left: 8px; padding-right: 8px; }
+  .guide-body { padding-left: 12px; padding-right: 12px; }
+  .guide-nav { padding-left: 12px; padding-right: 12px; gap: 8px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .guide-dot span { transition: none; }
+}

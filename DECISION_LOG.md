@@ -532,3 +532,84 @@ Aprobada por el propietario el 30/10/2026, tras el primer playtest físico con c
   - con invitación, un solo botón principal;
   - se puede pegar el enlace entero en el código.
 - **Informe del ciclo:** `QA/ciclo-20261030/INFORME_CICLO.md`.
+
+## Ciclo UX · 04/11/2026 (sala guiada, guía visual, Mission Report y capacidad)
+
+Decisiones técnicas reversibles tomadas en el ciclo autónomo; detalle y evidencia en `QA/ciclo-ux-202611/INFORME_CICLO_UX.md`.
+
+### D-058 · Decisión técnica reversible (04/11/2026) · Política de «Estoy listo»
+**Problema demostrado:** cualquier `configure` válido quitaba el «listo» a todos (`engine/src/engine.ts`, caso `configure`), y el cliente envía la configuración entera con cada cambio, incluida la casilla de la lista de seguridad y cada recentrado. Marcar la lista de seguridad obligaba a todos a volver a pulsar «Estoy listo».
+**Decisión:** solo un cambio material quita el «listo», y solo a los demás jugadores (no al anfitrión que lo hace).
+- **Cambio material:** primera configuración, modo, persecución, huida, pistas, radio o versiones de zona, zona dinámica, o mover el centro o el punto de encuentro 50 m o más.
+- **No material:** lista de seguridad, reenviar la misma configuración, recentrar menos de 50 m.
+- Nombres, roles, enlace, QR, entradas y salidas, y desconexiones no tocaban la configuración y siguen sin quitar el «listo».
+**Por qué en el motor:** el «listo» lo guarda y lo resetea el motor, y `start` lo exige. No se puede arreglar solo en el cliente.
+**Sin cambios:** el protocolo y las comprobaciones de `start` (seguridad confirmada, todos listos y conectados, mínimos por modo).
+**Alternativas descartadas:** que el cliente no envíe la lista de seguridad (seguiría reseteando al recentrar), y un campo nuevo en el protocolo (innecesario).
+**Pruebas:** `engine/test/preparacion.test.ts`.
+
+### D-059 · Decisión de producto reversible (04/11/2026) · Sala guiada y lista de seguridad al empezar
+**Decisión:** la sala muestra pasos (invitar, zona, preparación, empezar).
+- El anfitrión centra la zona automáticamente al entrar.
+- Los jugadores no pueden marcarse listos hasta que exista la zona.
+- La lista de seguridad se confirma en una hoja de resumen al pulsar «Empezar partida», no como casilla suelta.
+- El anfitrión no pulsa «Estoy listo» aparte: su comprobación GPS se hace al empezar.
+**Motivo:** quitar pasos repetidos sin quitar ninguna comprobación de seguridad.
+
+### D-060 · Decisión de producto reversible (04/11/2026) · Guía rápida a petición
+**Decisión:** la guía visual (12 pasos con capturas reales de la interfaz) se abre solo cuando el jugador la pide, desde el inicio, la sala o la partida. Nunca se abre sola ni es obligatoria.
+**Motivo:** encargo del ciclo: no interrumpir a quien ya sabe jugar.
+**Limitación:** las imágenes salen de pruebas automáticas (jugadores ficticios), no de una partida física.
+
+### D-061 · Decisión técnica reversible (04/11/2026) · Historial solo en el móvil
+**Decisión:** las estadísticas acumuladas se guardan solo en el `localStorage` del móvil (`outrun.stats`), una vez por partida.
+- No se guardan nombres, identificadores, salas ni ubicaciones.
+- Se pierden al borrar los datos o cambiar de móvil.
+**Alternativa descartada por ahora:** estadísticas en el servidor. Exigen base de datos persistente (coste en Render) y convertir el identificador del dispositivo en un dato personal.
+
+## Cierre del ciclo UX · 05/11/2026 (correcciones de la segunda auditoría)
+
+Detalle y evidencias en `QA/ciclo-ux-202611/CIERRE_CORRECCIONES_Y_DESPLIEGUE.md`. Corrigen defectos de `QA/ciclo-ux-202611/AUDITORIA_FINAL_PREVIA_PRUEBA_FISICA_R2.md`.
+
+### D-062 · Decisión técnica reversible (05/11/2026) · El «listo» se mide desde lo que aceptó cada jugador (completa D-058)
+**Problema demostrado (AF-01):** la referencia para medir los recentrados era una sola para toda la sala, la del último cambio material (`readyBase`). Quien se marcaba listo a mitad de una deriva podía empezar con la zona a 98 m de la que aceptó (+49 m, se marca listo, −49 m), y `start` lo aceptaba.
+**Decisión:**
+- Cada «listo» guarda lo que aceptó el jugador (`Player.readyRef`): la revisión de las reglas (`RoomState.configRev`, que sube con cada cambio de modo, tiempos, pistas, radio, versiones de zona o zona dinámica), los centros de la zona y el punto de encuentro.
+- Cada `configure` quita el «listo» a quien tenga otras reglas o la zona o el encuentro a 50 m o más de lo que él aceptó.
+- El anfitrión que hace el cambio acepta la configuración nueva.
+- `start` vuelve a comprobarlo.
+- Se elimina `readyBase`, que no llegó a publicarse.
+- Un estado guardado sin `readyRef` toma como aceptada la configuración vigente hasta el siguiente cambio.
+**Garantía:** nadie empieza con reglas distintas de las que aceptó, ni con la zona o el encuentro a 50 m o más de lo que vio.
+**Sin cambios:** protocolo, lista de seguridad, GPS, conexión y mínimos por modo.
+**Pruebas:** `engine/test/preparacion-referencia.test.ts` y `mobile/test/preparacion-coherencia.test.mjs` (motor real con la lógica del cliente).
+
+### D-063 · Decisión de producto reversible (05/11/2026) · El último Mission Report se conserva en el móvil y la revancha se confirma
+**Problema demostrado (AF-11):** «Revancha» (un toque) devolvía a todos a la sala, y el servidor olvida el informe, así que desaparecía en todos los móviles.
+**Decisión:**
+- Cada móvil guarda una copia del último informe (`localStorage`, `outrun.lastReport`, `mobile/www/js/last-report.js`).
+- La copia solo lleva nombres, equipos, capturas sin coordenadas, resultado y tiempos. Nada de zona, punto de encuentro ni pistas.
+- Se abre desde la sala y desde el inicio («Ver el informe de la partida anterior») y se puede compartir.
+- La revancha necesita un segundo toque que explica que el informe queda guardado.
+**Sin cambios:** el motor y el protocolo; el historial sigue contando cada partida una sola vez.
+**Alternativa descartada:** conservar el informe en el servidor (cambia el motor y el estado guardado).
+
+### D-064 · Decisión técnica reversible (05/11/2026) · La guía nunca tapa la cuenta atrás ni el rol
+**Problema demostrado (AF-10):** la guía (z-index 30) quedaba abierta al empezar la cuenta atrás y tapaba la tarjeta del rol.
+**Decisión:**
+- La guía se cierra sola al cambiar de fase o de partida y al mostrarse la tarjeta del rol o de infección.
+- No se puede abrir durante la cuenta atrás ni con esa tarjeta a la vista.
+- Cerrarla no toca la sala ni la partida.
+
+### D-065 · Decisión técnica reversible (05/11/2026) · Límite de fallos por dirección y plazo de los comandos
+**Problemas demostrados:**
+- AF-07: tras un reinicio, las reanudaciones fallidas de un grupo en la misma Wi-Fi agotaban el límite de 20 fallos por minuto y bloqueaban crear, unirse e incluso reanudaciones válidas.
+- AF-08: `command()` podía esperar para siempre.
+**Decisión AF-07:**
+- El límite de 20 fallos por minuto solo cuenta y bloquea los códigos de sala erróneos (unirse).
+- Las sesiones erróneas tienen un presupuesto aparte de 300 por minuto: adivinar una sesión de 256 bits no es un ataque viable.
+- Una sesión válida siempre reanuda, y crear sala no se bloquea por fallos.
+**Decisión AF-08:** cada comando sin respuesta en 20 s se resuelve con `no_response` y no se reenvía al reconectar. Si el servidor llegó a ejecutarlo (respuesta perdida), el jugador ve el aviso pero la instantánea siguiente muestra el resultado real, que es la referencia.
+**Sin cambios:** el protocolo y los códigos de error.
+**Pruebas:** `server/test/limite-fallos-ip.test.mjs` y el bloque AF-08 de `mobile/test/net-regresiones.test.mjs`.
+**Aplazado:** las dos copias de la sala con `structuredClone` por comando (AF-06). Exigen cambiar el aislamiento del estado del motor, y con 3–10 jugadores su coste es pequeño (≈4 % de un núcleo local).

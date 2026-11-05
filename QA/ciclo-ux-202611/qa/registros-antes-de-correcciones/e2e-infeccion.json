@@ -1,0 +1,89 @@
+[
+  {
+    "id": "I0 el modo elegido en el inicio (Infección) llega a la sala",
+    "ok": true,
+    "detail": "Modo Infección Zona 500 m de radio, se cierra cada 5 min Hui"
+  },
+  {
+    "id": "I1 el aviso al anfitrión no le pide un botón que no tiene («Estoy listo»)",
+    "ok": false,
+    "detail": {
+      "notice": "Se ha cancelado el inicio: alguien ha salido y faltan jugadores. Vuelve a pulsar «Estoy listo» para empezar otra vez.",
+      "hostHasReady": false
+    }
+  },
+  {
+    "id": "C P4 Infección: informe idéntico en los 3",
+    "ok": true,
+    "detail": [
+      "MISSION REPORT · INFECCIÓN · PARTIDA 1 SIN GANADOR Los cazadores abandonaron Terminó durante la huida, a los 0:03 PERSECUCIÓN — INFECTADOS 0 SUPERVIVIENTES 3/3 CRONOLOGÍA Nadie fue infectado Huida Fin",
+      "MISSION REPORT · INFECCIÓN · PARTIDA 1 SIN GANADOR Los cazadores abandonaron Terminó durante la huida, a los 0:03 PERSECUCIÓN — INFECTADOS 0 SUPERVIVIENTES 3/3 CRONOLOGÍA Nadie fue infectado Huida Fin",
+      "MISSION REPORT · INFECCIÓN · PARTIDA 1 SIN GANADOR Los cazadores abandonaron Terminó durante la huida, a los 0:03 PERSECUCIÓN — INFECTADOS 0 SUPERVIVIENTES 3/3 CRONOLOGÍA Nadie fue infectado Huida Fin"
+    ]
+  },
+  {
+    "id": "C P4 Infección: causa de abandono de los cazadores, sin coordenadas",
+    "ok": true,
+    "detail": "MISSION REPORT · INFECCIÓN · PARTIDA 1 SIN GANADOR Los cazadores abandonaron Terminó durante la huida, a los 0:03 PERSECUCIÓN — INFECTADOS 0 SUPERVIVIENTES 3/3 CRONOLOGÍA Nadie fue infectado Huida Final durante la huida: Los cazadores abandonaron REN"
+  },
+  {
+    "id": "C P4: historial de Beto = 1 partida (Infección)",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 1,
+      "wins": 0,
+      "losses": 0,
+      "other": 1,
+      "captures": 0,
+      "captured": 0,
+      "survivalMs": 0,
+      "bestSurvivalMs": 0,
+      "byMode": {
+        "classic": {
+          "games": 0,
+          "wins": 0
+        },
+        "infection": {
+          "games": 1,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "1forbqf"
+      ]
+    }
+  },
+  {
+    "id": "D3 errores de consola (host)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola (Beto)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola (Caro)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola (Dani)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  }
+]

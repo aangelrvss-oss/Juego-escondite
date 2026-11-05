@@ -1,0 +1,337 @@
+[
+  {
+    "id": "B1 guía desde la sala (320 px): se abre en contexto sala y Escape la cierra",
+    "ok": true,
+    "detail": "Guía · Clásico Paso 1 de 12"
+  },
+  {
+    "id": "B2 tras cerrar la guía: misma sala y conectado",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "B3 el foco vuelve al botón que abrió la guía",
+    "ok": true,
+    "detail": "guide-open"
+  },
+  {
+    "id": "E1 privacidad: Caro no ve el rol asignado a Beto en la sala",
+    "ok": true,
+    "detail": "Ana Host ANFITRIÓN\nSe confirma al empezar la partida.\nAnfitrión\nBeto\nGPS comprobado.\nListo\nCaro (tú)\nGPS comprobado.\nListo"
+  },
+  {
+    "id": "E2 cuenta atrás sin revelar roles",
+    "ok": true,
+    "detail": "LA PARTIDA EMPIEZA EN 5 Tu rol aparecerá al terminar. Nadie lo sabe todavía."
+  },
+  {
+    "id": "B4 guía en partida (huida): abre en contexto partida y se cierra con ✕; sigue en partida y conectado",
+    "ok": true,
+    "detail": "Paso 4 de 12"
+  },
+  {
+    "id": "D1 partida sin desbordamiento a 412px (host)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D1 partida sin desbordamiento a 360px (beto)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D1 partida sin desbordamiento a 320px (caro)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "C P1 terminada por el anfitrión: el informe común es idéntico para todos",
+    "ok": true,
+    "detail": "MISSION REPORT · CLÁSICO · PARTIDA 1 SIN GANADOR El anfitrión terminó la partida Terminó durante la huida, a los 0:07 PERSECUCIÓN — CAPTURAS 0 LIBRES AL FINAL 2/2 CRONOLOGÍA Nadie fue capturado Huida Final durante la huida: El anfitrión terminó la partida RENDIMIENTO CAZADORES Beto FUGITIVOS Ana Hos"
+  },
+  {
+    "id": "C P1 terminada por el anfitrión: el informe no muestra nada parecido a coordenadas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P1: causa «terminada por el anfitrión» y sin ganador",
+    "ok": true,
+    "detail": "MISSION REPORT · CLÁSICO · PARTIDA 1 SIN GANADOR El anfitrión terminó la partida Terminó durante la huida, a los 0:07 PERSECUCIÓN — CAPTURAS 0 LIBRES AL FINAL 2/2 CRONOLOGÍA Nadie fue capturado Huida "
+  },
+  {
+    "id": "C P1: compartir sin coordenadas, sin código de sala ni URL",
+    "ok": true,
+    "detail": "THE OUTRUN · Mission Report\nTHE OUTRUN · Mission Report · Clásico\nSin ganador — El anfitrión terminó la partida\n0 capturas\nRUN. HIDE. STAY AHEAD.\n"
+  },
+  {
+    "id": "C P1: historial local con 1 partida",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 1,
+      "wins": 0,
+      "losses": 0,
+      "other": 1,
+      "captures": 0,
+      "captured": 0,
+      "survivalMs": 0,
+      "bestSurvivalMs": 0,
+      "byMode": {
+        "classic": {
+          "games": 1,
+          "wins": 0
+        },
+        "infection": {
+          "games": 0,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "x8y9kg"
+      ]
+    }
+  },
+  {
+    "id": "C P1: tras recargar, el informe se reconstruye igual (caro)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P1: tras recargar, el historial no cuenta dos veces (caro)",
+    "ok": true,
+    "detail": {
+      "antes": 1,
+      "despues": 1
+    }
+  },
+  {
+    "id": "D1 informe sin desbordamiento a 412px (host)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en el informe (host)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D1 informe sin desbordamiento a 360px (beto)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en el informe (beto)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D1 informe sin desbordamiento a 320px (caro)",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "D2 objetivos táctiles < 44 px en el informe (caro)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "B5 la reclamación de captura cierra la guía y queda a la vista",
+    "ok": true,
+    "detail": {
+      "claimSeen": true,
+      "guideStill": false
+    }
+  },
+  {
+    "id": "C P2 todos capturados: el informe común es idéntico para todos",
+    "ok": true,
+    "detail": "MISSION REPORT · CLÁSICO · PARTIDA 2 GANAN LOS CAZADORES Todos los fugitivos capturados Partida de 2:07 en total · 2:00 de huida PERSECUCIÓN 0:07 CAPTURAS 2 PRIMERA CAPTURA 0:02 LIBRES AL FINAL 0/2 MOMENTOS Más capturas: Beto (2) CRONOLOGÍA 0:00 Empieza la persecución 0:02 Captura de Caro por Beto P"
+  },
+  {
+    "id": "C P2 todos capturados: el informe no muestra nada parecido a coordenadas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P2: ganan los cazadores, 2 capturas, captura decisiva",
+    "ok": true,
+    "detail": "MISSION REPORT · CLÁSICO · PARTIDA 2 GANAN LOS CAZADORES Todos los fugitivos capturados Partida de 2:07 en total · 2:00 de huida PERSECUCIÓN 0:07 CAPTURAS 2 PRIMERA CAPTURA 0:02 LIBRES AL FINAL 0/2 MOMENTOS Más capturas: Beto (2) CRONOLOGÍA 0:00 Empieza la persecución 0:02 Captura de Caro por Beto PRIMERA 0:07 Captura de Ana Host por Beto DECISIVA 0:07 Final: Todos los fugitivos capturados RENDIMI"
+  },
+  {
+    "id": "C P2: compartir sin coordenadas, sin código de sala ni URL",
+    "ok": true,
+    "detail": "THE OUTRUN · Mission Report\nTHE OUTRUN · Mission Report · Clásico\nGanan los cazadores — Todos los fugitivos capturados\npersecución 0:07 · 2 capturas · victoria a los 0:07\n• Primera captura: Caro a los 0:02\n• Captura decisiva: Ana Host por Beto a los 0:07\n• Más capturas: Beto (2)\nRUN. HIDE. STAY AHEAD.\n"
+  },
+  {
+    "id": "C P2: historial de Beto = 2 partidas, 1 victoria, 2 capturas hechas",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 2,
+      "wins": 1,
+      "losses": 0,
+      "other": 1,
+      "captures": 2,
+      "captured": 0,
+      "survivalMs": 0,
+      "bestSurvivalMs": 0,
+      "byMode": {
+        "classic": {
+          "games": 2,
+          "wins": 1
+        },
+        "infection": {
+          "games": 0,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "x8y9kg",
+        "1clbh26"
+      ]
+    }
+  },
+  {
+    "id": "C P2: historial de Caro = 2 partidas, 1 derrota, capturada 1 vez",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 2,
+      "wins": 0,
+      "losses": 1,
+      "other": 1,
+      "captures": 0,
+      "captured": 1,
+      "survivalMs": 1008,
+      "bestSurvivalMs": 1008,
+      "byMode": {
+        "classic": {
+          "games": 2,
+          "wins": 0
+        },
+        "infection": {
+          "games": 0,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "x8y9kg",
+        "1clbh26"
+      ]
+    }
+  },
+  {
+    "id": "C P2: tras recargar, el informe se reconstruye igual (host)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P2: tras recargar, el historial no cuenta dos veces (host)",
+    "ok": true,
+    "detail": {
+      "antes": 2,
+      "despues": 2
+    }
+  },
+  {
+    "id": "C P3 Caza del zorro: el informe común es idéntico para todos",
+    "ok": true,
+    "detail": "MISSION REPORT · CAZA DEL ZORRO · PARTIDA 3 GANAN LOS CAZADORES Zorro atrapado Partida de 2:01 en total · 2:00 de huida PERSECUCIÓN 0:01 CAPTURAS 1 PRIMERA CAPTURA 0:01 MOMENTOS Beto cayó a los 0:01, atrapado por Ana Host CRONOLOGÍA 0:00 Empieza la persecución 0:01 Captura de Beto por Ana Host PRIME"
+  },
+  {
+    "id": "C P3 Caza del zorro: el informe no muestra nada parecido a coordenadas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P3: zorro atrapado → ganan los cazadores",
+    "ok": true,
+    "detail": "MISSION REPORT · CAZA DEL ZORRO · PARTIDA 3 GANAN LOS CAZADORES Zorro atrapado Partida de 2:01 en total · 2:00 de huida PERSECUCIÓN 0:01 CAPTURAS 1 PRIMERA CAPTURA 0:01 MOMENTOS Beto cayó a los 0:01, atrapado por Ana Host CRONOLOGÍA 0:00 Empieza la persecución 0:01 Captura de Beto por Ana Host PRIME"
+  },
+  {
+    "id": "C P3: tras recargar, el informe se reconstruye igual (beto)",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C P3: tras recargar, el historial no cuenta dos veces (beto)",
+    "ok": true,
+    "detail": {
+      "antes": 3,
+      "despues": 3
+    }
+  },
+  {
+    "id": "EXCEPCIÓN del escenario",
+    "ok": false,
+    "detail": "Error: tiempo agotado: todos en FINISHED |     at until (file:///C:/Users/aange/Projects/Juego-escondite-recuperacion/QA/ciclo-ux-202611/qa/lib.mjs:109:9) |     at async waitAll (file:///C:/Users/aange/Projects/Juego-escondite-recuperacion/QA/ciclo-ux-202611/qa/e2e-partidas.mjs:52:3) |     at async file:///C:/Users/aange/Projects/Juego-escondite-recuperacion/QA/ciclo-ux-202611/qa/e2e-partidas.mjs:268:3"
+  },
+  {
+    "id": "D3 errores de consola/página (host)",
+    "ok": false,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+      "console: Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola/página (beto)",
+    "ok": false,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+      "console: Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216."
+    ]
+  },
+  {
+    "id": "D3 errores de consola/página (caro)",
+    "ok": false,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Blocked call to navigator.vibrate because user hasn't tapped on the frame or any embedded frame yet: https://www.chromestatus.com/feature/5644273861001216.",
+      "console: Failed to load resource: the server responded with a status of 403 ()",
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola/página (dani)",
+    "ok": true,
+    "detail": []
+  }
+]

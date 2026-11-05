@@ -17,9 +17,11 @@ import type {
   EngineEvent,
   ErrorCode,
   GameConfig,
+  LatLng,
   Outcome,
   PingEntry,
   Player,
+  ReadyRef,
   RoomState,
   Step,
   TeamPref,
@@ -49,6 +51,52 @@ const lobbyPlayers = (s: RoomState): Player[] => playersInOrder(s).filter((p) =>
 const activeOf = (s: RoomState, team: 'hunter' | 'runner'): Player[] =>
   playersInOrder(s).filter((p) => p.team === team && p.status === 'active');
 const isTeamPref = (v: unknown): v is TeamPref => v === 'hunter' || v === 'runner' || v === 'random';
+
+// Distancia a partir de la cual mover la zona o el punto de encuentro cambia la partida que los jugadores
+// aceptaron al marcar «Estoy listo». Por debajo es un reajuste del GPS del anfitrión (precisión típica de
+// 5–30 m), no otro sitio.
+const MATERIAL_MOVE_M = 50;
+
+/**
+ * ¿Cambian las reglas (no el sitio)? La primera configuración, el modo, los tiempos, las pistas, la zona
+ * dinámica, el radio o las versiones de zona. La lista de seguridad no: la confirma el anfitrión.
+ */
+function rulesChanged(prev: GameConfig | null, next: GameConfig): boolean {
+  if (!prev) return true;
+  if ((prev.mode ?? 'classic') !== (next.mode ?? 'classic')) return true;
+  if (prev.durationMs !== next.durationMs || prev.headStartMs !== next.headStartMs) return true;
+  if (prev.pingIntervalMs !== next.pingIntervalMs) return true;
+  if (Boolean(prev.dynamicZone) !== Boolean(next.dynamicZone)) return true;
+  if (prev.zone.length !== next.zone.length) return true;
+  return next.zone.some((b, i) => prev.zone[i]!.fromOffsetMs !== b.fromOffsetMs || prev.zone[i]!.radiusM !== b.radiusM);
+}
+
+/** Lo que acepta quien se marca listo ahora (D-062): la revisión de las reglas y dónde están la zona y el encuentro. */
+function readyRefOf(s: RoomState): ReadyRef | null {
+  if (!s.config) return null;
+  return {
+    rev: s.configRev ?? 0,
+    centers: s.config.zone.map((z) => ({ lat: z.center.lat, lng: z.center.lng })),
+    meetingPoint: { lat: s.config.meetingPoint.lat, lng: s.config.meetingPoint.lng },
+  };
+}
+
+/**
+ * ¿Sigue valiendo lo que aceptó para la configuración vigente? Mismas reglas, y la zona y el punto de
+ * encuentro a menos de MATERIAL_MOVE_M de donde estaban cuando lo aceptó (no de la posición anterior: varios
+ * recentrados pequeños seguidos suman, y quien se marcó listo a mitad de ellos se mide desde ahí).
+ */
+function readyRefValid(ref: ReadyRef, s: RoomState): boolean {
+  const cfg = s.config;
+  if (!cfg || ref.rev !== (s.configRev ?? 0) || ref.centers.length !== cfg.zone.length) return false;
+  const near = (a: LatLng, b: LatLng) => distanceM(a, b) < MATERIAL_MOVE_M;
+  return ref.centers.every((c, i) => near(c, cfg.zone[i]!.center)) && near(ref.meetingPoint, cfg.meetingPoint);
+}
+
+/** «Listo» que vale para empezar con la configuración vigente. Sin readyRef (estado guardado antes): la vigente. */
+function readyForCurrent(p: Player, s: RoomState): boolean {
+  return p.ready && (!p.readyRef || readyRefValid(p.readyRef, s));
+}
 
 function newPlayer(id: string, deviceId: string, name: string, now: number): Player {
   return {
@@ -455,6 +503,7 @@ function backToLobby(ctx: Ctx, reason: string): void {
       p.status = 'lobby';
       p.team = null;
       p.ready = false;
+      p.readyRef = null;
       p.playedGameNo = null;
     } else if (p.status === 'left' && !p.leftRoom && p.playedGameNo === s.gameNo) {
       // V-04: quien salió durante esta cuenta atrás no jugó ninguna partida. Sin partida, salir es salir
@@ -670,6 +719,7 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       if (s.phase !== 'LOBBY') return err('wrong_phase');
       if (p.status !== 'lobby') return err('forbidden');
       p.ready = cmd.ready;
+      p.readyRef = cmd.ready ? readyRefOf(s) : null;
       emit(ctx, 'player_updated', ALL, { playerId: p.id, ready: p.ready });
       return ok();
 
@@ -679,8 +729,29 @@ function handle(ctx: Ctx, actorId: string, cmd: Command): CommandResult {
       const config: GameConfig = { ...cmd.config, headStartMs: cmd.config.headStartMs ?? DEFAULTS.headStartMs };
       const invalid = validateConfig(config);
       if (invalid) return err('invalid_config', invalid);
+      // Política de preparación (D-058, D-062): solo un cambio material quita el «listo», y solo a los demás
+      // (el anfitrión que lo hace ya lo conoce y acepta la configuración nueva). Material para cada jugador:
+      // otras reglas, o la zona o el punto de encuentro a MATERIAL_MOVE_M o más de donde estaban cuando él
+      // se marcó listo. Marcar la lista de seguridad, reenviar la misma configuración o recentrar unos metros
+      // no obliga a nadie a confirmar otra vez. Se decide aquí y no en el cliente: el «listo» lo guarda el
+      // motor, y start vuelve a comprobarlo.
+      const before = readyRefOf(s); // lo aceptado por quien no tiene readyRef (estado guardado antes)
+      if (rulesChanged(s.config, config)) s.configRev = (s.configRev ?? 0) + 1;
       s.config = structuredClone(config);
-      for (const lp of lobbyPlayers(s)) lp.ready = false;
+      for (const lp of lobbyPlayers(s)) {
+        if (!lp.ready) continue;
+        if (lp.id === actorId) {
+          lp.readyRef = readyRefOf(s);
+          continue;
+        }
+        const ref = lp.readyRef ?? before;
+        if (ref && readyRefValid(ref, s)) {
+          lp.readyRef = ref;
+        } else {
+          lp.ready = false;
+          lp.readyRef = null;
+        }
+      }
       emit(ctx, 'config_updated', ALL, { config: s.config });
       return ok();
     }
@@ -832,6 +903,7 @@ function join(ctx: Ctx, actorId: string, rawName: string, deviceId: string): Com
   reclaimed.status = 'left';
   reclaimed.leftRoom = true;
   reclaimed.ready = false;
+  reclaimed.readyRef = null;
   reclaimed.leftReason = 'left';
   player.teamPref = reclaimed.teamPref;
   for (const p of playersInOrder(s)) {
@@ -858,7 +930,8 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
   const mode = modeOf(s.config);
   if (lobby.length < Math.max(LIMITS.minPlayers, mode.minPlayers)) return err('not_enough_players', mode.id);
   if (lobby.length > LIMITS.maxPlayers) return err('room_full');
-  if (lobby.some((p) => !p.ready || !p.connected)) return err('players_not_ready');
+  // Cada «listo» tiene que valer para la configuración con la que se empieza (D-062), no solo estar marcado.
+  if (lobby.some((p) => !readyForCurrent(p, s) || !p.connected)) return err('players_not_ready');
   const teams = resolveTeams(lobby, s.seed + s.gameNo, mode);
   // En los modos con un número fijo de cazadores, el detalle dice el modo (la interfaz explica la regla).
   if (!teams) return err('teams_unbalanced', mode.exactHunters ? mode.id : undefined);
@@ -872,6 +945,7 @@ function start(ctx: Ctx, isHost: boolean): CommandResult {
     p.team = teams.get(p.id) ?? null;
     p.status = 'active';
     p.ready = false;
+    p.readyRef = null;
     p.flags = [];
     p.rejectedTagCount = 0;
     p.playedGameNo = s.gameNo;
@@ -988,6 +1062,7 @@ function removePlayer(ctx: Ctx, p: Player, reason: 'left' | 'timeout'): void {
   const s = ctx.s;
   p.status = 'left';
   p.ready = false;
+  p.readyRef = null;
   p.away = false;
   // Tras el final, salir de la sala no cambia lo que pasó en la partida: el informe sigue igual (y quien
   // quedó fuera por el periodo de gracia sigue saliendo como «Sin conexión»).
@@ -1055,6 +1130,7 @@ function rematch(ctx: Ctx, isHost: boolean, swapRoles: boolean): CommandResult {
     p.teamPrefSetBy = null;
     p.team = null;
     p.ready = false;
+    p.readyRef = null;
     p.away = false;
     p.leftReason = null;
     clearLocationState(p);

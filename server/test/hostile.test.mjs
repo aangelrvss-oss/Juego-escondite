@@ -116,7 +116,9 @@ describe('protocolo hostil', () => {
     for (const g of guesses) for (let i = 0; i < RATE.attemptsPerMinute; i++) g.send({ t: 'join', code: `ZZZZ${n++}`.slice(0, 6), name: 'X', installId: `i${n}` });
     await waitFor(() => guesses.reduce((a, g) => a + g.got.length, 0) === 3 * RATE.attemptsPerMinute, 'respuestas');
     const errors = guesses.flatMap((g) => g.got.map((m) => m.error));
-    assert.equal(errors.filter((e) => e === 'not_found').length, RATE.failuresPerMinutePerIp - 1, 'el fallo de la sesión falsa también cuenta');
+    // AF-07: la sesión falsa ya no gasta el presupuesto de códigos (tiene el suyo): antes se esperaba
+    // failuresPerMinutePerIp - 1, y por eso un reinicio sin estado bloqueaba las uniones de toda la Wi-Fi.
+    assert.equal(errors.filter((e) => e === 'not_found').length, RATE.failuresPerMinutePerIp, 'la sesión falsa no cuenta como código');
     assert.ok(errors.filter((e) => e === 'rate_limited').length >= 3 * RATE.attemptsPerMinute - RATE.failuresPerMinutePerIp);
     // Avalancha: el servidor descarta y, si sigue, corta la conexión.
     const flood = await rawSocket(t.wsUrl);

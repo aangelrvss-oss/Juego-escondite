@@ -1,0 +1,632 @@
+{
+ "Ana": {
+  "myId": "p_miVJMVgL1G-C",
+  "snap": {
+   "roomId": "room_474fkbuNdJc2",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_miVJMVgL1G-C",
+   "serverNow": 1793812388151,
+   "countdownEnd": 1793812218027,
+   "headStartEnd": 1793812338027,
+   "gameEnd": 1793812938027,
+   "nextPingAt": null,
+   "activeStart": 1793812338027,
+   "finishedAt": 1793812388145,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_miVJMVgL1G-C",
+     "name": "Ana",
+     "team": "hunter",
+     "teamPref": "hunter",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_V-6du-fOc04M",
+     "name": "Beto",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_Tx2IAxEPcepa",
+     "name": "Caro",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_NUnyr-MFWkg4",
+     "name": "Dani",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_J3hy9LRzO4-v",
+     "name": "Eva",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_Tx2IAxEPcepa",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 15099,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_NUnyr-MFWkg4",
+     "hunterId": null,
+     "atOffsetMs": 35103,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_J3hy9LRzO4-v",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 50118,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Beto": {
+  "myId": "p_V-6du-fOc04M",
+  "snap": {
+   "roomId": "room_474fkbuNdJc2",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_miVJMVgL1G-C",
+   "serverNow": 1793812388151,
+   "countdownEnd": 1793812218027,
+   "headStartEnd": 1793812338027,
+   "gameEnd": 1793812938027,
+   "nextPingAt": null,
+   "activeStart": 1793812338027,
+   "finishedAt": 1793812388145,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_miVJMVgL1G-C",
+     "name": "Ana",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_V-6du-fOc04M",
+     "name": "Beto",
+     "team": "hunter",
+     "teamPref": "hunter",
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_Tx2IAxEPcepa",
+     "name": "Caro",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_NUnyr-MFWkg4",
+     "name": "Dani",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_J3hy9LRzO4-v",
+     "name": "Eva",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_Tx2IAxEPcepa",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 15099,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_NUnyr-MFWkg4",
+     "hunterId": null,
+     "atOffsetMs": 35103,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_J3hy9LRzO4-v",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 50118,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Caro": {
+  "myId": "p_Tx2IAxEPcepa",
+  "snap": {
+   "roomId": "room_474fkbuNdJc2",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_miVJMVgL1G-C",
+   "serverNow": 1793812388151,
+   "countdownEnd": 1793812218027,
+   "headStartEnd": 1793812338027,
+   "gameEnd": 1793812938027,
+   "nextPingAt": null,
+   "activeStart": 1793812338027,
+   "finishedAt": 1793812388145,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_miVJMVgL1G-C",
+     "name": "Ana",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_V-6du-fOc04M",
+     "name": "Beto",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_Tx2IAxEPcepa",
+     "name": "Caro",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_NUnyr-MFWkg4",
+     "name": "Dani",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_J3hy9LRzO4-v",
+     "name": "Eva",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_Tx2IAxEPcepa",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 15099,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_NUnyr-MFWkg4",
+     "hunterId": null,
+     "atOffsetMs": 35103,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_J3hy9LRzO4-v",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 50118,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Dani": {
+  "myId": "p_NUnyr-MFWkg4",
+  "snap": {
+   "roomId": "room_474fkbuNdJc2",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_miVJMVgL1G-C",
+   "serverNow": 1793812388151,
+   "countdownEnd": 1793812218027,
+   "headStartEnd": 1793812338027,
+   "gameEnd": 1793812938027,
+   "nextPingAt": null,
+   "activeStart": 1793812338027,
+   "finishedAt": 1793812388145,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_miVJMVgL1G-C",
+     "name": "Ana",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_V-6du-fOc04M",
+     "name": "Beto",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_Tx2IAxEPcepa",
+     "name": "Caro",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_NUnyr-MFWkg4",
+     "name": "Dani",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_J3hy9LRzO4-v",
+     "name": "Eva",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_Tx2IAxEPcepa",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 15099,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_NUnyr-MFWkg4",
+     "hunterId": null,
+     "atOffsetMs": 35103,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_J3hy9LRzO4-v",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 50118,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ },
+ "Eva": {
+  "myId": "p_J3hy9LRzO4-v",
+  "snap": {
+   "roomId": "room_474fkbuNdJc2",
+   "gameNo": 1,
+   "phase": "FINISHED",
+   "hostId": "p_miVJMVgL1G-C",
+   "serverNow": 1793812388151,
+   "countdownEnd": 1793812218027,
+   "headStartEnd": 1793812338027,
+   "gameEnd": 1793812938027,
+   "nextPingAt": null,
+   "activeStart": 1793812338027,
+   "finishedAt": 1793812388145,
+   "rulesVersion": "clasico/2026-10-30",
+   "players": [
+    {
+     "id": "p_miVJMVgL1G-C",
+     "name": "Ana",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_V-6du-fOc04M",
+     "name": "Beto",
+     "team": "hunter",
+     "teamPref": null,
+     "status": "active",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_Tx2IAxEPcepa",
+     "name": "Caro",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_NUnyr-MFWkg4",
+     "name": "Dani",
+     "team": "runner",
+     "teamPref": null,
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    },
+    {
+     "id": "p_J3hy9LRzO4-v",
+     "name": "Eva",
+     "team": "runner",
+     "teamPref": "runner",
+     "status": "captured",
+     "ready": false,
+     "connected": true,
+     "away": false,
+     "leftReason": null
+    }
+   ],
+   "config": {
+    "mode": "classic",
+    "durationMs": 600000,
+    "headStartMs": 120000,
+    "pingIntervalMs": 120000,
+    "zone": [
+     {
+      "fromOffsetMs": 0,
+      "center": {
+       "lat": 40.4153,
+       "lng": -3.6845
+      },
+      "radiusM": 250
+     }
+    ],
+    "dynamicZone": false,
+    "meetingPoint": {
+     "lat": 40.4153,
+     "lng": -3.6845
+    },
+    "safetyChecklistConfirmed": true
+   },
+   "zonePlan": null,
+   "captures": [
+    {
+     "runnerId": "p_Tx2IAxEPcepa",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 15099,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_NUnyr-MFWkg4",
+     "hunterId": null,
+     "atOffsetMs": 35103,
+     "via": "self"
+    },
+    {
+     "runnerId": "p_J3hy9LRzO4-v",
+     "hunterId": "p_miVJMVgL1G-C",
+     "atOffsetMs": 50118,
+     "via": "self"
+    }
+   ],
+   "outcome": {
+    "winner": "hunter",
+    "cause": "all_captured"
+   },
+   "lastPing": null,
+   "pendingClaimForMe": null,
+   "pendingClaimByMe": null,
+   "canTagFrom": null,
+   "closeReason": null
+  }
+ }
+}

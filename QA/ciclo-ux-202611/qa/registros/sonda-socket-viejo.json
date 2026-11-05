@@ -1,0 +1,14 @@
+[
+  {
+    "id": "V1 tras reconectar, el anfitrión no vuelve a verlo «sin conexión»",
+    "ok": true,
+    "detail": {
+      "reconnectedAt": 1042,
+      "offAfterReconnect": null,
+      "timeline": [
+        "0s red=Reconectando… anfitrión=SIN CONEXIÓN estado=Sin conexión",
+        "1s red=Conectado anfitrión=conectado estado=Listo"
+      ]
+    }
+  }
+]

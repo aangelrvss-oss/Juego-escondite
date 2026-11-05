@@ -2,12 +2,16 @@
 // servidor (snapshot) y de lo que el servidor permite ver (posiciones, pistas). Los eventos solo
 // producen avisos. Ninguna regla se decide aquí: todo lo valida el servidor.
 import { SYMBOL_PATHS, WORDMARK_PATHS, WORDMARK_VIEWBOX } from './brand.generated.js';
-import { CAPTURE_NORMS, INVITE_PARAM, MODES, PHASE_TEXT, zoneLine, modeInfo, teamName, PING_WARNING_MS, TEAM_TEXT, ago, briefing, mapModel, clock, codeFromLink, commandErrorText, connectionNotice, conversionText, countdownAbortText, errorText, foxLine, gpsCheckError, lobbyRolesHint, pendingConversion, pingWaitText, revealOpen, sheetAfterSnapshot, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, nightNotice, normalizeCode, personalResult, pingCountdown, reportParticipants, screenNotice, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers } from './game-view.js';
+import { CAPTURE_NORMS, INVITE_PARAM, MODES, PHASE_TEXT, zoneLine, modeInfo, teamName, PING_WARNING_MS, TEAM_TEXT, ago, briefing, mapModel, clock, codeFromLink, commandErrorText, connectionNotice, conversionText, countdownAbortText, errorText, foxLine, gpsCheckError, lobbyRolesHint, pendingConversion, pingWaitText, revealOpen, sheetAfterSnapshot, gpsStatus, inviteLink, isStaleEvent, locationDeniedNotice, me, missionReport, nightNotice, normalizeCode, pingCountdown, screenNotice, phaseDeadline, reportShareText, rivals, sharingStatus, startBlockers, SAFETY_CHECKLIST, configSummary, lobbySteps, playerReadiness, readyButton, readyProgress, readyResetNotice, acceptedConfig, guideStaysOpen, startSummary } from './game-view.js';
 import { createLocationSource } from './location.js';
 import { GameConnection, toWsUrl, uploadUrl } from './net.js';
 import { qrSvg } from './qr.js';
 import { MAP_MESSAGES, createMapController, loadMapConfig, loadMapLibre } from './map-view.js';
 import { radarSvg } from './radar.js';
+import { missionReportScreen } from './report-view.js';
+import { readStats, recordGame } from './stats.js';
+import { previousReportFor, readLastReport, saveLastReport } from './last-report.js';
+import { guideOverlay, guideStepFor, guideSteps } from './guide.js';
 
 // La interfaz se redibuja entera (innerHTML) en #app y #app-after. El mapa vive entre los dos, en
 // #map-host, que el redibujado nunca toca: así no se reinicia ni pierde el zoom (ver syncMap).
@@ -43,6 +47,7 @@ const ui = {
   toasts: [],
   reveal: null, // { team, until }
   lobbyNotice: null, // por qué se volvió a la sala desde la cuenta atrás (hasta volver a marcar «Estoy listo»)
+  acceptedConfig: null, // configuración que aceptó este jugador al marcarse listo (D-062; game-view acceptedConfig)
   claimSent: null, // { runnerId, expiresAt }
   zoneWarning: null, // { exposedAt } (fugitivo fuera de la zona)
   startZoneWarning: false,
@@ -59,12 +64,29 @@ const ui = {
   confirmEnd: false,
   confirmNewCode: false,
   confirmLeave: false,
+  confirmRematch: false, // el anfitrión ha tocado «Revancha» una vez: el segundo toque la empieza
+  confirmRematchTimer: undefined,
+  viewReport: false, // viendo el informe guardado de la partida anterior (last-report.js)
   gpsChecked: false, // este móvil ya ha dado una posición válida (se comprueba al pulsar «Estoy listo»)
+  gpsCheckedAt: 0, // cuándo (performance.now) dio la última posición válida
   location: null,
   tracking: false,
   locationDenied: false, // el permiso de ubicación falta o se ha retirado durante la partida (AC-D9)
   screenHeld: false, // el navegador mantiene la pantalla encendida (Screen Wake Lock)
   inviteCode: null, // código recibido por enlace de invitación (?sala=)
+  guide: null, // guía rápida abierta: { step, mode, context } (guide.js). No toca la sala ni la conexión
+  guideOpener: null, // botón que abrió la guía: recupera el foco al cerrarla
+  guideFocus: false, // dar el foco al título de la guía en el próximo dibujo (al abrirla o cambiar de paso)
+  // Sala guiada (ciclo UX 11/2026)
+  autoCenter: false, // ya se intentó centrar la zona sola al entrar como anfitrión sin configuración
+  centerError: null, // por qué no se pudo centrar la zona (se reintenta con «Centrar la zona aquí»)
+  readyError: null, // por qué falló la comprobación de GPS de «Estoy listo» (se queda hasta el siguiente intento)
+  editConfig: false, // selectores de la configuración desplegados («Cambiar»)
+  manage: false, // fila secundaria de cada jugador: asignar rol y expulsar
+  startAck: false, // lista de seguridad marcada en la hoja de «Empezar partida»
+  sheetFocus: null, // id que recibe el foco en el próximo dibujo (al abrir la hoja «Antes de empezar»)
+  starting: null, // texto del paso en curso al empezar (configurar, GPS, listo, empezar) o null
+  startError: null, // por qué no se pudo empezar (se muestra en la hoja, que no se cierra)
 };
 
 // Enlace de invitación: se toma el código y se quita de la barra de direcciones (no hace falta
@@ -180,6 +202,19 @@ function connect() {
   ui.conn = conn;
   conn.on('status', render);
   conn.on('snapshot', (snap) => {
+    // Si el motor acaba de quitarle el «listo» por un cambio material del anfitrión, se le explica qué ha
+    // cambiado desde lo que aceptó al marcarse listo (D-062; el protocolo no cambia).
+    // Tras recargar, lo aceptado se recupera de este móvil: si no, se mediría desde la zona de ahora.
+    const accepted = ui.acceptedConfig ?? storedAccepted(snap, conn.playerId);
+    const reset = readyResetNotice(ui.snap, snap, conn.playerId, accepted);
+    if (reset) {
+      ui.lobbyNotice = reset;
+      announce(reset);
+    }
+    ui.acceptedConfig = acceptedConfig(accepted, snap, conn.playerId);
+    storeAccepted(snap, conn.playerId, ui.acceptedConfig);
+    // La guía se cierra sola al empezar la cuenta atrás o cambiar de fase: no tapa el rol ni el inicio (AF-10).
+    if (ui.guide && !guideStaysOpen(ui.snap, snap, ui.reveal, performance.now())) dropGuide();
     ui.snap = snap;
     for (const p of snap.players) ui.names.set(p.id, p.name);
     forgetStaleWarnings(snap);
@@ -196,9 +231,21 @@ function connect() {
     if (snap.phase !== 'LOBBY') ui.lobbyNotice = null;
     // «¿Quién te ha pillado?» no sobrevive al final (el motor cierra las reclamaciones sin avisar).
     ui.sheet = sheetAfterSnapshot(ui.sheet, snap);
+    // Una reclamación de captura tiene 30 s para responder: la guía no puede taparla.
+    if (snap.pendingClaimForMe && snap.phase === 'ACTIVE') dropGuide();
     // Infección: la tarjeta de conversión también sale de la instantánea si el evento llegó viejo o se perdió.
     showConversion(snap);
+    // Historial de este móvil: una vez por partida (recordGame no cuenta dos veces tras recargar).
+    if (snap.phase === 'FINISHED' && ui.conn?.playerId) {
+      recordGame(store, snap, ui.conn.playerId);
+      // La revancha devuelve a todos a la sala y el servidor olvida el informe: este móvil guarda una copia.
+      saveLastReport(store, snap, ui.conn.playerId);
+    }
+    // El informe anterior se ve en la sala o en el inicio; al empezar otra partida, se cierra.
+    if (snap.phase !== 'LOBBY') ui.viewReport = false;
+    if (snap.phase !== 'FINISHED') ui.confirmRematch = false;
     syncTracking();
+    maybeAutoCenter(snap);
     render();
   });
   conn.on('event', onEvent);
@@ -219,6 +266,28 @@ function connect() {
   return conn;
 }
 
+// Lo que aceptó este jugador al marcarse listo (D-062), para seguir explicando bien un «listo» perdido tras
+// recargar. Solo la sala y la partida en las que vale; se borra al dejar de estar listo.
+const ACCEPTED_KEY = 'outrun.accepted';
+
+function storedAccepted(snap, myId) {
+  try {
+    const saved = JSON.parse(store.getItem(ACCEPTED_KEY) ?? 'null');
+    return saved && saved.roomId === snap.roomId && saved.gameNo === snap.gameNo && saved.playerId === myId ? saved.config : null;
+  } catch {
+    return null;
+  }
+}
+
+function storeAccepted(snap, myId, config) {
+  try {
+    if (config) store.setItem(ACCEPTED_KEY, JSON.stringify({ roomId: snap.roomId, gameNo: snap.gameNo, playerId: myId, config }));
+    else store.removeItem(ACCEPTED_KEY);
+  } catch {
+    /* sin almacenamiento: se mide desde la instantánea */
+  }
+}
+
 // Última conversión ya mostrada en este móvil (sala:partida): la tarjeta sale una sola vez.
 const CONVERTED_KEY = 'outrun.converted';
 
@@ -229,6 +298,7 @@ function showConversion(snap) {
   store.setItem(CONVERTED_KEY, seen.key);
   // Se cierra al tocarla o sola a los 15 s; después lo recuerda la franja «podrás capturar en…».
   ui.reveal = { team: seen.team, converted: true, until: performance.now() + 15_000 };
+  dropGuide();
   announce(`Te han infectado: ahora eres cazador. ${conversionText(snap.canTagFrom, serverNow())}`);
 }
 
@@ -243,10 +313,21 @@ function resetGame() {
   ui.startZoneWarning = false;
   ui.reveal = null;
   ui.lobbyNotice = null;
+  ui.acceptedConfig = null;
   ui.sheet = null;
+  ui.viewReport = false;
+  ui.confirmRematch = false;
   ui.sentAt = null;
   ui.phaseKey = null;
   ui.names.clear();
+  ui.autoCenter = false;
+  ui.centerError = null;
+  ui.readyError = null;
+  ui.editConfig = false;
+  ui.manage = false;
+  ui.startAck = false;
+  ui.starting = null;
+  ui.startError = null;
   syncWakeLock(); // sin partida, la pantalla vuelve a apagarse sola
 }
 
@@ -294,7 +375,10 @@ function onEvent(e) {
   const buzz = (pattern) => (stale ? undefined : navigator.vibrate?.(pattern));
   switch (e.type) {
     case 'role_revealed':
-      if (!stale) ui.reveal = { team: d.team, until: performance.now() + 5_000 };
+      if (!stale) {
+        ui.reveal = { team: d.team, until: performance.now() + 5_000 };
+        dropGuide(); // la tarjeta del rol no puede quedar bajo la guía
+      }
       buzz([120, 60, 120]);
       break;
     case 'role_changed':
@@ -408,7 +492,7 @@ function onEvent(e) {
       break;
     case 'countdown_aborted': {
       // Vuelta a la sala: el motor quita el «Listo» a todos. Se explica y se recuerda en la sala.
-      const text = countdownAbortText(d?.reason);
+      const text = countdownAbortText(d?.reason, { host: ui.snap?.hostId === ui.conn?.playerId });
       // Uno repetido al reanudar (de una cuenta atrás anterior) no vuelve a fijar el aviso en la sala (R-3).
       if (!stale) ui.lobbyNotice = text;
       notify(text, 'danger');
@@ -548,6 +632,7 @@ async function locateOnce() {
     if (!ui.tracking) await src.stop();
     ui.reading = reading;
     ui.gpsChecked = true;
+    ui.gpsCheckedAt = performance.now();
     return reading;
   } finally {
     ui.locating = false;
@@ -565,7 +650,9 @@ function draw() {
   let below = ''; // lo que va debajo del mapa (solo en la huida y la persecución)
   const home = !snap || !ui.conn?.playerId;
   document.body.classList.toggle('is-home', home);
-  if (home) body = homeScreen();
+  const previous = ui.viewReport ? previousReportFor(readLastReport(store), home ? null : snap) : null;
+  if (previous) body = archivedReportScreen(previous);
+  else if (home) body = homeScreen();
   else if (ui.conn.replaced) body = replacedScreen();
   else if (snap.phase === 'LOBBY') body = lobbyScreen(snap);
   else if (snap.phase === 'COUNTDOWN') body = countdownScreen(snap);
@@ -598,6 +685,14 @@ function draw() {
   }
   if (keepFocus) document.getElementById(keepFocus)?.focus();
   syncMap();
+  if (ui.sheetFocus) {
+    document.getElementById(ui.sheetFocus)?.focus({ preventScroll: true });
+    ui.sheetFocus = null;
+  }
+  if (ui.guideFocus) {
+    ui.guideFocus = false;
+    document.getElementById('guide-title')?.focus({ preventScroll: true });
+  }
 }
 
 /** Sustituye el contenido solo si ha cambiado: así un botón no se recrea si nada ha cambiado. */
@@ -766,8 +861,10 @@ function homeScreen() {
     </section>
     ${invite ? createBtn : ''}
   </form>
+  ${previousReportButton(null)}
   <section class="card how" aria-labelledby="how-h">
     <h2 id="how-h" class="h-sec">Cómo se juega</h2>
+    <button class="btn btn-outline btn-small guide-open" type="button" data-act="guide-open" aria-haspopup="dialog">Guía rápida con capturas</button>
     <ol class="steps">
       <li><span><b>Crea la sala y comparte el código</b>Por enlace, QR o de palabra. El anfitrión elige el modo y marca la zona y el punto de encuentro.</span></li>
       <li><span><b>Los fugitivos salen con ventaja</b>Los cazadores esperan en el punto de encuentro. Cada uno descubre su rol al terminar la cuenta atrás.</span></li>
@@ -795,65 +892,128 @@ function rulesSheet() {
     <button class="btn btn-primary" data-act="close-sheet">Entendido</button></div>`;
 }
 
+// Sala guiada (ciclo UX 11/2026): pasos visibles y una única acción principal en cada momento. El
+// anfitrión configura (la zona se centra sola al entrar), invita y empieza; la lista de seguridad y su
+// propio «listo» se confirman en la hoja de «Empezar partida». Los jugadores ven el resumen, su «Estoy
+// listo» y qué falta. Quién está listo lo decide el motor: aquí solo se muestra.
+
 function playerRow(p, snap, isHost) {
   const host = p.id === snap.hostId;
   const mine = p.id === ui.conn.playerId;
-  const assign = isHost
-    ? `<select class="mini" data-assign="${esc(p.id)}" aria-label="Rol de ${esc(p.name)}">
+  const st = playerReadiness(p, snap);
+  // Asignar rol y expulsar van en una fila secundaria, solo con «Gestionar jugadores» abierto.
+  const tools = isHost && ui.manage && p.status === 'lobby'
+    ? `<span class="ptools"><select class="mini" data-assign="${esc(p.id)}" aria-label="Rol de ${esc(p.name)}">
         ${['random', 'hunter', 'runner'].map((v) => `<option value="${v}"${(p.teamPref ?? 'random') === v ? ' selected' : ''}>${{ random: 'Sorteo', hunter: 'Cazador', runner: snap.config?.mode === 'fox_hunt' ? 'Zorro' : 'Fugitivo' }[v]}</option>`).join('')}
-      </select>`
+      </select>${host ? '' : `<button class="btn btn-ghost btn-small" data-kick="${esc(p.id)}" aria-label="Expulsar a ${esc(p.name)}">Expulsar</button>`}</span>`
     : '';
-  const kick = isHost && !host ? `<button class="icon-btn" data-kick="${esc(p.id)}" aria-label="Expulsar a ${esc(p.name)}">✕</button>` : '';
-  const state = p.status === 'invited' ? 'Invitado' : p.ready ? 'Listo' : 'Esperando';
-  return `<li class="player${p.connected ? '' : ' off'}">
+  return `<li class="player st-${st.tone}${p.connected ? '' : ' off'}">
     <span class="dot${p.connected ? ' on' : ''}" aria-hidden="true"></span>
-    <span class="pname">${esc(p.name)}${mine ? ' <em>(tú)</em>' : ''}${host ? ' <span class="tag">Anfitrión</span>' : ''}</span>
-    <span class="pstate${p.ready ? ' ready' : ''}">${state}</span>${assign}${kick}</li>`;
+    <span class="pname">${esc(p.name)}${mine ? ' <em>(tú)</em>' : ''}${host ? ' <span class="tag">Anfitrión</span>' : ''}<small class="preason">${esc(st.reason)}</small></span>
+    <span class="pstate${p.ready ? ' ready' : ''}">${esc(st.text)}</span>${tools}</li>`;
+}
+
+/** Pasos de la sala: dónde está el jugador y qué viene después. */
+function stepsBar(snap) {
+  const steps = lobbySteps(snap, ui.conn.playerId);
+  const current = steps.find((s) => s.state === 'current');
+  return `<ol class="lobby-steps" aria-label="Pasos para empezar${current ? `. Ahora: ${esc(current.label)}` : ''}">${steps
+    .map((s, i) => `<li class="lobby-step is-${s.state}"${s.state === 'current' ? ' aria-current="step"' : ''}><span class="lobby-step-n" aria-hidden="true">${s.state === 'done' ? '✓' : i + 1}</span>${esc(s.label)}</li>`)
+    .join('')}</ol>`;
+}
+
+function playersCard(snap, isHost) {
+  const players = snap.players.filter((p) => p.status === 'lobby' || p.status === 'invited');
+  const progress = readyProgress(snap);
+  return `<section class="card">
+      <h2>Jugadores <span class="count">${players.length}/20</span></h2>
+      <div class="progress" role="status" aria-live="polite">
+        <p class="progress-text"><b class="num">${esc(progress.text)}</b>${progress.total ? '' : ' · comparte el código'}</p>
+        <span class="progress-bar" style="--p:${progress.ratio}" aria-hidden="true"></span>
+      </div>
+      <ul class="players">${players.map((p) => playerRow(p, snap, isHost)).join('')}</ul>
+      ${isHost ? `<button class="btn btn-ghost btn-small" data-act="manage" aria-expanded="${ui.manage}">${ui.manage ? 'Cerrar la gestión de jugadores' : 'Gestionar jugadores (roles, expulsar)'}</button>
+      ${ui.manage ? `<p class="hint">${esc(lobbyRolesHint(snap.config))}</p>` : ''}` : ''}
+    </section>`;
 }
 
 function lobbyScreen(snap) {
   const self = me(snap, ui.conn.playerId);
   const isHost = snap.hostId === ui.conn.playerId;
   const code = ui.conn.code ?? '';
-  const players = snap.players.filter((p) => p.status === 'lobby' || p.status === 'invited');
   const night = nightNotice(new Date()); // hora local de este móvil (AC-B3)
   const invited = self?.status === 'invited';
-  const cfg = snap.config;
-  const summary = cfg
-    ? `${modeInfo(cfg).name} · ${cfg.durationMs / 60_000} min de persecución · ${cfg.headStartMs / 60_000} min de huida · zona de ${metres(cfg.zone[0].radiusM)}${cfg.dynamicZone ? ' que se cierra cada 5 min' : ''} · pistas cada ${cfg.pingIntervalMs / 60_000} min`
-    : 'El anfitrión aún no ha fijado la zona.';
-  const blockers = startBlockers(snap, { forHost: isHost });
-  return `<section class="card code-card">
-      <p class="label">Código de la sala</p>
+  const notice = ui.lobbyNotice && !self?.ready ? `<p class="msg warn" role="status">${esc(ui.lobbyNotice)}</p>` : '';
+  const invite = `<section class="card code-card">
+      <p class="label">Invita · código de la sala</p>
       <p class="code num">${esc(code)}</p>
       <div class="row2">
         <button class="btn btn-outline btn-small" data-act="share">Compartir enlace</button>
         <button class="btn btn-outline btn-small" data-act="qr"${currentInvite() ? '' : ' disabled'}>Mostrar QR</button>
       </div>
       ${isHost ? `<button class="btn btn-ghost btn-small" data-act="new-code">${ui.confirmNewCode ? 'Toca otra vez: el código actual dejará de servir' : 'Cambiar el código'}</button>` : ''}
+    </section>`;
+  const nightHtml = night ? `<p class="msg warn" role="note">${esc(night)}</p>` : '';
+  if (isHost) {
+    // Con todo listo, «Empezar partida» queda fijo abajo (la única acción que falta); con bloqueos, en su
+    // sitio: fijo taparía la configuración mientras se cambia.
+    const blockers = startBlockers(snap, { forHost: true, atStart: true });
+    return `${stepsBar(snap)}${notice}
+    ${hostConfig(snap)}
+    ${invite}
+    ${playersCard(snap, true)}
+    <section class="card stack start-card${blockers.length ? '' : ' dock'}">
+      ${blockers.length
+        ? `<div class="blockers" aria-live="polite"><p class="label">Para empezar falta</p>${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}</div>`
+        : '<p class="msg ok" role="status">Todo listo. Al empezar confirmarás la lista de seguridad y se comprobará tu GPS.</p>'}
+      <button class="btn btn-primary btn-big" data-act="start"${blockers.length || ui.starting ? ' disabled' : ''}>Empezar partida</button></section>
+    ${nightHtml}
+    ${rulesCard(snap, false)}
+    ${previousReportButton(snap)}
+    ${guideButton()}
+    <button class="btn btn-ghost" data-act="leave">Salir de la sala</button>`;
+  }
+  const blockers = startBlockers(snap, { forHost: false, atStart: true });
+  const btn = readyButton(snap, ui.conn.playerId, { locating: ui.locating });
+  const rows = configSummary(snap.config);
+  const mine = invited
+    ? '<button class="btn btn-primary btn-big" data-act="join_rematch">Unirme a la revancha</button>'
+    : `<section class="card stack ready-card">
+      <h2>Tu preparación</h2>
+      <button class="btn ${btn.primary ? 'btn-primary btn-big' : 'btn-outline'}" data-act="ready"${btn.disabled ? ' disabled' : ''}>${esc(btn.label)}</button>
+      ${ui.readyError ? `<p class="msg danger" role="alert">${esc(ui.readyError)}</p>` : ''}
+      ${!snap.config
+        ? '<p class="hint">Cuando el anfitrión fije la zona podrás confirmar. Así no tendrás que hacerlo dos veces.</p>'
+        : !self?.ready && !ui.gpsChecked ? '<p class="hint">Al pulsar «Estoy listo» se comprueba tu GPS. La ubicación solo se usa durante la partida y se borra al terminar.</p>' : ''}
+    </section>`;
+  return `${stepsBar(snap)}${notice}
+    ${mine}
+    <section class="card"><h2>Partida</h2>
+      ${rows ? summaryList(rows) : '<p class="line muted" role="status">El anfitrión está fijando la zona de juego…</p>'}
+      ${blockers.length
+        ? `<div class="blockers" aria-live="polite"><p class="label">Para empezar falta</p>${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}</div>`
+        : '<p class="msg ok" role="status">Todo listo: falta que el anfitrión pulse «Empezar partida».</p>'}
     </section>
-    ${invited ? `<button class="btn btn-primary" data-act="join_rematch">Unirme a la revancha</button>` : ''}
-    <section class="card">
-      <h2>Jugadores <span class="count">${players.length}/20</span></h2>
-      <ul class="players">${players.map((p) => playerRow(p, snap, isHost)).join('')}</ul>
-      ${isHost ? `<p class="hint">${esc(lobbyRolesHint(cfg))}</p>` : ''}
-      ${ui.lobbyNotice && !self?.ready ? `<p class="msg warn" role="status">${esc(ui.lobbyNotice)}</p>` : ''}
-      ${!invited ? `<button class="btn ${self?.ready ? 'btn-outline' : 'btn-primary'}" data-act="ready"${ui.locating ? ' disabled' : ''}>${ui.locating ? 'Comprobando tu GPS…' : self?.ready ? 'No estoy listo' : 'Estoy listo'}</button>` : ''}
-      ${!invited && !self?.ready && !ui.gpsChecked ? '<p class="hint">Al pulsar «Estoy listo» se comprueba tu GPS. La ubicación solo se usa durante la partida y se borra al terminar.</p>' : ''}
-    </section>
-    ${isHost ? hostConfig(snap) : `<section class="card"><h2>Partida</h2><p class="line">${esc(summary)}</p>${blockers.length ? `<div class="blockers" aria-live="polite"><p class="label">Para empezar falta</p>${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}</div>` : '<p class="msg">Todo listo: el anfitrión puede empezar.</p>'}</section>`}
-    ${night ? `<p class="msg warn" role="note">${esc(night)}</p>` : ''}
-    ${rulesCard(snap)}
-    ${isHost ? `<section class="card stack">${blockers.map((b) => `<p class="msg">${esc(b)}</p>`).join('')}
-      <button class="btn btn-primary btn-big" data-act="start"${blockers.length ? ' disabled' : ''}>Empezar partida</button></section>` : ''}
+    ${playersCard(snap, false)}
+    ${invite}
+    ${nightHtml}
+    ${rulesCard(snap, false)}
+    ${previousReportButton(snap)}
+    ${guideButton()}
     <button class="btn btn-ghost" data-act="leave">Salir de la sala</button>`;
 }
 
+/** Resumen de la configuración como lista legible (concepto, valor y su explicación breve). */
+// El anfitrión lo ve compacto (las explicaciones las tiene al desplegar «Cambiar»); los jugadores, explicado.
+function summaryList(rows, notes = true) {
+  return `<dl class="cfg-summary">${rows.map((r) => `<div class="cfg-row"><dt>${esc(r.label)}</dt><dd><b>${esc(r.value)}</b>${notes ? `<small>${esc(r.note)}</small>` : ''}</dd></div>`).join('')}</dl>`;
+}
+
 /** Reglas de la partida, visibles para todos antes de empezar (Plan Maestro §7, reglas/briefing). */
-function rulesCard(snap) {
+function rulesCard(snap, open = true) {
   const rules = briefing(snap.config);
   if (!rules) return '';
-  return `<details class="card rules" open><summary><h2>Reglas de la partida</h2></summary>
+  return `<details class="card rules"${open ? ' open' : ''}><summary><h2>Reglas de la partida</h2></summary>
     <dl>${rules.map((r) => `<dt>${esc(r.title)}</dt><dd>${esc(r.text)}</dd>`).join('')}</dl></details>`;
 }
 
@@ -868,26 +1028,65 @@ function hostConfig(snap) {
     d.center = snap.config.zone[0].center;
     d.safety = snap.config.safetyChecklistConfirmed;
   }
+  const centerLabel = ui.locating ? 'Buscando tu posición…' : d.center ? 'Volver a centrar' : 'Centrar la zona aquí';
+  if (!snap.config) {
+    // Sin configuración: la zona se centra sola en la posición del anfitrión (maybeAutoCenter). Si el GPS
+    // falla, se explica por qué y queda el botón para reintentarlo.
+    const failed = ui.centerError && !ui.locating;
+    return `<section class="card stack">
+      <h2>Configurar la partida</h2>
+      ${failed
+        ? `<p class="msg danger" role="alert">${esc(ui.centerError)}</p>
+      <button class="btn btn-primary" data-act="center">${centerLabel}</button>`
+        : '<p class="line" role="status">Buscando tu posición para centrar la zona… Colócate en el punto de encuentro.</p>'}
+      <p class="hint">La zona se centra en tu posición: también es el punto de encuentro y la salida de los cazadores. Después podrás cambiar el modo y los tiempos.</p>
+    </section>`;
+  }
+  const othersReady = snap.players.some((p) => p.status === 'lobby' && p.id !== snap.hostId && p.ready);
   const sel = (id, values, current, unit) =>
     `<select id="${id}" data-cfg>${values.map((v) => `<option value="${v}"${v === current ? ' selected' : ''}>${unit === 'm' ? metres(v) : `${v} ${unit}`}</option>`).join('')}</select>`;
   const mode = MODES[d.mode] ?? MODES.classic;
+  const body = ui.editConfig
+    ? `<div class="cfg-edit stack">
+      <label class="field">Modo de juego<select id="c-mode" data-cfg>${Object.values(MODES)
+        .map((m) => `<option value="${m.id}"${m.id === mode.id ? ' selected' : ''}>${esc(m.name)}${m.minPlayers > 2 ? ` (mín. ${m.minPlayers})` : ''}</option>`)
+        .join('')}</select></label>
+      <p class="hint mode-line">${esc(mode.line)}</p>
+      <div class="grid2">
+        <label class="field">Radio inicial${sel('c-radius', RADII.includes(d.radiusM) ? RADII : [...RADII, d.radiusM].sort((a, b) => a - b), d.radiusM, 'm')}</label>
+        <label class="field">Persecución${sel('c-duration', DURATIONS, d.durationMin, 'min')}</label>
+        <label class="field">Huida${sel('c-head', HEAD_STARTS, d.headStartMin, 'min')}</label>
+        <label class="field">Pistas cada${sel('c-ping', [...new Set([...pingChoices(d.durationMin), d.pingMin])].sort((a, b) => a - b), d.pingMin, 'min')}</label>
+      </div>
+      <p class="hint">La huida es la ventaja para esconderse; las pistas envían a los cazadores la posición de los fugitivos; la zona se cierra cada 5 min.</p>
+      ${othersReady ? '<p class="msg warn">Cambiar el modo, la zona o los tiempos quita el «listo» a los demás: tendrán que confirmarlo otra vez.</p>' : ''}
+      <button class="btn btn-outline" data-act="edit-config" aria-expanded="true">Hecho</button>
+    </div>`
+    : `${summaryList(configSummary(snap.config), false)}
+    <button class="btn btn-outline btn-small" data-act="edit-config" aria-expanded="false">Cambiar</button>`;
   return `<section class="card stack">
-    <h2>Configuración</h2>
-    <label class="field">Modo de juego<select id="c-mode" data-cfg>${Object.values(MODES)
-      .map((m) => `<option value="${m.id}"${m.id === mode.id ? ' selected' : ''}>${esc(m.name)}</option>`)
-      .join('')}</select></label>
-    <p class="hint mode-line">${esc(mode.line)}${mode.minPlayers > 2 ? ` Mínimo ${mode.minPlayers} jugadores.` : ''}</p>
-    <button class="btn btn-outline" data-act="center"${ui.locating ? ' disabled' : ''}>${ui.locating ? 'Buscando tu posición…' : d.center ? 'Volver a centrar la zona aquí' : 'Centrar la zona aquí'}</button>
-    <p class="hint">${d.center ? 'Zona fijada en tu posición. También es el punto de encuentro y la zona de salida de los cazadores.' : 'La zona se centra en tu posición actual: colócate en el punto de encuentro.'}</p>
-    <div class="grid2">
-      <label class="field">Radio inicial${sel('c-radius', RADII.includes(d.radiusM) ? RADII : [...RADII, d.radiusM].sort((a, b) => a - b), d.radiusM, 'm')}</label>
-      <label class="field">Persecución${sel('c-duration', DURATIONS, d.durationMin, 'min')}</label>
-      <label class="field">Huida${sel('c-head', HEAD_STARTS, d.headStartMin, 'min')}</label>
-      <label class="field">Pistas cada${sel('c-ping', [...new Set([...pingChoices(d.durationMin), d.pingMin])].sort((a, b) => a - b), d.pingMin, 'min')}</label>
-    </div>
-    <label class="check"><input type="checkbox" id="c-safety" data-cfg${d.safety ? ' checked' : ''}>
-      Lista de seguridad revisada: sin calzadas ni vías, toque suave para capturar, todos mayores de 18 y punto de encuentro acordado.</label>
+    <h2>Partida</h2>
+    ${body}
+    <button class="btn btn-ghost btn-small" data-act="center"${ui.locating ? ' disabled' : ''}>${centerLabel}</button>
+    ${ui.centerError ? `<p class="msg danger" role="alert">${esc(ui.centerError)}</p>` : ''}
+    <p class="hint">Zona centrada en tu posición: es el punto de encuentro. Recentrar unos metros no obliga a nadie a confirmar otra vez; si la zona acaba a 50 m o más de donde estaba cuando alguien se marcó listo, tendrá que confirmarlo de nuevo.</p>
   </section>`;
+}
+
+/** Hoja de «Empezar partida»: resumen breve y la lista de seguridad que el anfitrión confirma aquí. */
+function startSheet(snap) {
+  const rows = startSummary(snap);
+  return `<div class="overlay sheet start-sheet" role="dialog" aria-modal="true" aria-labelledby="start-title">
+    <h2 id="start-title" tabindex="-1">Antes de empezar</h2>
+    <dl class="start-summary">${rows.map((r) => `<div><dt>${esc(r.label)}</dt><dd>${esc(r.value)}</dd></div>`).join('')}</dl>
+    <div class="safety">
+      <p class="label">Lista de seguridad</p>
+      <ul>${SAFETY_CHECKLIST.map((t) => `<li>${esc(t)}</li>`).join('')}</ul>
+      <label class="home-check"><input type="checkbox" id="start-safety"${ui.startAck ? ' checked' : ''}><span>La he revisado con el grupo</span></label>
+    </div>
+    ${ui.startError ? `<p class="msg danger" role="alert">${esc(ui.startError)}</p>` : ''}
+    <button class="btn btn-primary btn-big" data-act="start-now"${!ui.startAck || ui.starting ? ' disabled' : ''}>${esc(ui.starting ?? 'Empezar ya')}</button>
+    <button class="btn btn-ghost" data-act="close-sheet"${ui.starting ? ' disabled' : ''}>Volver a la sala</button></div>`;
 }
 
 function countdownScreen(snap) {
@@ -916,6 +1115,35 @@ function sharingPill() {
  * Plan Maestro §4.5: se puede abandonar la partida en cualquier momento, y al salir se deja de
  * compartir la ubicación. Doble toque para no salir por error.
  */
+/** Guía rápida, a petición (nunca se abre sola). En la partida abre en el paso que más ayuda ahora. */
+function guideButton(label = 'Guía rápida') {
+  return `<button class="btn btn-ghost btn-small guide-open" type="button" data-act="guide-open" aria-haspopup="dialog">${esc(label)}</button>`;
+}
+
+/** Cierra la guía sin mover el foco: la cierra la partida (cambio de fase, tarjeta del rol), no el jugador. */
+function dropGuide() {
+  ui.guide = null;
+  ui.guideOpener = null;
+  ui.guideFocus = false;
+}
+
+/** Cierra la guía y devuelve el foco al botón que la abrió (o al primero de la guía que haya). */
+function closeGuide() {
+  if (!ui.guide) return;
+  const opener = ui.guideOpener;
+  ui.guide = null;
+  ui.guideOpener = null;
+  draw();
+  (opener?.isConnected ? opener : document.querySelector('[data-act="guide-open"]'))?.focus();
+}
+
+/** Paso de la guía para la ayuda de la partida: el problema actual si lo hay; si no, la captura. */
+function guideTopic(snap) {
+  if (ui.locationDenied) return 'location';
+  if (ui.conn && ui.conn.status !== 'open') return 'connection';
+  return snap?.phase === 'HEAD_START' ? 'roles' : 'capture';
+}
+
 function leaveGameButton() {
   return `<button class="btn btn-ghost" data-act="leave-game">${ui.confirmLeave ? 'Toca otra vez: saldrás y dejarás de compartir tu ubicación' : 'Abandonar la partida'}</button>`;
 }
@@ -974,6 +1202,7 @@ function gameScreen(snap) {
     <section class="card map-meta"><p class="gps tone-${gps.tone}">${esc(gps.text)}</p>${sharingPill()}${mapLegend(team, captured, snap.config?.mode === 'fox_hunt', foxIs)}</section>
     ${!captured && snap.phase === 'ACTIVE' && !snap.pendingClaimForMe ? actions(snap, team) : ''}
     <p class="foot num">${snap.config?.mode === 'infection' ? 'Infectados' : 'Capturas'}: ${snap.captures.length}</p>
+    ${guideButton('Ayuda: cómo se juega')}
     ${snap.hostId === ui.conn.playerId ? `<button class="btn btn-ghost" data-act="end">${ui.confirmEnd ? 'Toca otra vez para terminar la partida' : 'Terminar partida (anfitrión)'}</button>` : ''}
     ${leaveGameButton()}`;
   return { top, bottom };
@@ -1049,64 +1278,22 @@ function pingList(ping, snap) {
       .join('') || `<li class="muted">No queda ningún fugitivo libre en esta pista.</li>`}</ul></section>`;
 }
 
+/** Mission Report (report-view.js): el informe común, «Tu partida» y el historial de este móvil (stats.js). */
 function finishedScreen(snap) {
-  const o = snap.outcome;
-  // El informe usa solo la instantánea (igual para todos y tras recargar): quien ya salió de la sala
-  // aparece como «Alguien» para todos, no con el nombre que cada móvil recuerde.
-  const officialName = (id) => snap.players.find((p) => p.id === id)?.name ?? 'Alguien';
-  const report = missionReport(snap, officialName);
-  const isHost = snap.hostId === ui.conn.playerId;
-  if (!report) return `<section class="card"><p class="line">Calculando el resultado…</p></section>`;
-  // Lo personal va fuera del informe: el Mission Report es idéntico para todos (y tras recargar).
-  const mine = personalResult(snap, ui.conn.playerId, nameOf);
-  const people = reportParticipants(snap, officialName);
-  const stat = (label, value) => `<div class="stat"><p class="label">${esc(label)}</p><p class="num">${esc(value)}</p></div>`;
-  // «Hasta la victoria» repetía la duración cuando la última captura acaba la partida: entonces se
-  // muestra cuándo cayó el primero, que sí aporta.
-  const repeated = report.timeToVictoryMs !== null && report.durationMs !== null && Math.abs(report.timeToVictoryMs - report.durationMs) < 1_000;
-  const third = report.timeToVictoryMs !== null && !repeated
-    ? stat('Hasta la victoria', clock(report.timeToVictoryMs))
-    : report.captures.length ? stat(snap.config?.mode === 'infection' ? 'Primera infección' : 'Primera captura', clock(report.captures[0].atMs)) : '';
-  const myId = ui.conn.playerId;
-  return `${mine ? `<section class="result-me tone-${mine.tone}"><p class="label">Tu partida</p><p class="result-me-title">${esc(mine.title)}</p><p class="line">${esc(mine.detail)}</p></section>` : ''}
-    <section class="card result t-${o?.winner ?? 'x'}" aria-label="Mission Report">
-      <header class="result-hero">
-        <p class="label">Mission Report · ${esc(report.mode)} · Partida ${esc(snap.gameNo)}</p>
-        <h1${report.winner.split(' ').some((w) => w.length > 11) ? ' class="is-long"' : ''}>${esc(report.winner)}</h1>
-        <p class="result-cause">${esc(report.cause)}</p>
-      </header>
-      <div class="result-body">
-        <div class="stats">
-          ${stat('Persecución', report.durationMs === null ? '—' : clock(report.durationMs))}
-          ${stat(snap.config?.mode === 'infection' ? 'Infectados' : 'Capturas', String(report.captureCount))}
-          ${third}
-        </div>
-        ${report.highlights.length ? `<h2>Momentos</h2><ul class="highlights">${report.highlights.map((h) => `<li>${esc(h)}</li>`).join('')}</ul>` : ''}
-        <h2>Cronología</h2>
-        <ol class="timeline">${report.captures.map((c) => `<li><span class="num">${clock(c.atMs)}</span><span>${c.converted ? 'Infección' : 'Captura'} de <b>${esc(c.runner)}</b>${c.hunter ? ` por <b>${esc(c.hunter)}</b>` : ''}${c.via === 'self' ? ' <small>· autodeclarada</small>' : ''}</span></li>`).join('') || '<li class="empty">Nadie fue capturado</li>'}</ol>
-        ${rosterHtml(people, myId, snap.config?.mode === 'fox_hunt')}
-        <p class="hint">Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado.${report.rulesVersion ? ` Reglas: ${esc(report.rulesVersion)}.` : ''}</p>
-      </div>
-    </section>
-    <div class="result-actions">
-      ${isHost ? '<button class="btn btn-primary btn-big" data-act="rematch">Revancha</button>' : '<p class="msg">Esperando a que el anfitrión proponga la revancha…</p>'}
-      <button class="btn btn-outline" data-act="share-report">Compartir resultado</button>
-      <button class="btn btn-ghost" data-act="leave">Salir de la sala</button>
-    </div>`;
+  return missionReportScreen(snap, { myId: ui.conn.playerId, nameOf, stats: readStats(store), confirmRematch: ui.confirmRematch });
 }
 
-/** Jugadores del Mission Report, por equipos (se revelan al terminar). Igual para todos. */
-function rosterHtml(people, myId, fox = false) {
-  if (!people.length) return '';
-  const item = (p) => `<li class="${p.caught ? 'is-caught' : ''}${p.captures ? ' has-captures' : ''}${p.left ? ' has-left' : ''}${p.id === myId ? ' is-me' : ''}"><span class="pname">${esc(p.name)}</span>${p.detail ? `<span class="muted">${esc(p.detail)}</span>` : ''}</li>`;
-  const groups = [
-    ['hunter', 'Cazadores'],
-    ['runner', fox ? 'Zorro' : 'Fugitivos'],
-    [null, 'Jugadores'],
-  ]
-    .map(([team, title]) => [title, people.filter((p) => p.team === team), team])
-    .filter(([, list]) => list.length);
-  return groups.map(([title, list, team]) => `<h2>${esc(title)}</h2><ul class="roster t-${team ?? 'x'}">${list.map(item).join('')}</ul>`).join('');
+/** El informe guardado de la partida anterior (tras la revancha o al volver al inicio): ver, compartir, volver. */
+function archivedReportScreen(last) {
+  return missionReportScreen(last.snap, { myId: last.myId, stats: readStats(store), archived: true });
+}
+
+/** Acceso al informe guardado: en la sala de la revancha y en el inicio. */
+function previousReportButton(snap) {
+  const last = previousReportFor(readLastReport(store), snap);
+  if (!last) return '';
+  const label = snap?.roomId === last.snap.roomId ? `Ver el informe de la partida anterior (${last.snap.gameNo})` : 'Ver el informe de tu última partida';
+  return `<button class="btn btn-outline btn-small" type="button" data-act="open-report">${esc(label)}</button>`;
 }
 
 /** D-057: quién lleva más de 30 s sin dar señales (sin equipo ni desde cuándo: lo ven todos igual). */
@@ -1181,6 +1368,7 @@ function overlays() {
       <p class="hint">Abre la partida en el navegador con el código ya puesto.</p>
       <button class="btn btn-ghost" data-act="close-sheet">Cerrar</button></div>`;
   }
+  if (ui.sheet === 'start' && snap?.phase === 'LOBBY' && snap.hostId === ui.conn?.playerId) out += startSheet(snap);
   if (ui.sheet === 'selftag' && snap?.phase === 'ACTIVE') {
     const hunters = rivals(snap, ui.conn.playerId);
     out += `<div class="overlay sheet" role="dialog" aria-label="Declararte capturado">
@@ -1189,6 +1377,7 @@ function overlays() {
       <button class="btn btn-outline btn-small" data-selftag="">No lo sé</button></div>
       <button class="btn btn-ghost" data-act="close-sheet">Cancelar</button></div>`;
   }
+  if (ui.guide) out += guideOverlay(ui.guide);
   // La reclamación de captura va la última, encima de cualquier otra hoja: tiene 30 s para responder.
   const pending = snap?.pendingClaimForMe;
   if (pending && snap.phase === 'ACTIVE') {
@@ -1257,16 +1446,10 @@ async function enter(kind) {
 // (la primera llega un intervalo después de empezar).
 const pingChoices = (durationMin) => PING_INTERVALS.filter((v) => v < durationMin);
 
-async function configure(patch = {}) {
-  Object.assign(ui.draft, patch);
+/** Comando «configure» con el borrador actual (la configuración se envía siempre entera). */
+function configCommand() {
   const d = ui.draft;
-  const fits = pingChoices(d.durationMin);
-  if (!fits.includes(d.pingMin)) {
-    d.pingMin = fits[fits.length - 1];
-    toast(`Pistas cada ${d.pingMin} min: con ${d.durationMin} min de persecución, un intervalo igual o mayor no daría ninguna pista.`);
-  }
-  if (!d.center) return render();
-  await cmd({
+  return {
     type: 'configure',
     config: {
       mode: d.mode,
@@ -1279,7 +1462,98 @@ async function configure(patch = {}) {
       meetingPoint: d.center,
       safetyChecklistConfirmed: d.safety,
     },
-  });
+  };
+}
+
+// El motor solo quita el «listo» a los demás si el cambio es material (modo, tiempos, pistas, radio o
+// la zona o el encuentro a 50 m o más de lo que aceptó cada uno, D-062): confirmar la seguridad o recentrar
+// unos metros no obliga a nadie.
+async function configure(patch = {}) {
+  Object.assign(ui.draft, patch);
+  const d = ui.draft;
+  const fits = pingChoices(d.durationMin);
+  if (!fits.includes(d.pingMin)) {
+    d.pingMin = fits[fits.length - 1];
+    toast(`Pistas cada ${d.pingMin} min: con ${d.durationMin} min de persecución, un intervalo igual o mayor no daría ninguna pista.`);
+  }
+  if (!d.center) return void render();
+  return cmd(configCommand());
+}
+
+/** Centra la zona en la posición del anfitrión (y envía la configuración). El fallo se queda a la vista. */
+async function centerZone() {
+  ui.centerError = null;
+  try {
+    const r = await locateOnce();
+    await configure({ center: { lat: r.lat, lng: r.lng } });
+  } catch (e) {
+    ui.centerError = gpsCheckError(e.message, ui.draft.center ? 'Volver a centrar' : 'Centrar la zona aquí');
+    announce(ui.centerError);
+    render();
+  }
+}
+
+/**
+ * Paso 2 automático: el anfitrión que entra en una sala sin configuración no tiene que buscar el botón.
+ * Se pide el GPS una sola vez; si falla, se explica y queda «Centrar la zona aquí» para reintentarlo.
+ */
+function maybeAutoCenter(snap) {
+  if (ui.autoCenter || ui.locating || snap.phase !== 'LOBBY' || snap.config || snap.hostId !== ui.conn?.playerId) return;
+  ui.autoCenter = true;
+  centerZone();
+}
+
+// Antigüedad máxima de la lectura GPS del anfitrión al empezar (AF-12).
+const HOST_GPS_FRESH_MS = 2 * 60_000;
+
+/**
+ * «Empezar ya» (hoja de empezar): confirma la lista de seguridad (no quita el «listo» a nadie), comprueba
+ * el GPS del anfitrión y lo marca listo si hacía falta, y empieza. Si algo falla, se dice en la hoja, que
+ * sigue abierta, y lo ya hecho se conserva (el siguiente intento no lo repite).
+ */
+async function startGame() {
+  if (ui.starting) return;
+  ui.startError = null;
+  const step = (text) => {
+    ui.starting = text;
+    render();
+  };
+  const fail = (text) => {
+    ui.starting = null;
+    ui.startError = text;
+    announce(text);
+    render();
+  };
+  const send = async (command) => {
+    const r = await ui.conn.command(command);
+    if (!r.ok) fail(commandErrorText(r.error, r.detail, command.type));
+    return r.ok;
+  };
+  if (!ui.snap?.config) return fail(startBlockers(ui.snap, { forHost: true })[0] ?? errorText('config_missing'));
+  if (!ui.snap.config.safetyChecklistConfirmed) {
+    step('Guardando la lista de seguridad…');
+    ui.draft.safety = true;
+    if (!(await send(configCommand()))) return;
+  }
+  // AF-12: la lectura del autocentrado puede tener muchos minutos. Al empezar, el GPS del anfitrión se
+  // comprueba otra vez si la última lectura válida es de hace más de HOST_GPS_FRESH_MS (como dice la hoja).
+  if (!ui.gpsChecked || performance.now() - ui.gpsCheckedAt > HOST_GPS_FRESH_MS) {
+    step('Comprobando tu GPS…');
+    try {
+      await locateOnce();
+    } catch (e) {
+      return fail(gpsCheckError(e.message, 'Empezar ya'));
+    }
+  }
+  if (!me(ui.snap, ui.conn.playerId)?.ready) {
+    step('Preparando…');
+    if (!(await send({ type: 'set_ready', ready: true }))) return;
+  }
+  step('Empezando…');
+  if (!(await send({ type: 'start' }))) return;
+  ui.starting = null;
+  ui.sheet = null;
+  render();
 }
 
 document.addEventListener('submit', (ev) => {
@@ -1293,6 +1567,10 @@ document.addEventListener('change', (ev) => {
   const el = ev.target;
   if (el.dataset.assign !== undefined) return void cmd({ type: 'assign_team', targetId: el.dataset.assign, pref: el.value });
   if (el.id === 'f-adult') return void (ui.adult = el.checked);
+  if (el.id === 'start-safety') {
+    ui.startAck = el.checked;
+    return render();
+  }
   if (el.name === 'home-mode') {
     ui.draft.mode = el.value;
     return render();
@@ -1304,7 +1582,37 @@ document.addEventListener('change', (ev) => {
   else if (el.id === 'c-duration') configure({ durationMin: v });
   else if (el.id === 'c-head') configure({ headStartMin: v });
   else if (el.id === 'c-ping') configure({ pingMin: v });
-  else if (el.id === 'c-safety') configure({ safety: el.checked });
+});
+
+// Guía abierta: Escape la cierra y el foco no sale del diálogo (aria-modal).
+document.addEventListener('keydown', (ev) => {
+  // La hoja «Antes de empezar» también se cierra con Escape (salvo mientras empieza la partida).
+  if (!ui.guide && ev.key === 'Escape' && ui.sheet === 'start' && !ui.starting) {
+    ui.sheet = null;
+    ui.startError = null;
+    render();
+    document.querySelector('[data-act="start"]')?.focus();
+    return;
+  }
+  if (!ui.guide) return;
+  if (ev.key === 'Escape') {
+    ev.preventDefault();
+    closeGuide();
+    return;
+  }
+  if (ev.key !== 'Tab') return;
+  const box = document.querySelector('.guide-overlay');
+  const f = box ? [...box.querySelectorAll('button:not([disabled])')].filter((x) => x.offsetParent !== null) : [];
+  if (!f.length) return;
+  const first = f[0];
+  const last = f[f.length - 1];
+  if (ev.shiftKey && (document.activeElement === first || !box.contains(document.activeElement))) {
+    ev.preventDefault();
+    last.focus();
+  } else if (!ev.shiftKey && (document.activeElement === last || !box.contains(document.activeElement))) {
+    ev.preventDefault();
+    first.focus();
+  }
 });
 
 document.addEventListener('click', async (ev) => {
@@ -1351,7 +1659,8 @@ document.addEventListener('click', async (ev) => {
       ui.sheet = 'qr';
       return render();
     case 'share-report': {
-      const text = reportShareText(missionReport(ui.snap, (id) => ui.snap?.players.find((p) => p.id === id)?.name ?? 'Alguien'));
+      const shown = ui.viewReport ? readLastReport(store)?.snap : ui.snap;
+      const text = reportShareText(missionReport(shown, (id) => shown?.players.find((p) => p.id === id)?.name ?? 'Alguien'));
       if (!text) return;
       try {
         if (navigator.share) await navigator.share({ title: 'THE OUTRUN · Mission Report', text });
@@ -1382,25 +1691,37 @@ document.addEventListener('click', async (ev) => {
       // Antes de declararse listo, este móvil tiene que dar una posición: así el permiso se pide en la
       // sala (con su explicación) y no en mitad de la cuenta atrás, y nadie empieza sin GPS.
       if (ready && !ui.gpsChecked) {
+        ui.readyError = null;
         try {
           await locateOnce();
         } catch (e) {
-          toast(gpsCheckError(e.message), 'danger');
-          return;
+          // El motivo se queda bajo el botón (no solo un aviso pasajero) hasta el siguiente intento.
+          ui.readyError = gpsCheckError(e.message);
+          announce(ui.readyError);
+          return render();
         }
       }
+      ui.readyError = null;
       return void cmd({ type: 'set_ready', ready });
     }
     case 'center':
-      try {
-        const r = await locateOnce();
-        await configure({ center: { lat: r.lat, lng: r.lng } });
-      } catch (e) {
-        toast(e.message === 'permission_missing' ? 'Necesitas dar permiso de ubicación.' : 'No se pudo obtener tu posición. Prueba al aire libre.', 'danger');
-      }
-      return;
+      return void centerZone();
+    case 'edit-config':
+      ui.editConfig = !ui.editConfig;
+      return render();
+    case 'manage':
+      ui.manage = !ui.manage;
+      return render();
     case 'start':
-      return void cmd({ type: 'start' });
+      // La hoja de empezar: resumen y lista de seguridad, que se confirma en cada partida (también en la
+      // revancha: puede cambiar el sitio o el grupo).
+      ui.startAck = false;
+      ui.startError = null;
+      ui.sheet = 'start';
+      ui.sheetFocus = 'start-title';
+      return render();
+    case 'start-now':
+      return void startGame();
     case 'end':
       if (!ui.confirmEnd) {
         ui.confirmEnd = true;
@@ -1418,8 +1739,33 @@ document.addEventListener('click', async (ev) => {
     case 'rules':
       ui.sheet = 'rules';
       return render();
+    case 'guide-open': {
+      // El modo de la sala si ya hay; si no, el elegido en el inicio. Abrirla no toca la sala ni la conexión.
+      const snap = ui.snap;
+      // Ni durante la cuenta atrás ni con la tarjeta del rol a la vista (AF-10): se puede abrir justo después.
+      if (ui.conn?.playerId && !guideStaysOpen(null, snap, ui.reveal, performance.now())) return toast('La guía se puede abrir en cuanto veas tu rol.');
+      const context = !snap || !ui.conn?.playerId ? 'home' : snap.phase === 'LOBBY' ? 'lobby' : 'game';
+      const mode = snap?.config?.mode ?? (context === 'home' ? ui.draft.mode : null);
+      ui.guideOpener = el;
+      ui.guide = { step: context === 'game' ? guideStepFor(guideTopic(snap)) : 0, mode, context };
+      ui.guideFocus = true;
+      return render();
+    }
+    case 'guide-prev':
+    case 'guide-next':
+    case 'guide-goto': {
+      if (!ui.guide) return;
+      const last = guideSteps(ui.guide.mode).length - 1;
+      const to = el.dataset.act === 'guide-goto' ? Number(el.dataset.step) : ui.guide.step + (el.dataset.act === 'guide-next' ? 1 : -1);
+      ui.guide = { ...ui.guide, step: Math.max(0, Math.min(last, to)) };
+      ui.guideFocus = true;
+      return render();
+    }
+    case 'guide-close':
+      return closeGuide();
     case 'close-sheet':
       ui.sheet = null;
+      ui.startError = null;
       return render();
     case 'dismiss-reveal':
       ui.reveal = null;
@@ -1434,7 +1780,25 @@ document.addEventListener('click', async (ev) => {
       ui.locationDenied = false;
       return void syncTracking().then(render);
     case 'rematch':
+      // Dos toques (AF-11): la revancha lleva a todos a la sala; el informe queda guardado en cada móvil.
+      clearTimeout(ui.confirmRematchTimer);
+      if (!ui.confirmRematch) {
+        ui.confirmRematch = true;
+        ui.confirmRematchTimer = setTimeout(() => {
+          ui.confirmRematch = false;
+          render();
+        }, 6_000);
+        return render();
+      }
+      ui.confirmRematch = false;
       return void cmd({ type: 'rematch', swapRoles: false });
+    case 'open-report':
+      ui.viewReport = true;
+      scrollTo(0, 0);
+      return render();
+    case 'close-report':
+      ui.viewReport = false;
+      return render();
     case 'join_rematch':
       return void cmd({ type: 'join_rematch' });
     case 'leave-game':

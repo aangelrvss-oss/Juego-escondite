@@ -1,0 +1,292 @@
+[
+  {
+    "id": "G0 320×568: no se abre sola",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G1 320: al abrir, el foco va al título",
+    "ok": true,
+    "detail": "guide-title"
+  },
+  {
+    "id": "G2 320: 12 pasos recorridos con «Siguiente»",
+    "ok": true,
+    "detail": "Paso 12 de 12"
+  },
+  {
+    "id": "G3 320: todas las imágenes cargan (naturalWidth>0) y tienen alt",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G4 320: panel, ✕ y botones dentro de la pantalla en todos los pasos; sin desbordamiento",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G5 320: objetivos táctiles de la guía ≥ 44 px",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G6 320: «Entendido» en el último paso cierra la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G7 320: el borrador del formulario sigue igual tras la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G8 320: puntos (ir al 8) y «Anterior» (al 7)",
+    "ok": true,
+    "detail": {
+      "c8": "Paso 8 de 12",
+      "c7": "Paso 7 de 12"
+    }
+  },
+  {
+    "id": "G9 320: «Anterior» deshabilitado en el paso 1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G10 320: Tab no saca el foco del diálogo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G11 320: ✕ cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G12 320: Escape cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G13 320: con «Caza del zorro» elegido, la guía es la de ese modo",
+    "ok": true,
+    "detail": "Guía · Caza del zorro Paso 1 de 12"
+  },
+  {
+    "id": "G14 320: role=dialog, aria-modal y aria-labelledby",
+    "ok": true,
+    "detail": {
+      "role": "dialog",
+      "modal": "true",
+      "lab": "guide-title"
+    }
+  },
+  {
+    "id": "G15 320: inicio sin desbordamiento",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "G0 360×640: no se abre sola",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G1 360: al abrir, el foco va al título",
+    "ok": true,
+    "detail": "guide-title"
+  },
+  {
+    "id": "G2 360: 12 pasos recorridos con «Siguiente»",
+    "ok": true,
+    "detail": "Paso 12 de 12"
+  },
+  {
+    "id": "G3 360: todas las imágenes cargan (naturalWidth>0) y tienen alt",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G4 360: panel, ✕ y botones dentro de la pantalla en todos los pasos; sin desbordamiento",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G5 360: objetivos táctiles de la guía ≥ 44 px",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G6 360: «Entendido» en el último paso cierra la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G7 360: el borrador del formulario sigue igual tras la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G8 360: puntos (ir al 8) y «Anterior» (al 7)",
+    "ok": true,
+    "detail": {
+      "c8": "Paso 8 de 12",
+      "c7": "Paso 7 de 12"
+    }
+  },
+  {
+    "id": "G9 360: «Anterior» deshabilitado en el paso 1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G10 360: Tab no saca el foco del diálogo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G11 360: ✕ cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G12 360: Escape cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G13 360: con «Caza del zorro» elegido, la guía es la de ese modo",
+    "ok": true,
+    "detail": "Guía · Caza del zorro Paso 1 de 12"
+  },
+  {
+    "id": "G14 360: role=dialog, aria-modal y aria-labelledby",
+    "ok": true,
+    "detail": {
+      "role": "dialog",
+      "modal": "true",
+      "lab": "guide-title"
+    }
+  },
+  {
+    "id": "G15 360: inicio sin desbordamiento",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "G0 412×915: no se abre sola",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G1 412: al abrir, el foco va al título",
+    "ok": true,
+    "detail": "guide-title"
+  },
+  {
+    "id": "G2 412: 12 pasos recorridos con «Siguiente»",
+    "ok": true,
+    "detail": "Paso 12 de 12"
+  },
+  {
+    "id": "G3 412: todas las imágenes cargan (naturalWidth>0) y tienen alt",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G4 412: panel, ✕ y botones dentro de la pantalla en todos los pasos; sin desbordamiento",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G5 412: objetivos táctiles de la guía ≥ 44 px",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "G6 412: «Entendido» en el último paso cierra la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G7 412: el borrador del formulario sigue igual tras la guía",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G8 412: puntos (ir al 8) y «Anterior» (al 7)",
+    "ok": true,
+    "detail": {
+      "c8": "Paso 8 de 12",
+      "c7": "Paso 7 de 12"
+    }
+  },
+  {
+    "id": "G9 412: «Anterior» deshabilitado en el paso 1",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G10 412: Tab no saca el foco del diálogo",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G11 412: ✕ cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G12 412: Escape cierra",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "G13 412: con «Caza del zorro» elegido, la guía es la de ese modo",
+    "ok": true,
+    "detail": "Guía · Caza del zorro Paso 1 de 12"
+  },
+  {
+    "id": "G14 412: role=dialog, aria-modal y aria-labelledby",
+    "ok": true,
+    "detail": {
+      "role": "dialog",
+      "modal": "true",
+      "lab": "guide-title"
+    }
+  },
+  {
+    "id": "G15 412: inicio sin desbordamiento",
+    "ok": true,
+    "detail": {
+      "over": 0,
+      "culprits": []
+    }
+  },
+  {
+    "id": "G16 tras recargar, la guía tampoco se abre sola",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "D3 errores de consola (inicio-320)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D3 errores de consola (inicio-360)",
+    "ok": true,
+    "detail": []
+  },
+  {
+    "id": "D3 errores de consola (inicio-412)",
+    "ok": true,
+    "detail": []
+  }
+]

@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<title>Guía · vista previa</title>
+<!-- Servir desde la raíz del repositorio (servidor.mjs): la base hace que «guia/x.webp» resuelva como en la app. -->
+<base href="/mobile/www/">
+<link rel="icon" href="favicon.svg">
+<link rel="stylesheet" href="css/tokens.generated.css">
+<link rel="stylesheet" href="css/game.css">
+<link rel="stylesheet" href="css/guide.css">
+</head>
+<body>
+<main class="screen">
+  <section class="card stack">
+    <h2>Vista previa de la guía</h2>
+    <p class="hint">Archivo de QA (no forma parte de la app). Parámetros: ?step=0&amp;mode=classic&amp;context=home</p>
+    <button class="btn btn-outline" type="button" data-act="guide-open">Abrir la guía</button>
+  </section>
+</main>
+<div id="guide-host"></div>
+<script type="module">
+// Referencia de integración: el mismo manejo que se propone para app.js (INFORME_GUIA.md).
+import { guideOverlay, guideStepFor, guideSteps } from './js/guide.js';
+
+const q = new URLSearchParams(location.search);
+const mode = q.get('mode') || null;
+const context = q.get('context') || 'home';
+const topic = q.get('topic');
+const ui = { guide: q.get('closed') ? null : { step: topic ? guideStepFor(topic) : Number(q.get('step') ?? 0), mode, context } };
+let opener = null;
+const host = document.getElementById('guide-host');
+
+function render() {
+  host.innerHTML = ui.guide ? guideOverlay(ui.guide) : '';
+  if (ui.guide) host.querySelector('#guide-title')?.focus({ preventScroll: true });
+}
+function close() {
+  ui.guide = null;
+  render();
+  (opener ?? document.querySelector('[data-act="guide-open"]'))?.focus();
+}
+document.addEventListener('click', (ev) => {
+  const el = ev.target.closest('[data-act]');
+  if (!el) return;
+  const n = guideSteps(mode).length;
+  switch (el.dataset.act) {
+    case 'guide-open': opener = el; ui.guide = { step: 0, mode, context }; break;
+    case 'guide-prev': ui.guide.step = Math.max(0, ui.guide.step - 1); break;
+    case 'guide-next': ui.guide.step = Math.min(n - 1, ui.guide.step + 1); break;
+    case 'guide-goto': ui.guide.step = Number(el.dataset.step); break;
+    case 'guide-close': return close();
+    default: return;
+  }
+  render();
+});
+document.addEventListener('keydown', (ev) => {
+  if (!ui.guide) return;
+  if (ev.key === 'Escape') { ev.preventDefault(); close(); }
+  // Foco atrapado dentro del diálogo (aria-modal).
+  if (ev.key === 'Tab') {
+    const f = [...host.querySelectorAll('button:not([disabled])')].filter((x) => x.offsetParent !== null);
+    if (!f.length) return;
+    const first = f[0], last = f[f.length - 1];
+    if (ev.shiftKey && (document.activeElement === first || !host.contains(document.activeElement))) { ev.preventDefault(); last.focus(); }
+    else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+  }
+});
+render();
+window.__guide = ui;
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "C tiempo agotado: informe idéntico en los dos",
+    "ok": true,
+    "detail": [
+      "MISSION REPORT · CLÁSICO · PARTIDA 1 GANAN LOS FUGITIVOS Se acabó el tiempo Partida de 12:00 en total · 2:00 de huida PERSECUCIÓN 10:00 CAPTURAS 0 LIBRES AL FINAL 1/1 MOMENTOS Los fugitivos aguantaron hasta el final CRONOLOGÍA 0:00 Empieza la persecución Nadie fue capturado 10:00 Final: Se acabó el tiempo RENDIMIENTO CAZADORES Ana Host FUGITIVOS Rita Libre al final 10:00 Tiempo libre contado desde el inicio de la persecución. Tu historial en este móvil Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado. Reglas: clasico/2026-10-30.",
+      "MISSION REPORT · CLÁSICO · PARTIDA 1 GANAN LOS FUGITIVOS Se acabó el tiempo Partida de 12:00 en total · 2:00 de huida PERSECUCIÓN 10:00 CAPTURAS 0 LIBRES AL FINAL 1/1 MOMENTOS Los fugitivos aguantaron hasta el final CRONOLOGÍA 0:00 Empieza la persecución Nadie fue capturado 10:00 Final: Se acabó el tiempo RENDIMIENTO CAZADORES Ana Host FUGITIVOS Rita Libre al final 10:00 Tiempo libre contado desde el inicio de la persecución. Tu historial en este móvil Solo datos oficiales del servidor. Las ubicaciones de la partida ya se han borrado. Reglas: clasico/2026-10-30."
+    ]
+  },
+  {
+    "id": "C tiempo agotado: ganan los fugitivos por tiempo, 0 capturas, libres 1/1",
+    "ok": true,
+    "detail": "MISSION REPORT · CLÁSICO · PARTIDA 1 GANAN LOS FUGITIVOS Se acabó el tiempo Partida de 12:00 en total · 2:00 de huida PERSECUCIÓN 10:00 CAPTURAS 0 LIBRES AL FINAL 1/1 MOMENTOS Los fugitivos aguantaron hasta el final CRONOLOGÍA 0:00 Empieza la persecución Nadie fue capturado 10:00 Final: Se acabó el tiempo RENDIMIENTO CAZADORES Ana Host FUGITIVOS Rita Libre al final 10:00 Tiempo libre contado desde"
+  },
+  {
+    "id": "C tiempo agotado: sin coordenadas",
+    "ok": true,
+    "detail": ""
+  },
+  {
+    "id": "C tiempo agotado: historial de Rita = 1 victoria, supervivencia ≈ 10:00",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "other": 0,
+      "captures": 0,
+      "captured": 0,
+      "survivalMs": 600000,
+      "bestSurvivalMs": 600000,
+      "byMode": {
+        "classic": {
+          "games": 1,
+          "wins": 1
+        },
+        "infection": {
+          "games": 0,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "17qpv5t"
+      ]
+    }
+  },
+  {
+    "id": "C tiempo agotado: recargar no duplica el historial",
+    "ok": true,
+    "detail": {
+      "v": 1,
+      "games": 1,
+      "wins": 1,
+      "losses": 0,
+      "other": 0,
+      "captures": 0,
+      "captured": 0,
+      "survivalMs": 600000,
+      "bestSurvivalMs": 600000,
+      "byMode": {
+        "classic": {
+          "games": 1,
+          "wins": 1
+        },
+        "infection": {
+          "games": 0,
+          "wins": 0
+        },
+        "fox_hunt": {
+          "games": 0,
+          "wins": 0
+        }
+      },
+      "seen": [
+        "17qpv5t"
+      ]
+    }
+  },
+  {
+    "id": "D3 errores de consola (host)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  },
+  {
+    "id": "D3 errores de consola (runner)",
+    "ok": true,
+    "detail": [
+      "console: Failed to load resource: the server responded with a status of 403 ()"
+    ]
+  }
+]

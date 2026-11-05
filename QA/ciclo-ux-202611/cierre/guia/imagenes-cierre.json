@@ -1,0 +1,39 @@
+{
+  "date": "2026-11-05",
+  "server": "local, reloj acelerado",
+  "pageErrors": [],
+  "images": [
+    {
+      "out": "sala-codigo",
+      "size": [
+        720,
+        760
+      ],
+      "bytes": 18062,
+      "src": "capturas/sala-codigo.png",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 360,
+        "height": 380
+      },
+      "reason": "AF-09: la sala de espera cambió (pasos, «Invita · código de la sala», roles en «Gestionar jugadores», el anfitrión como «Anfitrión»)"
+    },
+    {
+      "out": "final",
+      "size": [
+        720,
+        980
+      ],
+      "bytes": 35818,
+      "src": "capturas/final.png",
+      "clip": {
+        "x": 0,
+        "y": 0,
+        "width": 360,
+        "height": 490
+      },
+      "reason": "AF-09: el Mission Report cambió (cuarta cifra, «Partida de X en total», etiquetas, rendimiento)"
+    }
+  ]
+}
